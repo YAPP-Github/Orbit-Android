@@ -38,7 +38,6 @@ internal fun AlarmCheckItem(
             text = label,
             style = OrbitTheme.typography.label1Medium,
             color = if (isPressed) OrbitTheme.colors.main else OrbitTheme.colors.gray_400,
-            modifier = Modifier.padding(start = 4.dp),
             textAlign = TextAlign.Center,
         )
     }
