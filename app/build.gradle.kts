@@ -3,6 +3,7 @@ plugins {
     id("orbit.android.compose")
     alias(libs.plugins.google.service)
     alias(libs.plugins.firebase.app.distribution)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
@@ -38,4 +39,6 @@ dependencies {
     implementation(projects.feature.mission)
     implementation(projects.feature.setting)
     implementation(projects.feature.navigator)
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
 }

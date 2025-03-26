@@ -60,6 +60,7 @@ gson = "2.11.0"
 google-service = "4.4.2"
 firebase-bom = "33.1.1"
 firebase-app-distribution = "5.1.0"
+firebase-crashlytics = "3.0.3"
 
 ## Test
 junit = "4.13.2"
@@ -152,6 +153,7 @@ gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 # Google Libraries
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics-ktx" }
 firebase-config = { group = "com.google.firebase", name = "firebase-config-ktx" }
 
 ## Logging
@@ -190,4 +192,5 @@ android-test = { id = "com.android.test", version.ref = "android-gradle-plugin" 
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-service = { id = "com.google.gms.google-services", version.ref = "google-service" }
 firebase-app-distribution = { id = "com.google.firebase.appdistribution", version.ref = "firebase-app-distribution" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics" }
 #sentry = { id = "io.sentry.android.gradle", version.ref = "sentry" }
