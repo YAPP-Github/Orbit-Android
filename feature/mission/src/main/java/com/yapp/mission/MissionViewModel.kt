@@ -11,7 +11,9 @@ import com.yapp.common.navigation.destination.FortuneDestination
 import com.yapp.common.navigation.destination.HomeDestination
 import com.yapp.common.navigation.destination.MissionDestination
 import com.yapp.datastore.UserPreferences
+import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
+import com.yapp.domain.usecase.GetMissionTypeUseCase
 import com.yapp.media.haptic.HapticFeedbackManager
 import com.yapp.media.haptic.HapticType
 import com.yapp.ui.base.BaseViewModel
@@ -21,7 +23,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
-import kotlin.random.Random
 
 @HiltViewModel
 class MissionViewModel @Inject constructor(
@@ -29,17 +30,25 @@ class MissionViewModel @Inject constructor(
     private val hapticFeedbackManager: HapticFeedbackManager,
     private val fortuneRepository: FortuneRepository,
     private val userPreferences: UserPreferences,
+    private val getMissionTypeUseCase: GetMissionTypeUseCase,
     private val app: Application,
     savedStateHandle: SavedStateHandle,
 ) : BaseViewModel<MissionContract.State, MissionContract.SideEffect>(
-    MissionContract.State(
-        missionType = if (Random.nextBoolean()) MissionContract.MissionType.Shake else MissionContract.MissionType.Click,
-    ),
+    MissionContract.State(),
 ) {
     init {
         val notificationId = savedStateHandle.get<String>("notificationId")?.toLong()
         if (notificationId != null) {
             sendAlarmDismissIntent(notificationId)
+        }
+
+        loadRemoteMissionType()
+    }
+
+    private fun loadRemoteMissionType() {
+        viewModelScope.launch {
+            val missionType = getMissionTypeUseCase.execute()
+            updateState { copy(missionType = missionType) }
         }
     }
 
@@ -69,7 +78,7 @@ class MissionViewModel @Inject constructor(
     private fun handleShake() = viewModelScope.launch {
         if (currentState.showOverlay) updateState { copy(showOverlay = false) }
         if (currentState.showOverlayText) updateState { copy(showOverlayText = false) }
-        if (currentState.missionType !is MissionContract.MissionType.Shake) return@launch
+        if (currentState.missionType !is MissionType.Shake) return@launch
 
         val currentCount = currentState.shakeCount
         if (currentCount < 9) {
@@ -98,7 +107,7 @@ class MissionViewModel @Inject constructor(
     }
 
     private fun handleClick() = viewModelScope.launch {
-        if (currentState.missionType !is MissionContract.MissionType.Click) return@launch
+        if (currentState.missionType !is MissionType.Click) return@launch
 
         val currentCount = currentState.clickCount
         if (currentCount < 9) {
