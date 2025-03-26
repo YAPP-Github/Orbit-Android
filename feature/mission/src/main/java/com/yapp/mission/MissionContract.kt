@@ -1,5 +1,7 @@
 package com.yapp.mission
 
+import com.yapp.domain.model.MissionType
+
 sealed class MissionContract {
 
     data class State(
@@ -28,11 +30,6 @@ sealed class MissionContract {
         object ShowExitDialog : Action()
         object HideExitDialog : Action()
         object RetryPostFortune : Action()
-    }
-
-    sealed class MissionType {
-        data object Shake : MissionType()
-        data object Click : MissionType()
     }
 
     sealed class SideEffect : com.yapp.ui.base.SideEffect {

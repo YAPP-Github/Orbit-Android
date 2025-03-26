@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.LocalAnalyticsHelper
 import com.yapp.designsystem.theme.OrbitTheme
+import com.yapp.domain.model.MissionType
 import com.yapp.mission.component.FlipCard
 import com.yapp.mission.component.MissionProgressBar
 import com.yapp.ui.component.dialog.OrbitDialog
@@ -141,8 +142,8 @@ fun MissionProgressScreen(
                 Spacer(modifier = Modifier.heightForScreenPercentage(0.0246f))
                 MissionProgressBar(
                     currentProgress = when (state.missionType) {
-                        is MissionContract.MissionType.Shake -> state.shakeCount
-                        is MissionContract.MissionType.Click -> state.clickCount
+                        is MissionType.Shake -> state.shakeCount
+                        is MissionType.Click -> state.clickCount
                     },
                     totalProgress = 10,
                     modifier = Modifier
@@ -153,7 +154,7 @@ fun MissionProgressScreen(
                 )
                 Spacer(modifier = Modifier.heightForScreenPercentage(0.06f))
                 Text(
-                    text = if (state.missionType is MissionContract.MissionType.Shake) "10회를 흔들어야 운세를 받아요" else "10회를 눌러야 운세를 받아요",
+                    text = if (state.missionType is MissionType.Shake) "10회를 흔들어야 운세를 받아요" else "10회를 눌러야 운세를 받아요",
                     color = OrbitTheme.colors.white,
                     style = OrbitTheme.typography.heading2SemiBold,
                     modifier = Modifier.alpha(if (state.showOverlay) 0f else 1f),
@@ -161,21 +162,21 @@ fun MissionProgressScreen(
                 Spacer(modifier = Modifier.heightForScreenPercentage(0.005f))
                 Text(
                     text = when (state.missionType) {
-                        is MissionContract.MissionType.Shake -> state.shakeCount.toString()
-                        is MissionContract.MissionType.Click -> state.clickCount.toString()
+                        is MissionType.Shake -> state.shakeCount.toString()
+                        is MissionType.Click -> state.clickCount.toString()
                     },
                     color = OrbitTheme.colors.white,
                     style = OrbitTheme.typography.displaySemiBold,
                     modifier = Modifier.alpha(if (state.showOverlay) 0f else 1f),
                 )
 
-                Spacer(modifier = Modifier.heightForScreenPercentage(if (state.missionType is MissionContract.MissionType.Shake) 0.0665f else 0.1f))
-                if (state.missionType is MissionContract.MissionType.Shake) {
+                Spacer(modifier = Modifier.heightForScreenPercentage(if (state.missionType is MissionType.Shake) 0.0665f else 0.1f))
+                if (state.missionType is MissionType.Shake) {
                     FlipCard(
                         state = state,
                         eventDispatcher = eventDispatcher,
                     )
-                } else if (state.missionType is MissionContract.MissionType.Click) {
+                } else if (state.missionType is MissionType.Click) {
                     Crossfade(
                         targetState = state.showFinalAnimation,
                         animationSpec = tween(durationMillis = 500),
@@ -230,7 +231,7 @@ fun MissionProgressScreen(
                     ) + fadeIn(animationSpec = tween(durationMillis = 300)),
                 ) {
                     Text(
-                        text = if (state.missionType is MissionContract.MissionType.Shake) "흔들기 시작!" else "누르기 시작!",
+                        text = if (state.missionType is MissionType.Shake) "흔들기 시작!" else "누르기 시작!",
                         color = OrbitTheme.colors.white,
                         style = OrbitTheme.typography.title1Bold,
                     )
@@ -250,8 +251,8 @@ fun MissionProgressScreen(
                             type = "mission_fail",
                             properties = mapOf(
                                 AnalyticsEvent.MissionPropertiesKeys.MISSION_TYPE to when (state.missionType) {
-                                    is MissionContract.MissionType.Shake -> "shake"
-                                    is MissionContract.MissionType.Click -> "click"
+                                    is MissionType.Shake -> "shake"
+                                    is MissionType.Click -> "click"
                                 },
                             ),
                         ),

@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.LocalAnalyticsHelper
 import com.yapp.designsystem.theme.OrbitTheme
+import com.yapp.domain.model.MissionType
 import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.dialog.OrbitDialog
 import com.yapp.ui.utils.heightForScreenPercentage
@@ -83,9 +84,9 @@ fun MissionScreen(
                 Spacer(modifier = Modifier.heightForScreenPercentage(0.110f))
                 MissionTag(label = "기상미션")
                 Spacer(modifier = Modifier.heightForScreenPercentage(0.0418f))
-                MissionLabel(label = if (state.missionType is MissionContract.MissionType.Shake) "10회를 흔들어" else "10회를 눌러서", style = OrbitTheme.typography.headline2Medium)
+                MissionLabel(label = if (state.missionType is MissionType.Shake) "10회를 흔들어" else "10회를 눌러서", style = OrbitTheme.typography.headline2Medium)
                 Spacer(modifier = Modifier.heightForScreenPercentage(0.01f))
-                MissionLabel(label = if (state.missionType is MissionContract.MissionType.Shake) "부적을 뒤집어줘" else "편지를 열어줘", style = OrbitTheme.typography.title2Bold)
+                MissionLabel(label = if (state.missionType is MissionType.Shake) "부적을 뒤집어줘" else "편지를 열어줘", style = OrbitTheme.typography.title2Bold)
             }
             Column(
                 modifier = Modifier
@@ -94,7 +95,7 @@ fun MissionScreen(
             ) {
                 Image(
                     painter = painterResource(
-                        if (state.missionType is MissionContract.MissionType.Shake) {
+                        if (state.missionType is MissionType.Shake) {
                             core.designsystem.R.drawable.img_mission_main
                         } else {
                             core.designsystem.R.drawable.ic_mission_main_letter
@@ -103,7 +104,7 @@ fun MissionScreen(
                     contentDescription = "",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .scale(if (state.missionType is MissionContract.MissionType.Shake) 1.1f else 1.0f),
+                        .scale(if (state.missionType is MissionType.Shake) 1.1f else 1.0f),
                 )
             }
             Column(
