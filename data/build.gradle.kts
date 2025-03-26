@@ -14,6 +14,7 @@ dependencies {
     implementation(projects.core.network)
     implementation(projects.core.datastore)
     implementation(projects.core.media)
+    implementation(projects.core.remoteconfig)
 
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
