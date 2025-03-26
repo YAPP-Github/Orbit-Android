@@ -184,7 +184,7 @@ private fun SettingContent(
                 .padding(horizontal = 24.dp),
         )
         Spacer(modifier = Modifier.weight(1f))
-        VersionCodeText(versionCode = "v1.0.0")
+        VersionCodeText()
         Spacer(modifier = Modifier.height(24.dp))
     }
 }
