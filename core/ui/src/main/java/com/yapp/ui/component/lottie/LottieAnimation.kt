@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -26,12 +27,17 @@ fun LottieAnimation(
     contentScale: ContentScale = ContentScale.FillWidth,
     scaleXAdjustment: Float = 1f,
     scaleYAdjustment: Float = 1f,
+    play: Boolean = iterations == 1,
+    restartOnPlay: Boolean = false,
     onAnimationEnd: (() -> Unit)? = null,
 ) {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(resId))
-    val progress by animateLottieCompositionAsState(
+    val isPlaying = remember { mutableStateOf(iterations == LottieConstants.IterateForever || play) }
+    val animationState = animateLottieCompositionAsState(
         composition = composition,
         iterations = iterations,
+        isPlaying = isPlaying.value,
+        restartOnPlay = restartOnPlay,
     )
     val alpha = remember { Animatable(0f) }
 
@@ -44,9 +50,18 @@ fun LottieAnimation(
         }
     }
 
-    LaunchedEffect(progress) {
-        if (progress == 1f) {
+    LaunchedEffect(play) {
+        if (play) {
+            isPlaying.value = true
+        }
+    }
+
+    LaunchedEffect(animationState.progress) {
+        if (animationState.progress == 1f) {
             onAnimationEnd?.invoke()
+            if (iterations == 1) {
+                isPlaying.value = false
+            }
         }
     }
 
@@ -62,7 +77,7 @@ fun LottieAnimation(
         if (composition != null) {
             com.airbnb.lottie.compose.LottieAnimation(
                 composition = composition,
-                progress = { progress },
+                progress = { animationState.progress },
                 modifier = Modifier.fillMaxSize(),
             )
         }

@@ -11,7 +11,9 @@ import com.yapp.common.navigation.destination.FortuneDestination
 import com.yapp.common.navigation.destination.HomeDestination
 import com.yapp.common.navigation.destination.MissionDestination
 import com.yapp.datastore.UserPreferences
+import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
+import com.yapp.domain.usecase.GetMissionTypeUseCase
 import com.yapp.media.haptic.HapticFeedbackManager
 import com.yapp.media.haptic.HapticType
 import com.yapp.ui.base.BaseViewModel
@@ -28,6 +30,7 @@ class MissionViewModel @Inject constructor(
     private val hapticFeedbackManager: HapticFeedbackManager,
     private val fortuneRepository: FortuneRepository,
     private val userPreferences: UserPreferences,
+    private val getMissionTypeUseCase: GetMissionTypeUseCase,
     private val app: Application,
     savedStateHandle: SavedStateHandle,
 ) : BaseViewModel<MissionContract.State, MissionContract.SideEffect>(
@@ -37,6 +40,15 @@ class MissionViewModel @Inject constructor(
         val notificationId = savedStateHandle.get<String>("notificationId")?.toLong()
         if (notificationId != null) {
             sendAlarmDismissIntent(notificationId)
+        }
+
+        loadRemoteMissionType()
+    }
+
+    private fun loadRemoteMissionType() {
+        viewModelScope.launch {
+            val missionType = getMissionTypeUseCase.execute()
+            updateState { copy(missionType = missionType) }
         }
     }
 
@@ -54,7 +66,8 @@ class MissionViewModel @Inject constructor(
 
             is MissionContract.Action.StartOverlayTimer -> startOverlayTimer()
 
-            is MissionContract.Action.ShakeCard, is MissionContract.Action.ClickCard -> handleIncreaseCount()
+            is MissionContract.Action.ShakeCard -> handleShake()
+            is MissionContract.Action.ClickCard -> handleClick()
 
             is MissionContract.Action.ShowExitDialog -> updateState { copy(showExitDialog = true) }
             is MissionContract.Action.HideExitDialog -> updateState { copy(showExitDialog = false) }
@@ -62,9 +75,10 @@ class MissionViewModel @Inject constructor(
         }
     }
 
-    private fun handleIncreaseCount() = viewModelScope.launch {
+    private fun handleShake() = viewModelScope.launch {
         if (currentState.showOverlay) updateState { copy(showOverlay = false) }
         if (currentState.showOverlayText) updateState { copy(showOverlayText = false) }
+        if (currentState.missionType !is MissionType.Shake) return@launch
 
         val currentCount = currentState.shakeCount
         if (currentCount < 9) {
@@ -89,6 +103,37 @@ class MissionViewModel @Inject constructor(
                 )
             }
             kotlinx.coroutines.delay(500)
+        }
+    }
+
+    private fun handleClick() = viewModelScope.launch {
+        if (currentState.missionType !is MissionType.Click) return@launch
+
+        val currentCount = currentState.clickCount
+        if (currentCount < 9) {
+            hapticFeedbackManager.performHapticFeedback(HapticType.SUCCESS)
+            analyticsHelper.logEvent(
+                AnalyticsEvent(
+                    type = "mission_success",
+                    properties = mapOf(
+                        AnalyticsEvent.MissionPropertiesKeys.MISSION_TYPE to "click",
+                    ),
+                ),
+            )
+            updateState { copy(clickCount = currentCount + 1, playWhenClick = true) }
+
+            kotlinx.coroutines.delay(500)
+            updateState { copy(playWhenClick = false) }
+        } else if (currentCount == 9) {
+            updateState {
+                copy(
+                    clickCount = 10,
+                    showFinalAnimation = true,
+                )
+            }
+            postFortune()
+            kotlinx.coroutines.delay(500)
+            updateState { copy(isMissionCompleted = true) }
         }
     }
 
