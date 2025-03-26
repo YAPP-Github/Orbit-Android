@@ -152,6 +152,7 @@ gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 # Google Libraries
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
+firebase-config = { group = "com.google.firebase", name = "firebase-config-ktx" }
 
 ## Logging
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
