@@ -48,10 +48,12 @@ class MissionViewModel @Inject constructor(
     private fun loadRemoteMissionType() {
         viewModelScope.launch {
             val missionType = getMissionTypeUseCase.execute()
-            updateState { copy(
-                missionType = missionType,
-                isMissionTypeLoading = false,
-            ) }
+            updateState {
+                copy(
+                    missionType = missionType,
+                    isMissionTypeLoading = false,
+                )
+            }
         }
     }
 

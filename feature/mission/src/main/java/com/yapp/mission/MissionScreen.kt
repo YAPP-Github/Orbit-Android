@@ -67,7 +67,7 @@ fun MissionScreen(
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
-        if(state.isMissionTypeLoading) {
+        if (state.isMissionTypeLoading) {
             MissionLoadingScreen()
             return
         }
