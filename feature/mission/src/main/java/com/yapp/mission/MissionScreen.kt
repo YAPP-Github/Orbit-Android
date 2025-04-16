@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +33,7 @@ import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.MissionType
 import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.dialog.OrbitDialog
+import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.utils.heightForScreenPercentage
 
 @Composable
@@ -65,6 +67,10 @@ fun MissionScreen(
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
+        if(state.isMissionTypeLoading) {
+            MissionLoadingScreen()
+            return
+        }
         Image(
             painter = painterResource(id = core.designsystem.R.drawable.img_mission_main_background),
             contentDescription = null,
@@ -196,7 +202,21 @@ fun MissionLabel(
 }
 
 @Composable
-@Preview
+fun MissionLoadingScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        LottieAnimation(
+            modifier = Modifier
+                .size(70.dp),
+            resId = core.designsystem.R.raw.star_loading,
+        )
+    }
+}
+
+@Composable
+@Preview(showBackground = true)
 fun MissionRoutePreview() {
     MissionScreen(
         stateProvider = { MissionContract.State() },
