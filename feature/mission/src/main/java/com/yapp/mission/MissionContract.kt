@@ -6,6 +6,7 @@ sealed class MissionContract {
 
     data class State(
         val missionType: MissionType = MissionType.Click,
+        val isMissionTypeLoading: Boolean = true,
         val showOverlayText: Boolean = false,
         val showOverlay: Boolean = true,
         val missionProgress: Int = 0,
