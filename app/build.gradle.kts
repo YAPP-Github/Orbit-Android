@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     id("orbit.android.application")
     id("orbit.android.compose")
@@ -18,24 +16,8 @@ android {
     }
 
     buildTypes {
-        val localProperties = Properties()
-        localProperties.load(
-            project.rootProject.file("local.properties").bufferedReader(),
-        )
-        debug {
-            resValue(
-                "string",
-                "admob_app_id",
-                localProperties["admobAppIdDebug"] as String,
-            )
-        }
         release {
             signingConfig = signingConfigs.getByName("debug")
-            resValue(
-                "string",
-                "admob_app_id",
-                localProperties["admobAppIdRelease"] as String,
-            )
         }
     }
 }

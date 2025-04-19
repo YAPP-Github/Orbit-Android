@@ -1,5 +1,4 @@
 import com.yapp.convention.setNamespace
-import java.util.Properties
 
 plugins {
     id("orbit.android.library")
@@ -8,28 +7,6 @@ plugins {
 
 android {
     setNamespace("core.ui")
-
-    buildTypes {
-        val localProperties = Properties()
-        localProperties.load(
-            project.rootProject.file("local.properties").bufferedReader(),
-        )
-
-        debug {
-            resValue(
-                "string",
-                "admob_ad_unit_id",
-                localProperties["admobAdUnitIdDebug"] as String,
-            )
-        }
-        release {
-            resValue(
-                "string",
-                "admob_ad_unit_id",
-                localProperties["admobAdUnitIdRelease"] as String,
-            )
-        }
-    }
 }
 
 dependencies {

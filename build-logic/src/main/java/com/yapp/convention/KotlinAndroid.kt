@@ -41,6 +41,7 @@ internal fun Project.configureKotlinAndroid() {
         }
 
         addBuildConfigFields(project)
+        addResValues(project)
     }
 
     configureKotlin()

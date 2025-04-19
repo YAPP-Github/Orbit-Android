@@ -43,6 +43,24 @@ internal fun CommonExtension<*, *, *, *, *, *>.addBuildConfigFields(project: Pro
     }
 }
 
+internal fun CommonExtension<*, *, *, *, *, *>.addResValues(project: Project) {
+    val admobAppIdDebug = project.getLocalProperty("admobAppIdDebug", "")
+    val admobAppIdRelease = project.getLocalProperty("admobAppIdRelease", "")
+    val admobAdUnitIdDebug = project.getLocalProperty("admobAdUnitIdDebug", "")
+    val admobAdUnitIdRelease = project.getLocalProperty("admobAdUnitIdRelease", "")
+
+    buildTypes {
+        getByName("debug") {
+            resValue("string", "admob_app_id", admobAppIdDebug)
+            resValue("string", "admob_ad_unit_id", admobAdUnitIdDebug)
+        }
+        getByName("release") {
+            resValue("string", "admob_app_id", admobAppIdRelease)
+            resValue("string", "admob_ad_unit_id", admobAdUnitIdRelease)
+        }
+    }
+}
+
 internal fun Project.getLocalProperty(key: String, defaultValue: String? = null): String {
     val propertiesFile = rootProject.file("local.properties")
     if (propertiesFile.exists()) {
