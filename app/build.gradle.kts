@@ -41,4 +41,5 @@ dependencies {
     implementation(projects.feature.navigator)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
+    implementation(libs.play.services.ads)
 }

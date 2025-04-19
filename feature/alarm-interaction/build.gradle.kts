@@ -22,4 +22,5 @@ dependencies {
     implementation(libs.androidx.material.android)
     implementation(libs.androidx.annotation)
     implementation(libs.gson)
+    implementation(libs.play.services.ads)
 }

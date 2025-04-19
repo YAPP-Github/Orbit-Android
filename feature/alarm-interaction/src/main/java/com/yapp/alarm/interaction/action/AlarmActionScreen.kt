@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -30,6 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.designsystem.theme.OrbitTheme
+import com.yapp.ui.component.banner.AdsBanner
 import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.utils.heightForScreenPercentage
@@ -121,61 +123,65 @@ private fun AlarmActionContent(
     onSnoozeClick: () -> Unit,
     onDismissClick: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                color = Color(0xFF496381),
-            ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(
-            modifier = Modifier.heightForScreenPercentage(
-                0.17f,
-            ),
-        )
-
-        AlarmTime(
-            isAm = isAm,
-            hour = hour,
-            minute = minute,
-            todayDate = todayDate,
-        )
-
-        Spacer(modifier = Modifier.height(102.dp))
-
-        Icon(
-            painter = painterResource(id = core.designsystem.R.drawable.ic_alarm_action_character),
-            tint = Color(0xFF07203E),
-            contentDescription = "Alarm Action Character",
-        )
-
-        Spacer(modifier = Modifier.height(56.dp))
-
-        if (snoozeEnabled && snoozeCount != 0) {
-            AlarmSnoozeButton(
-                snoozeInterval = snoozeInterval,
-                snoozeCount = snoozeCount,
-                onSnoozeClick = onSnoozeClick,
+    Box(modifier = Modifier.statusBarsPadding()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    color = Color(0xFF496381),
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(
+                modifier = Modifier.heightForScreenPercentage(
+                    0.17f,
+                ),
             )
-        } else {
-            Spacer(modifier = Modifier.height(54.dp))
+
+            AlarmTime(
+                isAm = isAm,
+                hour = hour,
+                minute = minute,
+                todayDate = todayDate,
+            )
+
+            Spacer(modifier = Modifier.height(102.dp))
+
+            Icon(
+                painter = painterResource(id = core.designsystem.R.drawable.ic_alarm_action_character),
+                tint = Color(0xFF07203E),
+                contentDescription = "Alarm Action Character",
+            )
+
+            Spacer(modifier = Modifier.height(56.dp))
+
+            if (snoozeEnabled && snoozeCount != 0) {
+                AlarmSnoozeButton(
+                    snoozeInterval = snoozeInterval,
+                    snoozeCount = snoozeCount,
+                    onSnoozeClick = onSnoozeClick,
+                )
+            } else {
+                Spacer(modifier = Modifier.height(54.dp))
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            OrbitButton(
+                label = stringResource(id = R.string.alarm_off_btn),
+                enabled = true,
+                modifier = Modifier
+                    .padding(
+                        start = 40.dp,
+                        end = 40.dp,
+                        bottom = 48.dp,
+                    )
+                    .height(62.dp),
+                onClick = onDismissClick,
+            )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
-        OrbitButton(
-            label = stringResource(id = R.string.alarm_off_btn),
-            enabled = true,
-            modifier = Modifier
-                .padding(
-                    start = 40.dp,
-                    end = 40.dp,
-                    bottom = 48.dp,
-                )
-                .height(62.dp),
-            onClick = onDismissClick,
-        )
+        AdsBanner()
     }
 }
 

@@ -17,4 +17,5 @@ dependencies {
     implementation(libs.orbit.compose)
     implementation(libs.orbit.viewmodel)
     implementation(libs.lottie.compose)
+    implementation(libs.play.services.ads)
 }

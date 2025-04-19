@@ -58,6 +58,7 @@ gson = "2.11.0"
 
 # Google Libraries Versions
 google-service = "4.4.2"
+playServicesAd = "24.2.0"
 firebase-bom = "33.1.1"
 firebase-app-distribution = "5.1.0"
 firebase-crashlytics = "3.0.3"
@@ -178,6 +179,8 @@ accompanist-permission = { module = "com.google.accompanist:accompanist-permissi
 androidx-material-android = { group = "androidx.compose.material", name = "material-android", version.ref = "materialAndroid" }
 
 amplitude-analytics = { group = "com.amplitude", name = "analytics-android", version.ref = "amplitude" }
+
+play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAd" }
 
 [plugins]
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

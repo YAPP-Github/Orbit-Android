@@ -57,8 +57,17 @@ jobs:
         env:
             BASE_URL: ${{ secrets.BASE_URL }}
             AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
+            ADMOB_APP_ID_DEBUG: ${{ secrets.ADMOB_APP_ID_DEBUG }}
+            ADMOB_APP_ID_RELEASE: ${{ secrets.ADMOB_APP_ID_RELEASE }}
+            ADMOB_AD_UNIT_ID_DEBUG: ${{ secrets.ADMOB_AD_UNIT_ID_DEBUG }}
+            ADMOB_AD_UNIT_ID_RELEASE: ${{ secrets.ADMOB_AD_UNIT_ID_RELEASE }}
         run: |
-            echo -e "baseUrl=$BASE_URL\namplitudeApiKey=$AMPLITUDE_API_KEY" >> local.properties
+            echo -e "baseUrl=$BASE_URL" > local.properties
+            echo -e "amplitudeApiKey=$AMPLITUDE_API_KEY" >> local.properties
+            echo -e "admobAppIdDebug=$ADMOB_APP_ID_DEBUG" >> local.properties
+            echo -e "admobAppIdRelease=$ADMOB_APP_ID_RELEASE" >> local.properties
+            echo -e "admobAdUnitIdDebug=$ADMOB_AD_UNIT_ID_DEBUG" >> local.properties
+            echo -e "admobAdUnitIdRelease=$ADMOB_AD_UNIT_ID_RELEASE" >> local.properties
 
       # Debug Local Properties Check
       - name: Debug Local Properties
