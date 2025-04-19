@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,14 +27,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
 import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.designsystem.theme.OrbitTheme
+import com.yapp.ui.component.banner.AdsBanner
 import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.utils.heightForScreenPercentage
@@ -185,7 +181,7 @@ private fun AlarmActionContent(
             )
         }
 
-        BannersAds()
+        AdsBanner()
     }
 }
 
@@ -289,27 +285,6 @@ private fun AlarmSnoozeButton(
             )
         }
     }
-}
-
-@Composable
-private fun BannersAds(
-    modifier: Modifier = Modifier,
-) {
-    val adUnitId = stringResource(id = R.string.admob_ad_unit_id)
-
-    AndroidView(
-        modifier = modifier.fillMaxWidth(),
-        factory = { context ->
-            AdView(context).apply {
-                setAdSize(AdSize.BANNER)
-                this.adUnitId = adUnitId
-                loadAd(AdRequest.Builder().build())
-            }
-        },
-        update = { adView ->
-            adView.loadAd(AdRequest.Builder().build())
-        },
-    )
 }
 
 @Preview
