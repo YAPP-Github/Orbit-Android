@@ -34,18 +34,6 @@ fun NavGraphBuilder.missionNavGraph(
 
             MissionRoute(viewModel)
         }
-
-        composable(MissionDestination.Progress.route) { backStackEntry ->
-            val viewModel = backStackEntry.sharedHiltViewModel<MissionViewModel>(navigator.navController)
-
-            LaunchedEffect(viewModel) {
-                viewModel.container.sideEffectFlow.collect { sideEffect ->
-                    handleMissionSideEffect(sideEffect, navigator, viewModel)
-                }
-            }
-
-            MissionProgressRoute(viewModel)
-        }
     }
 }
 
@@ -62,6 +50,5 @@ private fun handleMissionSideEffect(
         )
 
         MissionContract.SideEffect.NavigateBack -> navigator.navigateBack()
-//        MissionContract.SideEffect.MissionCompleted -> onFinishMission()
     }
 }
