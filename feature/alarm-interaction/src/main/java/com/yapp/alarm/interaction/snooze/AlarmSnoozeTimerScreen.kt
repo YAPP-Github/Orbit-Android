@@ -291,7 +291,7 @@ private fun AlarmOffButton(
         ),
     ) {
         Text(
-            text = stringResource(id = R.string.alarm_off_btn),
+            text = stringResource(id = R.string.alarm_off_mission_start_btn),
             style = OrbitTheme.typography.headline2SemiBold,
         )
     }

@@ -168,7 +168,7 @@ private fun AlarmActionContent(
             Spacer(modifier = Modifier.weight(1f))
 
             OrbitButton(
-                label = stringResource(id = R.string.alarm_off_btn),
+                label = stringResource(id = R.string.alarm_off_mission_start_btn),
                 enabled = true,
                 modifier = Modifier
                     .padding(
