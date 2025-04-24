@@ -45,13 +45,19 @@ jobs:
             - name: Install Firebase CLI
               run: curl -sL https://firebase.tools | bash
 
-            # 6. Decode google-services.json
-            - name: Decode google-services.json
+            # 6. Decode google-services.json for debug
+            - name: Decode google-services.json (debug)
               env:
-                  FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET }}
+                FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET_DEBUG }}
+              run: echo $FIREBASE_SECRET | base64 --decode > app/src/dev/google-services.json
+
+            # 7. Decode google-services.json for release
+            - name: Decode google-services.json (release)
+              env:
+                FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET_RELEASE }}
               run: echo $FIREBASE_SECRET | base64 --decode > app/google-services.json
 
-            # Add Local Properties
+            # 8. Add Local Properties
             - name: Add Local Properties
               env:
                   BASE_URL: ${{ secrets.BASE_URL }}
@@ -68,41 +74,41 @@ jobs:
                   echo -e "admobAdUnitIdDebug=$ADMOB_AD_UNIT_ID_DEBUG" >> local.properties
                   echo -e "admobAdUnitIdRelease=$ADMOB_AD_UNIT_ID_RELEASE" >> local.properties
 
-            # 7. Debug Local Properties Check
-            -   name: Debug Local Properties
-                run: cat local.properties
+            # 9. Debug Local Properties Check
+            - name: Debug Local Properties
+              run: cat local.properties
 
-            # 8. Ktlint
+            # 10. Ktlint
             - name: Run Ktlint Check
               run: ./gradlew ktlintCheck --stacktrace
 
-            # 9. Debug APK Build
+            # 11. Debug APK Build
             - name: Build Debug APK
               run: ./gradlew assembleDebug --stacktrace
 
-            # 10. Release AAB Build
+            # 12. Release AAB Build
             - name: Build Release AAB
               run: ./gradlew bundleRelease --stacktrace
 
-            # 11. Release APK Build
+            # 13. Release APK Build
             - name: Build Release APK
               run: ./gradlew assembleRelease --stacktrace
 
-            # 12. AAB Artifact Upload
+            # 14. AAB Artifact Upload
             - name: Upload Release AAB
               uses: actions/upload-artifact@v4
               with:
                   name: release-aab
                   path: app/build/outputs/bundle/release/app-release.aab
 
-            # 13. APK Artifact Upload
+            # 15. APK Artifact Upload
             - name: Upload Release APK
               uses: actions/upload-artifact@v4
               with:
                   name: release-apk
                   path: app/build/outputs/apk/release/app-release.apk
 
-            # 14. Set up Firebase Service Account Credentials
+            # 16. Set up Firebase Service Account Credentials
             - name: Set up Firebase Service Account Credentials
               env:
                   GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
@@ -113,7 +119,7 @@ jobs:
                   export GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-credentials.json
                   echo "GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS"
 
-            # 15. Firebase CLI 인증 확인
+            # 17. Firebase CLI 인증 확인
             - name: Check Firebase CLI Authentication
               run: |
                   export GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-credentials.json
@@ -125,7 +131,7 @@ jobs:
                   echo "📌 현재 Firebase 프로젝트 목록 확인:"
                   firebase projects:list || (echo "❌ Firebase 인증 실패!"; exit 1)
 
-            # 16. Firebase App Distribution Upload
+            # 18. Firebase App Distribution Upload
             - name: Upload APK to Firebase App Distribution
               env:
                   GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-credentials.json
@@ -148,7 +154,7 @@ jobs:
                   --release-notes "🚀 새로운 데모 버전이 배포되었습니다!" \
                   --groups "orbit-tester-group"
 
-            # 17. Notify Discord
+            # 19. Notify Discord
             - name: Notify Discord
               env:
                   DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

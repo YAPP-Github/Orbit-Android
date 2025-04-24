@@ -42,10 +42,16 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # Decode google-services.json
-      - name: Decode google-services.json
+      # Decode google-services.json for debug
+      - name: Decode google-services.json (debug)
         env:
-          FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET }}
+          FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET_DEBUG }}
+        run: echo $FIREBASE_SECRET | base64 --decode > app/src/dev/google-services.json
+
+      # Decode google-services.json for release
+      - name: Decode google-services.json (release)
+        env:
+          FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET_RELEASE }}
         run: echo $FIREBASE_SECRET | base64 --decode > app/google-services.json
 
       # Debug google-services.json
