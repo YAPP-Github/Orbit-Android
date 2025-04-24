@@ -1,7 +1,6 @@
 package com.yapp.setting
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yapp.designsystem.theme.OrbitTheme
@@ -55,7 +55,7 @@ fun SettingRoute(
             val kakaoUrl = "http://pf.kakao.com/_ykqxjn"
             val kakaoSchemeUrl = "kakaoplus://plusfriend/home/_ykqxjn"
 
-            val kakaoIntent = Intent(Intent.ACTION_VIEW, Uri.parse(kakaoSchemeUrl))
+            val kakaoIntent = Intent(Intent.ACTION_VIEW, kakaoSchemeUrl.toUri())
 
             try {
                 context.startActivity(kakaoIntent) // 카카오톡 앱으로 이동
