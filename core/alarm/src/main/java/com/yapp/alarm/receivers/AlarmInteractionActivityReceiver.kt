@@ -38,6 +38,7 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
                             val missionIntent =
                                 Intent(Intent.ACTION_VIEW, "orbitapp://mission".toUri()).apply {
                                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    setPackage(context.packageName)
                                 }
                             it.startActivity(missionIntent)
                         }

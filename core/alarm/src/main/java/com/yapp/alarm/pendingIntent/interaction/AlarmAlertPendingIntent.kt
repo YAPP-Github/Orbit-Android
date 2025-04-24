@@ -12,6 +12,7 @@ fun createAlarmAlertPendingIntent(
     alarm: Alarm,
 ): PendingIntent {
     val alarmAlertIntent = createAlarmAlertIntent(
+        context,
         alarm.id,
         alarm,
     )
@@ -24,6 +25,7 @@ fun createAlarmAlertPendingIntent(
 }
 
 private fun createAlarmAlertIntent(
+    context: Context,
     notificationId: Long,
     alarm: Alarm,
 ): Intent {
@@ -31,5 +33,6 @@ private fun createAlarmAlertIntent(
         putExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, notificationId)
         putExtra(AlarmConstants.EXTRA_ALARM, alarm)
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        setPackage(context.packageName)
     }
 }
