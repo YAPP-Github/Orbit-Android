@@ -49,7 +49,9 @@ jobs:
             - name: Decode google-services.json (debug)
               env:
                 FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET_DEBUG }}
-              run: echo $FIREBASE_SECRET | base64 --decode > app/src/dev/google-services.json
+              run: |
+                mkdir -p app/src/dev
+                echo $FIREBASE_SECRET | base64 --decode > app/src/dev/google-services.json
 
             # 7. Decode google-services.json for release
             - name: Decode google-services.json (release)
