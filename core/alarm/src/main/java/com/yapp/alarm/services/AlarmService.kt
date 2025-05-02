@@ -16,6 +16,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import com.yapp.alarm.AlarmConstants
 import com.yapp.alarm.AlarmHelper
 import com.yapp.alarm.pendingIntent.interaction.createAlarmAlertPendingIntent
@@ -221,7 +222,7 @@ class AlarmService : Service() {
 
     private fun startSound(soundUri: String, volume: Int) {
         val uri: Uri = if (soundUri.isNotEmpty()) {
-            Uri.parse(soundUri)
+            soundUri.toUri()
         } else {
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
         }
