@@ -4,14 +4,18 @@ import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
+import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.Alarm
 import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import kotlin.math.max
 
@@ -19,6 +23,7 @@ import kotlin.math.max
 class AlarmSnoozeTimerViewModel @Inject constructor(
     private val app: Application,
     savedStateHandle: SavedStateHandle,
+    private val userPreferences: UserPreferences,
 ) : BaseViewModel<AlarmSnoozeTimerContract.State, AlarmSnoozeTimerContract.SideEffect>(
     AlarmSnoozeTimerContract.State(),
 ) {
@@ -26,7 +31,20 @@ class AlarmSnoozeTimerViewModel @Inject constructor(
     private val alarm: Alarm? = alarmJson?.let { Alarm.fromJson(it) }
 
     init {
+        fetchIsFirstMission()
         startClock()
+    }
+
+    private fun fetchIsFirstMission() {
+        viewModelScope.launch {
+            val fortuneDate = userPreferences.fortuneDateFlow.firstOrNull()
+            val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+            val isFirstMission = fortuneDate != todayDate
+
+            updateState {
+                copy(isFirstMission = isFirstMission)
+            }
+        }
     }
 
     private fun startClock() {
