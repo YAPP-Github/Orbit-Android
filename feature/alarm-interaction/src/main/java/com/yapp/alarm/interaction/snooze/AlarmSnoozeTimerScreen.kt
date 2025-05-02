@@ -90,6 +90,7 @@ internal fun AlarmSnoozeTimerScreen(
         AlarmSnoozeContent(
             remainingSeconds = state.remainingSeconds,
             totalSeconds = state.totalSeconds,
+            isFirstMission = state.isFirstMission,
             onDismissClick = {
                 eventDispatcher(AlarmSnoozeTimerContract.Action.Dismiss)
                 (context as? ComponentActivity)?.finish()
@@ -119,6 +120,7 @@ private fun AlarmSnoozeLoadingScreen() {
 private fun AlarmSnoozeContent(
     remainingSeconds: Int,
     totalSeconds: Int,
+    isFirstMission: Boolean?,
     onDismissClick: () -> Unit,
 ) {
     Column(
@@ -147,9 +149,14 @@ private fun AlarmSnoozeContent(
             )
         }
 
-        AlarmOffButton(
-            onClick = onDismissClick,
-        )
+        if (isFirstMission != null) {
+            AlarmOffButton(
+                onClick = onDismissClick,
+                isFirstMission = isFirstMission,
+            )
+        } else {
+            Spacer(modifier = Modifier.height(58.dp))
+        }
 
         Spacer(modifier = Modifier.height(48.dp))
     }
@@ -273,6 +280,7 @@ private fun formatSecondsToTime(seconds: Int): String {
 private fun AlarmOffButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
+    isFirstMission: Boolean,
     height: Dp = 58.dp,
     containerColor: Color = OrbitTheme.colors.white.copy(alpha = 0.2f),
     contentColor: Color = OrbitTheme.colors.white,
@@ -291,7 +299,11 @@ private fun AlarmOffButton(
         ),
     ) {
         Text(
-            text = stringResource(id = R.string.alarm_off_mission_start_btn),
+            text = if (isFirstMission) {
+                stringResource(id = R.string.alarm_off_mission_start_btn)
+            } else {
+                stringResource(id = R.string.alarm_off_btn)
+            },
             style = OrbitTheme.typography.headline2SemiBold,
         )
     }

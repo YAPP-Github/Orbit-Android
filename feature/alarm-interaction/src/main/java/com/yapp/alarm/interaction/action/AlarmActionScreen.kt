@@ -85,6 +85,7 @@ internal fun AlarmActionScreen(
             snoozeEnabled = state.snoozeEnabled,
             snoozeInterval = state.snoozeInterval,
             snoozeCount = state.snoozeCount,
+            isFirstMission = state.isFirstMission,
             onSnoozeClick = { eventDispatcher(AlarmActionContract.Action.Snooze) },
             onDismissClick = {
                 eventDispatcher(AlarmActionContract.Action.Dismiss)
@@ -120,6 +121,7 @@ private fun AlarmActionContent(
     snoozeEnabled: Boolean,
     snoozeInterval: Int,
     snoozeCount: Int,
+    isFirstMission: Boolean?,
     onSnoozeClick: () -> Unit,
     onDismissClick: () -> Unit,
 ) {
@@ -167,18 +169,26 @@ private fun AlarmActionContent(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            OrbitButton(
-                label = stringResource(id = R.string.alarm_off_mission_start_btn),
-                enabled = true,
-                modifier = Modifier
-                    .padding(
-                        start = 40.dp,
-                        end = 40.dp,
-                        bottom = 48.dp,
-                    )
-                    .height(62.dp),
-                onClick = onDismissClick,
-            )
+            if (isFirstMission != null) {
+                OrbitButton(
+                    label = if (isFirstMission) {
+                        stringResource(id = R.string.alarm_off_mission_start_btn)
+                    } else {
+                        stringResource(id = R.string.alarm_off_btn)
+                    },
+                    enabled = true,
+                    modifier = Modifier
+                        .padding(
+                            start = 40.dp,
+                            end = 40.dp,
+                            bottom = 48.dp,
+                        )
+                        .height(62.dp),
+                    onClick = onDismissClick,
+                )
+            } else {
+                Spacer(modifier = Modifier.height(62.dp))
+            }
         }
 
         AdsBanner()
