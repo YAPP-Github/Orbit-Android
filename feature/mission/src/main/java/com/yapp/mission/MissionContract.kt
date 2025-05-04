@@ -7,9 +7,6 @@ sealed class MissionContract {
     data class State(
         val missionType: MissionType = MissionType.Click,
         val isMissionTypeLoading: Boolean = true,
-        val showOverlayText: Boolean = false,
-        val showOverlay: Boolean = true,
-        val missionProgress: Int = 0,
         val isMissionCompleted: Boolean = false,
         val shakeCount: Int = 0,
         val clickCount: Int = 0,
@@ -23,14 +20,11 @@ sealed class MissionContract {
     ) : com.yapp.ui.base.UiState
 
     sealed class Action {
-        data object NextStep : Action()
-        data object PreviousStep : Action()
-        object StartOverlayTimer : Action()
-        object ShakeCard : Action()
-        object ClickCard : Action()
-        object ShowExitDialog : Action()
-        object HideExitDialog : Action()
-        object RetryPostFortune : Action()
+        data object ShakeCard : Action()
+        data object ClickCard : Action()
+        data object ShowExitDialog : Action()
+        data object HideExitDialog : Action()
+        data object RetryPostFortune : Action()
     }
 
     sealed class SideEffect : com.yapp.ui.base.SideEffect {

@@ -6,17 +6,22 @@ import androidx.lifecycle.viewModelScope
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmSnoozeIntent
 import com.yapp.common.navigation.Routes
+import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.Alarm
 import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 @HiltViewModel
 class AlarmActionViewModel @Inject constructor(
     private val app: Application,
+    private val userPreferences: UserPreferences,
     savedStateHandle: SavedStateHandle,
 ) : BaseViewModel<AlarmActionContract.State, AlarmActionContract.SideEffect>(
     AlarmActionContract.State(),
@@ -25,6 +30,7 @@ class AlarmActionViewModel @Inject constructor(
     private val alarm: Alarm? = alarmJson?.let { Alarm.fromJson(it) }
 
     init {
+        fetchIsFirstMission()
         updateState {
             copy(
                 snoozeEnabled = alarm?.isSnoozeEnabled ?: false,
@@ -34,6 +40,18 @@ class AlarmActionViewModel @Inject constructor(
         }
 
         startClock()
+    }
+
+    private fun fetchIsFirstMission() {
+        viewModelScope.launch {
+            val fortuneDate = userPreferences.fortuneDateFlow.firstOrNull()
+            val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+            val isFirstMission = fortuneDate != todayDate
+
+            updateState {
+                copy(isFirstMission = isFirstMission)
+            }
+        }
     }
 
     private fun startClock() {

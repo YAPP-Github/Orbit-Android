@@ -9,6 +9,7 @@ class AlarmSnoozeTimerContract {
         val alarmTimeStamp: Long = 0L,
         val remainingSeconds: Int = 1,
         val totalSeconds: Int = 300,
+        val isFirstMission: Boolean? = null,
     ) : UiState
 
     sealed class Action {

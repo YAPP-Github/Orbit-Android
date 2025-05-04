@@ -19,6 +19,7 @@ import com.yapp.media.haptic.HapticType
 import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,11 +38,9 @@ class MissionViewModel @Inject constructor(
     MissionContract.State(),
 ) {
     init {
-        val notificationId = savedStateHandle.get<String>("notificationId")?.toLong()
-        if (notificationId != null) {
-            sendAlarmDismissIntent(notificationId)
+        savedStateHandle.get<String>("notificationId")?.toLong()?.let {
+            sendAlarmDismissIntent(it)
         }
-
         loadRemoteMissionType()
     }
 
@@ -59,47 +58,31 @@ class MissionViewModel @Inject constructor(
 
     fun processAction(action: MissionContract.Action) {
         when (action) {
-            is MissionContract.Action.NextStep -> {
-                emitSideEffect(
-                    MissionContract.SideEffect.Navigate(route = MissionDestination.Progress.route),
-                )
-            }
-
-            is MissionContract.Action.PreviousStep -> {
-                emitSideEffect(MissionContract.SideEffect.NavigateBack)
-            }
-
-            is MissionContract.Action.StartOverlayTimer -> startOverlayTimer()
-
             is MissionContract.Action.ShakeCard -> handleShake()
             is MissionContract.Action.ClickCard -> handleClick()
-
-            is MissionContract.Action.ShowExitDialog -> updateState { copy(showExitDialog = true) }
-            is MissionContract.Action.HideExitDialog -> updateState { copy(showExitDialog = false) }
+            is MissionContract.Action.ShowExitDialog -> showExitDialog()
+            is MissionContract.Action.HideExitDialog -> hideExitDialog()
             is MissionContract.Action.RetryPostFortune -> retryPostFortune()
         }
     }
 
+    private fun showExitDialog() {
+        updateState { copy(showExitDialog = true) }
+    }
+
+    private fun hideExitDialog() {
+        updateState { copy(showExitDialog = false) }
+    }
+
     private fun handleShake() = viewModelScope.launch {
-        if (currentState.showOverlay) updateState { copy(showOverlay = false) }
-        if (currentState.showOverlayText) updateState { copy(showOverlayText = false) }
         if (currentState.missionType !is MissionType.Shake) return@launch
 
         val currentCount = currentState.shakeCount
         if (currentCount < 9) {
-            hapticFeedbackManager.performHapticFeedback(HapticType.SUCCESS)
+            performHapticSuccess()
             updateState { copy(shakeCount = currentCount + 1) }
-        } else if (currentCount == 9 && !currentState.isFlipped) {
-            hapticFeedbackManager.performHapticFeedback(HapticType.SUCCESS)
-            analyticsHelper.logEvent(
-                AnalyticsEvent(
-                    type = "mission_success",
-                    properties = mapOf(
-                        AnalyticsEvent.MissionPropertiesKeys.MISSION_TYPE to "shake",
-                    ),
-                ),
-            )
-            postFortune()
+        } else if (!currentState.isFlipped) {
+            completeMission(type = "shake")
             updateState {
                 copy(
                     isMissionCompleted = true,
@@ -107,7 +90,7 @@ class MissionViewModel @Inject constructor(
                     isFlipped = true,
                 )
             }
-            kotlinx.coroutines.delay(500)
+            delay(500)
         }
     }
 
@@ -116,20 +99,12 @@ class MissionViewModel @Inject constructor(
 
         val currentCount = currentState.clickCount
         if (currentCount < 9) {
-            hapticFeedbackManager.performHapticFeedback(HapticType.SUCCESS)
-            analyticsHelper.logEvent(
-                AnalyticsEvent(
-                    type = "mission_success",
-                    properties = mapOf(
-                        AnalyticsEvent.MissionPropertiesKeys.MISSION_TYPE to "click",
-                    ),
-                ),
-            )
+            performHapticSuccess()
+            logMissionSuccess("click")
             updateState { copy(clickCount = currentCount + 1, playWhenClick = true) }
-
-            kotlinx.coroutines.delay(500)
+            delay(500)
             updateState { copy(playWhenClick = false) }
-        } else if (currentCount == 9) {
+        } else {
             updateState {
                 copy(
                     clickCount = 10,
@@ -137,7 +112,7 @@ class MissionViewModel @Inject constructor(
                 )
             }
             postFortune()
-            kotlinx.coroutines.delay(500)
+            delay(500)
             updateState { copy(isMissionCompleted = true) }
         }
     }
@@ -145,15 +120,16 @@ class MissionViewModel @Inject constructor(
     private fun postFortune() {
         viewModelScope.launch {
             val userId = userPreferences.userIdFlow.firstOrNull() ?: return@launch
-            val fortuneResult = runCatching {
+            val result = runCatching {
                 withContext(Dispatchers.IO) {
                     fortuneRepository.postFortune(userId)
                 }
             }
-            fortuneResult.onSuccess { fortune ->
-                val fortuneData = fortune.getOrThrow()
-                userPreferences.saveFortuneId(fortuneData.id)
-                userPreferences.saveFortuneScore(fortuneData.avgFortuneScore)
+
+            result.onSuccess {
+                val data = it.getOrThrow()
+                userPreferences.saveFortuneId(data.id)
+                userPreferences.saveFortuneScore(data.avgFortuneScore)
 
                 emitSideEffect(
                     MissionContract.SideEffect.Navigate(
@@ -172,16 +148,16 @@ class MissionViewModel @Inject constructor(
     private fun retryPostFortune() {
         viewModelScope.launch {
             val userId = userPreferences.userIdFlow.firstOrNull() ?: return@launch
-            val fortuneResult = runCatching {
+            val result = runCatching {
                 withContext(Dispatchers.IO) {
                     fortuneRepository.postFortune(userId)
                 }
             }
 
-            fortuneResult.onSuccess { fortune ->
-                val fortuneData = fortune.getOrThrow()
-                userPreferences.saveFortuneId(fortuneData.id)
-                userPreferences.saveFortuneScore(fortuneData.avgFortuneScore)
+            result.onSuccess {
+                val data = it.getOrThrow()
+                userPreferences.saveFortuneId(data.id)
+                userPreferences.saveFortuneScore(data.avgFortuneScore)
 
                 emitSideEffect(
                     MissionContract.SideEffect.Navigate(
@@ -191,10 +167,31 @@ class MissionViewModel @Inject constructor(
                     ),
                 )
             }.onFailure {
-                Log.e("MissionViewModel", "운세 데이터 재요청 실패: ${it.message}")
+                Log.e("MissionViewModel", "운세 재요청 실패: ${it.message}")
                 navigateToHome()
             }
         }
+    }
+
+    private fun completeMission(type: String) {
+        performHapticSuccess()
+        logMissionSuccess(type)
+        postFortune()
+    }
+
+    private fun performHapticSuccess() {
+        hapticFeedbackManager.performHapticFeedback(HapticType.SUCCESS)
+    }
+
+    private fun logMissionSuccess(type: String) {
+        analyticsHelper.logEvent(
+            AnalyticsEvent(
+                type = "mission_success",
+                properties = mapOf(
+                    AnalyticsEvent.MissionPropertiesKeys.MISSION_TYPE to type,
+                ),
+            ),
+        )
     }
 
     private fun navigateToHome() {
@@ -205,14 +202,6 @@ class MissionViewModel @Inject constructor(
                 inclusive = true,
             ),
         )
-    }
-
-    private fun startOverlayTimer() = viewModelScope.launch {
-        updateState { copy(showOverlay = true) }
-        kotlinx.coroutines.delay(1000)
-        updateState { copy(showOverlayText = true) }
-        kotlinx.coroutines.delay(2000)
-        updateState { copy(showOverlay = false, showOverlayText = false) }
     }
 
     private fun sendAlarmDismissIntent(id: Long) {
