@@ -1,8 +1,8 @@
 package com.yapp.splash
 
 import androidx.lifecycle.viewModelScope
+import com.yapp.common.navigation.destination.HomeDestination
 import com.yapp.common.navigation.destination.OnboardingDestination
-import com.yapp.common.navigation.destination.TopLevelDestination
 import com.yapp.datastore.UserPreferences
 import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,7 +41,7 @@ class SplashViewModel @Inject constructor(
                 Pair(userId, onboardingCompleted)
             }.collect { (userId, onboardingCompleted) ->
                 val destination = if (userId != null && onboardingCompleted) {
-                    TopLevelDestination.HOME.route
+                    HomeDestination.Home.route
                 } else {
                     OnboardingDestination.Route.route
                 }

@@ -19,7 +19,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.common.navigation.destination.SplashDestination
-import com.yapp.common.navigation.destination.TopLevelDestination
 import com.yapp.common.navigation.rememberOrbitNavigator
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.fortune.fortuneNavGraph
@@ -31,7 +30,6 @@ import com.yapp.splash.SplashRoute
 import com.yapp.ui.component.snackbar.CustomSnackBarVisuals
 import com.yapp.ui.component.snackbar.OrbitSnackBar
 import com.yapp.webview.webViewNavGraph
-import kotlinx.collections.immutable.toImmutableList
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -43,14 +41,6 @@ internal fun OrbitNavHost(
 
     Scaffold(
         modifier = modifier,
-        bottomBar = {
-            OrbitBottomNavigationBar(
-                visible = false,
-                currentTab = navigator.currentTab,
-                entries = TopLevelDestination.entries.toImmutableList(),
-                onClickItem = navigator::navigateToTopLevelDestination,
-            )
-        },
         snackbarHost = {
             OrbitSnackBarHost(snackBarHostState = snackBarHostState)
         },
@@ -66,7 +56,7 @@ internal fun OrbitNavHost(
             }
             onboardingNavGraph(
                 navigator = navigator,
-                onFinishOnboarding = { navigator.navigateToTopLevelDestination(TopLevelDestination.HOME) },
+                onFinishOnboarding = { },
             )
             homeNavGraph(
                 navigator = navigator,

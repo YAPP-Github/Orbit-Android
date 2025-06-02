@@ -14,4 +14,5 @@ dependencies {
     implementation(projects.core.designsystem)
     implementation(libs.compose.navigation)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
 }
