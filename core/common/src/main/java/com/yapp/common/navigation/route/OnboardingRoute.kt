@@ -6,33 +6,33 @@ import kotlin.reflect.KClass
 @Serializable
 data object OnboardingBaseRoute
 
-sealed interface OnboardingDestination {
+sealed class OnboardingDestination {
     @Serializable
-    data object Explain : OnboardingDestination
+    data object Explain : OnboardingDestination()
 
     @Serializable
-    data object AlarmTimeSelection : OnboardingDestination
+    data object AlarmTimeSelection : OnboardingDestination()
 
     @Serializable
-    data object Birthday : OnboardingDestination
+    data object Birthday : OnboardingDestination()
 
     @Serializable
-    data object TimeOfBirth : OnboardingDestination
+    data object TimeOfBirth : OnboardingDestination()
 
     @Serializable
-    data object Name : OnboardingDestination
+    data object Name : OnboardingDestination()
 
     @Serializable
-    data object Gender : OnboardingDestination
+    data object Gender : OnboardingDestination()
 
     @Serializable
-    data object Access : OnboardingDestination
+    data object Access : OnboardingDestination()
 
     @Serializable
-    data object Complete1 : OnboardingDestination
+    data object Complete1 : OnboardingDestination()
 
     @Serializable
-    data object Complete2 : OnboardingDestination
+    data object Complete2 : OnboardingDestination()
 
     companion object {
         val routes: List<KClass<out OnboardingDestination>> = listOf(

@@ -104,7 +104,7 @@ class OnboardingViewModel @Inject constructor(
         if (nextRoute != null) {
             savedStateHandle["currentStep"] = nextStep
             updateState { copy(currentStep = nextStep) }
-            emitSideEffect(OnboardingContract.SideEffect.NavigateToNextStep)
+            emitSideEffect(OnboardingContract.SideEffect.NavigateToNextStep(currentStep))
         } else {
             emitSideEffect(OnboardingContract.SideEffect.OnboardingCompleted)
         }

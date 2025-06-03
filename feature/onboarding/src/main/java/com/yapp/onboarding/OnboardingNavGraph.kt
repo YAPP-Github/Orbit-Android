@@ -114,8 +114,8 @@ private fun handleSideEffect(
     viewModel: OnboardingViewModel,
 ) {
     when (sideEffect) {
-        OnboardingContract.SideEffect.NavigateToNextStep -> {
-            navigator.navigateToOnboardingNextStep()
+        is OnboardingContract.SideEffect.NavigateToNextStep -> {
+            navigator.navigateToOnboardingNextStep(sideEffect.currentStep)
         }
 
         OnboardingContract.SideEffect.NavigateBack -> {

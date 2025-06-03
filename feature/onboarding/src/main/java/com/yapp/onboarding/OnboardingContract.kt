@@ -72,7 +72,7 @@ sealed class OnboardingContract {
     }
 
     sealed class SideEffect : com.yapp.ui.base.SideEffect {
-        data object NavigateToNextStep : SideEffect()
+        data class NavigateToNextStep(val currentStep: Int) : SideEffect()
 
         data object NavigateBack : SideEffect()
 

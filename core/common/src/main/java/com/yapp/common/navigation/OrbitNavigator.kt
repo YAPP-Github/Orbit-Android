@@ -5,7 +5,6 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.rememberNavController
-import com.yapp.common.navigation.extensions.toRoute
 import com.yapp.common.navigation.route.AlarmInteractionDestination
 import com.yapp.common.navigation.route.FortuneBaseRoute
 import com.yapp.common.navigation.route.FortuneDestination
@@ -28,13 +27,13 @@ class OrbitNavigator(
         navController.navigate(OnboardingBaseRoute, navOptions)
     }
 
-    fun navigateToOnboardingNextStep(navOptions: NavOptions? = null) {
-        val currentRoute = navController.currentBackStackEntry?.destination?.route ?: return
+    fun navigateToOnboardingNextStep(currentStep: Int, navOptions: NavOptions? = null) {
+        val nextRouteClass = OnboardingDestination.nextRoute(currentStep + 1) ?: return
 
-        val currentIndex = OnboardingDestination.routes.indexOfFirst { it.toRoute() == currentRoute }
-        val nextRouteClass = OnboardingDestination.nextRoute(currentIndex + 1) ?: return
+        val nextRouteInstance = nextRouteClass.objectInstance
+            ?: error("Cannot get object instance of route class: $nextRouteClass")
 
-        navController.navigate(nextRouteClass, navOptions)
+        navController.navigate(nextRouteInstance, navOptions)
     }
 
     fun navigateToAddAlarm(navOptions: NavOptions? = null) {
