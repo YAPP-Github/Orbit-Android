@@ -47,8 +47,8 @@ sealed class OnboardingDestination {
             Complete2::class,
         )
 
-        fun nextRoute(currentStep: Int): KClass<out OnboardingDestination>? {
-            val nextRoute = routes.getOrNull(currentStep)
+        fun getNextRouteForStep(currentStep: Int): KClass<out OnboardingDestination>? {
+            val nextRoute = routes.getOrNull(currentStep + 1)
             return nextRoute
         }
     }

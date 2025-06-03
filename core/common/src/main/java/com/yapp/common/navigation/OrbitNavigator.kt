@@ -1,5 +1,6 @@
 package com.yapp.common.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
@@ -28,12 +29,12 @@ class OrbitNavigator(
     }
 
     fun navigateToOnboardingNextStep(currentStep: Int, navOptions: NavOptions? = null) {
-        val nextRouteClass = OnboardingDestination.nextRoute(currentStep + 1) ?: return
-
-        val nextRouteInstance = nextRouteClass.objectInstance
-            ?: error("Cannot get object instance of route class: $nextRouteClass")
-
-        navController.navigate(nextRouteInstance, navOptions)
+        val instance = OnboardingDestination.getNextRouteForStep(currentStep)?.objectInstance
+        if (instance != null) {
+            navController.navigate(instance, navOptions)
+        } else {
+            Log.e("Navigator", "Invalid route at step: $currentStep")
+        }
     }
 
     fun navigateToAddAlarm(navOptions: NavOptions? = null) {

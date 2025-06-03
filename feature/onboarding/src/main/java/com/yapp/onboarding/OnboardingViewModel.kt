@@ -96,7 +96,7 @@ class OnboardingViewModel @Inject constructor(
     private fun moveToNextStep() {
         val currentStep = container.stateFlow.value.currentStep
         val nextStep = currentStep + 1
-        val nextRoute = OnboardingDestination.nextRoute(currentStep)
+        val nextRoute = OnboardingDestination.getNextRouteForStep(currentStep)
 
         savedStateHandle["birthDate"] = currentState.birthDate
         savedStateHandle["birthType"] = currentState.birthType
