@@ -36,7 +36,7 @@ class OnboardingViewModel @Inject constructor(
     ),
 ) {
     private val currentRoute: KClass<out OnboardingDestination>?
-        get() = OnboardingDestination.routes.getOrNull(currentState.currentStep - 1)
+        get() = OnboardingDestination.routes.getOrNull(currentState.currentStep)
 
     fun processAction(action: OnboardingContract.Action) {
         when (action) {
