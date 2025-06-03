@@ -65,14 +65,14 @@ sealed class SettingContract {
     }
 
     sealed class SideEffect : com.yapp.ui.base.SideEffect {
-        data class Navigate(
-            val route: String,
-            val popUpTo: String? = null,
-            val inclusive: Boolean = false,
-        ) : SideEffect()
-
         data object NavigateBack : SideEffect()
+
+        data object NavigateToSettingRoute : SideEffect()
+
+        data object NavigateToEditProfile : SideEffect()
+
+        data object NavigateToEditBirthday : SideEffect()
+
         data class OpenWebView(val url: String) : SideEffect()
-        data object UserInfoUpdated : SideEffect()
     }
 }

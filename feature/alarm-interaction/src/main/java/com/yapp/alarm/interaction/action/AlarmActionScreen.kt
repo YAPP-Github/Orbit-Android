@@ -49,12 +49,8 @@ internal fun AlarmActionRoute(
     LaunchedEffect(sideEffect) {
         sideEffect.collect { action ->
             when (action) {
-                is AlarmActionContract.SideEffect.Navigate -> {
-                    navigator.navigateTo(
-                        route = action.route,
-                        popUpTo = action.popUpTo,
-                        inclusive = action.inclusive,
-                    )
+                is AlarmActionContract.SideEffect.NavigateToAlarmSnooze -> {
+                    navigator.navigateToAlarmSnoozeTimer(action.alarm)
                 }
             }
         }

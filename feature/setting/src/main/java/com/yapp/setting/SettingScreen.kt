@@ -46,9 +46,7 @@ fun SettingRoute(
     SettingScreen(
         state = state,
         onNavigateToEditProfile = {
-            viewModel.onAction(
-                SettingContract.Action.NavigateToEditProfile,
-            )
+            viewModel.onAction(SettingContract.Action.NavigateToEditProfile)
         },
         onBackClick = { viewModel.onAction(SettingContract.Action.PreviousStep) },
         onInquiryClick = {

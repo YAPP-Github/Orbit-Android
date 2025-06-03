@@ -1,5 +1,7 @@
 package com.yapp.alarm.interaction.action
 
+import com.yapp.domain.model.Alarm
+import com.yapp.ui.base.SideEffect
 import com.yapp.ui.base.UiState
 
 class AlarmActionContract {
@@ -22,10 +24,6 @@ class AlarmActionContract {
     }
 
     sealed class SideEffect : com.yapp.ui.base.SideEffect {
-        data class Navigate(
-            val route: String,
-            val popUpTo: String? = null,
-            val inclusive: Boolean = false,
-        ) : SideEffect()
+        data class NavigateToAlarmSnooze(val alarm: Alarm) : SideEffect()
     }
 }

@@ -5,8 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
-import com.yapp.common.navigation.destination.HomeDestination
-import com.yapp.common.navigation.destination.OnboardingDestination
+import com.yapp.common.navigation.route.OnboardingDestination
 import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
@@ -19,6 +18,7 @@ import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.reflect.KClass
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
@@ -35,8 +35,8 @@ class OnboardingViewModel @Inject constructor(
         birthType = savedStateHandle["birthType"] ?: "양력",
     ),
 ) {
-    private val currentRoute: String?
-        get() = OnboardingDestination.routes.getOrNull(currentState.currentStep - 1)?.route
+    private val currentRoute: KClass<out OnboardingDestination>?
+        get() = OnboardingDestination.routes.getOrNull(currentState.currentStep - 1)
 
     fun processAction(action: OnboardingContract.Action) {
         when (action) {
@@ -104,7 +104,7 @@ class OnboardingViewModel @Inject constructor(
         if (nextRoute != null) {
             savedStateHandle["currentStep"] = nextStep
             updateState { copy(currentStep = nextStep) }
-            emitSideEffect(OnboardingContract.SideEffect.Navigate(nextRoute))
+            emitSideEffect(OnboardingContract.SideEffect.NavigateToNextStep)
         } else {
             emitSideEffect(OnboardingContract.SideEffect.OnboardingCompleted)
         }
@@ -201,7 +201,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     private fun updateBirthDate(lunar: String, year: Int, month: Int, day: Int) {
-        if (currentRoute != OnboardingDestination.Birthday.route) return
+        if (currentRoute != OnboardingDestination.Birthday::class) return
 
         val formattedDate = "$year-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}"
 
@@ -241,13 +241,7 @@ class OnboardingViewModel @Inject constructor(
     private fun completeOnboarding() {
         viewModelScope.launch {
             userPreferences.setOnboardingCompleted()
-            emitSideEffect(
-                OnboardingContract.SideEffect.Navigate(
-                    route = HomeDestination.Route.route,
-                    popUpTo = OnboardingDestination.Route.route,
-                    inclusive = true,
-                ),
-            )
+            emitSideEffect(OnboardingContract.SideEffect.OnboardingCompleted)
         }
     }
 

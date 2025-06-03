@@ -72,14 +72,12 @@ sealed class OnboardingContract {
     }
 
     sealed class SideEffect : com.yapp.ui.base.SideEffect {
-        data class Navigate(
-            val route: String,
-            val popUpTo: String? = null,
-            val inclusive: Boolean = false,
-        ) : SideEffect()
+        data object NavigateToNextStep : SideEffect()
 
         data object NavigateBack : SideEffect()
+
         data object OnboardingCompleted : SideEffect()
+
         data class OpenWebView(val url: String) : SideEffect()
     }
 
