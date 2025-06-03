@@ -4,51 +4,41 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
-import androidx.navigation.navigation
+import androidx.navigation.navOptions
 import com.yapp.common.navigation.OrbitNavigator
-import com.yapp.common.navigation.destination.MissionDestination
 import com.yapp.common.navigation.extensions.sharedHiltViewModel
+import com.yapp.common.navigation.route.MissionRoute
 
-fun NavGraphBuilder.missionNavGraph(
+fun NavGraphBuilder.missionScreen(
     navigator: OrbitNavigator,
 ) {
-    navigation(
-        route = MissionDestination.Route.route,
-        startDestination = MissionDestination.Mission.route,
+    composable<MissionRoute>(
+        deepLinks = listOf(
+            navDeepLink {
+                uriPattern = "orbitapp://mission?notificationId={notificationId}"
+            },
+        ),
     ) {
-        composable(
-            route = MissionDestination.Mission.route,
-            deepLinks = listOf(
-                navDeepLink {
-                    uriPattern = "orbitapp://mission?notificationId={notificationId}"
-                },
-            ),
-        ) { backStackEntry ->
-            val viewModel = backStackEntry.sharedHiltViewModel<MissionViewModel>(navigator.navController)
+        val viewModel = it.sharedHiltViewModel<MissionViewModel>(navigator.navController)
 
-            LaunchedEffect(viewModel) {
-                viewModel.container.sideEffectFlow.collect { sideEffect ->
-                    handleMissionSideEffect(sideEffect, navigator, viewModel)
+        LaunchedEffect(viewModel) {
+            viewModel.container.sideEffectFlow.collect { sideEffect ->
+                when (sideEffect) {
+                    MissionContract.SideEffect.NavigateToFortune -> {
+                        navigator.navigateToFortune(
+                            navOptions = navOptions {
+                                popUpTo(MissionRoute) {
+                                    inclusive = true
+                                }
+                            },
+                        )
+                    }
+
+                    MissionContract.SideEffect.NavigateBack -> navigator.navigateBack()
                 }
             }
-
-            MissionRoute(viewModel)
         }
-    }
-}
 
-private fun handleMissionSideEffect(
-    sideEffect: MissionContract.SideEffect,
-    navigator: OrbitNavigator,
-    viewModel: MissionViewModel,
-) {
-    when (sideEffect) {
-        is MissionContract.SideEffect.Navigate -> navigator.navigateTo(
-            route = sideEffect.route,
-            popUpTo = sideEffect.popUpTo,
-            inclusive = sideEffect.inclusive,
-        )
-
-        MissionContract.SideEffect.NavigateBack -> navigator.navigateBack()
+        MissionRoute(viewModel)
     }
 }
