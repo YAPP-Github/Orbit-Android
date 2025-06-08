@@ -1,7 +1,5 @@
 package com.yapp.data.remote.di
 
-import com.yapp.data.remote.datasource.DummyDataSource
-import com.yapp.data.remote.datasource.DummyDataSourceImpl
 import com.yapp.data.remote.datasource.FortuneDataSource
 import com.yapp.data.remote.datasource.FortuneDataSourceImpl
 import com.yapp.data.remote.datasource.SignUpDataSource
@@ -17,11 +15,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class DataSourceModule {
-    @Binds
-    @Singleton
-    abstract fun bindsDummyDataSource(
-        dummyDataSource: DummyDataSourceImpl,
-    ): DummyDataSource
 
     @Binds
     @Singleton

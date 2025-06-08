@@ -14,6 +14,7 @@ dependencies {
     implementation(libs.orbit.core)
     implementation(libs.orbit.compose)
     implementation(libs.orbit.viewmodel)
+    implementation(libs.kotlin.reflect)
     implementation(projects.feature.home)
     implementation(projects.feature.alarmInteraction)
     implementation(projects.feature.onboarding)

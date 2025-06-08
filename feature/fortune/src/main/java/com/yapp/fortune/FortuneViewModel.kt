@@ -4,8 +4,6 @@ import android.app.Application
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.viewModelScope
-import com.yapp.common.navigation.destination.FortuneDestination
-import com.yapp.common.navigation.destination.HomeDestination
 import com.yapp.datastore.UserPreferences
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.repository.ImageRepository
@@ -78,13 +76,7 @@ class FortuneViewModel @Inject constructor(
         when (action) {
             is FortuneContract.Action.NextStep -> {
                 if (state.hasReward) {
-                    postSideEffect(
-                        FortuneContract.SideEffect.Navigate(
-                            route = FortuneDestination.Reward.route,
-                            popUpTo = FortuneDestination.Fortune.route,
-                            inclusive = true,
-                        ),
-                    )
+                    postSideEffect(FortuneContract.SideEffect.NavigateToFortuneReward)
                 } else {
                     reduce { state.copy(currentStep = (state.currentStep + 1).coerceAtMost(5)) }
                 }
@@ -102,13 +94,7 @@ class FortuneViewModel @Inject constructor(
     }
 
     private fun navigateToHome() {
-        emitSideEffect(
-            FortuneContract.SideEffect.Navigate(
-                route = HomeDestination.Route.route,
-                popUpTo = FortuneDestination.Route.route,
-                inclusive = true,
-            ),
-        )
+        emitSideEffect(FortuneContract.SideEffect.NavigateToHome)
     }
 
     private fun saveImage(@DrawableRes resId: Int) = viewModelScope.launch {

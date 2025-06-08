@@ -1,7 +1,7 @@
 package com.yapp.data.remote.dto.response
 
-import com.yapp.domain.model.fortune.Fortune
-import com.yapp.domain.model.fortune.FortuneDetailModel
+import com.yapp.domain.model.Fortune
+import com.yapp.domain.model.FortuneDetailModel
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

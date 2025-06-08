@@ -2,7 +2,6 @@ package com.yapp.setting
 
 import android.util.Log
 import androidx.lifecycle.viewModelScope
-import com.yapp.common.navigation.destination.SettingDestination
 import com.yapp.datastore.UserPreferences
 import com.yapp.domain.repository.UserInfoRepository
 import com.yapp.ui.base.BaseViewModel
@@ -49,8 +48,8 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    private fun navigateToEditProfile() = intent {
-        emitSideEffect(SettingContract.SideEffect.Navigate(SettingDestination.EditProfile.route))
+    private fun navigateToEditProfile() {
+        emitSideEffect(SettingContract.SideEffect.NavigateToEditProfile)
     }
 
     private fun openWebView(url: String) {

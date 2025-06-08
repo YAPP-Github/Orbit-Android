@@ -10,5 +10,5 @@ android {
 }
 
 dependencies {
-    implementation(libs.gson)
+    implementation(libs.kotlinx.serialization.json)
 }

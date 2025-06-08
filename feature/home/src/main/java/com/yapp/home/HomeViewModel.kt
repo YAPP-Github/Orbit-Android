@@ -3,9 +3,6 @@ package com.yapp.home
 import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.yapp.alarm.AlarmHelper
-import com.yapp.common.navigation.destination.FortuneDestination
-import com.yapp.common.navigation.destination.HomeDestination
-import com.yapp.common.navigation.destination.SettingDestination
 import com.yapp.common.util.ResourceProvider
 import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.Alarm
@@ -103,7 +100,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun navigateToAlarmCreation() {
-        emitSideEffect(HomeContract.SideEffect.Navigate(HomeDestination.AlarmAddEdit.route))
+        emitSideEffect(HomeContract.SideEffect.NavigateToAddAlarm)
     }
 
     private fun toggleMultiSelectionMode() {
@@ -316,7 +313,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun editAlarm(alarmId: Long) {
-        emitSideEffect(HomeContract.SideEffect.Navigate("${HomeDestination.AlarmAddEdit.route}?id=$alarmId"))
+        emitSideEffect(HomeContract.SideEffect.NavigateToEditAlarm(alarmId))
     }
 
     private fun updateDeliveryTime(alarms: List<Alarm>) {
@@ -404,9 +401,7 @@ class HomeViewModel @Inject constructor(
                 processAction(HomeContract.Action.ShowNoDailyFortuneDialog)
             } else {
                 userPreferences.markFortuneAsChecked()
-                emitSideEffect(
-                    HomeContract.SideEffect.Navigate(FortuneDestination.Fortune.route),
-                )
+                emitSideEffect(HomeContract.SideEffect.NavigateToFortune)
             }
         }
     }
@@ -457,11 +452,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun navigateToSetting() {
-        emitSideEffect(
-            HomeContract.SideEffect.Navigate(
-                route = SettingDestination.Route.route,
-            ),
-        )
+        emitSideEffect(HomeContract.SideEffect.NavigateToSetting)
     }
 
     private fun showItemMenu(alarmId: Long, x: Float, y: Float) {

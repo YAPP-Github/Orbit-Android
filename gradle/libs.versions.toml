@@ -149,7 +149,6 @@ okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor",
 flexible-bottomsheet = { group = "com.github.skydoves", name = "flexible-bottomsheet-material3", version.ref = "flexible-bottomsheet" }
 #sentry-android = { group = "io.sentry", name = "sentry-android", version.ref = "sentry-android" }
 #sentry-compose = { group = "io.sentry", name = "sentry-compose", version.ref = "sentry-compose" }
-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 
 # Google Libraries
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
@@ -181,6 +180,8 @@ androidx-material-android = { group = "androidx.compose.material", name = "mater
 amplitude-analytics = { group = "com.amplitude", name = "analytics-android", version.ref = "amplitude" }
 
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAd" }
+
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 
 [plugins]
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

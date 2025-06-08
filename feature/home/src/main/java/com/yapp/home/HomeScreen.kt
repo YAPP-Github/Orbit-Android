@@ -123,13 +123,22 @@ fun HomeRoute(
     LaunchedEffect(sideEffect) {
         sideEffect.collectLatest { effect ->
             when (effect) {
-                is HomeContract.SideEffect.Navigate -> {
-                    navigator.navigateTo(
-                        route = effect.route,
-                        popUpTo = effect.popUpTo,
-                        inclusive = effect.inclusive,
-                    )
+                is HomeContract.SideEffect.NavigateToAddAlarm -> {
+                    navigator.navigateToAddAlarm()
                 }
+
+                is HomeContract.SideEffect.NavigateToEditAlarm -> {
+                    navigator.navigateToEditAlarm(effect.alarmId)
+                }
+
+                is HomeContract.SideEffect.NavigateToFortune -> {
+                    navigator.navigateToFortune()
+                }
+
+                is HomeContract.SideEffect.NavigateToSetting -> {
+                    navigator.navigateToSetting()
+                }
+
                 is HomeContract.SideEffect.ShowSnackBar -> {
                     val result = showCustomSnackBar(
                         scope = coroutineScope,

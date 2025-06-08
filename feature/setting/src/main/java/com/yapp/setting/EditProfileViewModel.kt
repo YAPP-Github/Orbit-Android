@@ -2,7 +2,6 @@ package com.yapp.setting
 
 import android.util.Log
 import androidx.lifecycle.viewModelScope
-import com.yapp.common.navigation.destination.SettingDestination
 import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.EditUser
 import com.yapp.domain.repository.UserInfoRepository
@@ -150,15 +149,7 @@ class EditProfileViewModel @Inject constructor(
 
         if (result.isSuccess) {
             userPreferences.saveUserName(state.name)
-            emitSideEffect(SettingContract.SideEffect.UserInfoUpdated)
-
-            emitSideEffect(
-                SettingContract.SideEffect.Navigate(
-                    route = SettingDestination.Setting.route,
-                    popUpTo = SettingDestination.Setting.route,
-                    inclusive = true,
-                ),
-            )
+            emitSideEffect(SettingContract.SideEffect.NavigateToSettingRoute)
         } else {
             Log.e("EditProfileViewModel", "사용자 정보 수정 실패")
         }
@@ -168,9 +159,9 @@ class EditProfileViewModel @Inject constructor(
         return formattedDate.replace(Regex("[^0-9-]"), "")
     }
 
-    private fun navigateToEditBirthday() = intent {
+    private fun navigateToEditBirthday() {
         updateState { copy(shouldFetchUserInfo = false) }
-        emitSideEffect(SettingContract.SideEffect.Navigate(SettingDestination.EditBirthday.route))
+        emitSideEffect(SettingContract.SideEffect.NavigateToEditBirthday)
     }
 
     private fun refreshUserInfo() {

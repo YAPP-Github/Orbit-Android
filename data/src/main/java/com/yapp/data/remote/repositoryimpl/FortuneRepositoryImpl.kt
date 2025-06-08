@@ -2,7 +2,7 @@ package com.yapp.data.remote.repositoryimpl
 
 import com.yapp.data.remote.datasource.FortuneDataSource
 import com.yapp.data.remote.dto.response.toDomain
-import com.yapp.domain.model.fortune.Fortune
+import com.yapp.domain.model.Fortune
 import com.yapp.domain.repository.FortuneRepository
 import javax.inject.Inject
 

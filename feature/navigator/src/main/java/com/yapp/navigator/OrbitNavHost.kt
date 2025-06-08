@@ -16,22 +16,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import com.yapp.common.navigation.OrbitNavigator
-import com.yapp.common.navigation.destination.SplashDestination
-import com.yapp.common.navigation.destination.TopLevelDestination
 import com.yapp.common.navigation.rememberOrbitNavigator
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.fortune.fortuneNavGraph
 import com.yapp.home.homeNavGraph
-import com.yapp.mission.missionNavGraph
+import com.yapp.mission.missionScreen
 import com.yapp.onboarding.onboardingNavGraph
 import com.yapp.setting.settingNavGraph
-import com.yapp.splash.SplashRoute
+import com.yapp.splash.splashScreen
 import com.yapp.ui.component.snackbar.CustomSnackBarVisuals
 import com.yapp.ui.component.snackbar.OrbitSnackBar
-import com.yapp.webview.webViewNavGraph
-import kotlinx.collections.immutable.toImmutableList
+import com.yapp.webview.webViewScreen
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -43,14 +39,6 @@ internal fun OrbitNavHost(
 
     Scaffold(
         modifier = modifier,
-        bottomBar = {
-            OrbitBottomNavigationBar(
-                visible = false,
-                currentTab = navigator.currentTab,
-                entries = TopLevelDestination.entries.toImmutableList(),
-                onClickItem = navigator::navigateToTopLevelDestination,
-            )
-        },
         snackbarHost = {
             OrbitSnackBarHost(snackBarHostState = snackBarHostState)
         },
@@ -61,24 +49,19 @@ internal fun OrbitNavHost(
             startDestination = navigator.startDestination,
             modifier = Modifier.navigationBarsPadding(),
         ) {
-            composable(SplashDestination.Route.route) {
-                SplashRoute(navigator)
-            }
-            onboardingNavGraph(
-                navigator = navigator,
-                onFinishOnboarding = { navigator.navigateToTopLevelDestination(TopLevelDestination.HOME) },
-            )
+            splashScreen(navigator = navigator)
+            onboardingNavGraph(navigator = navigator)
             homeNavGraph(
                 navigator = navigator,
                 snackBarHostState = snackBarHostState,
             )
-            missionNavGraph(navigator = navigator)
+            missionScreen(navigator = navigator)
             fortuneNavGraph(
                 navigator = navigator,
                 snackBarHostState = snackBarHostState,
             )
             settingNavGraph(navigator = navigator)
-            webViewNavGraph(navigator = navigator)
+            webViewScreen(navigator = navigator)
         }
     }
 }

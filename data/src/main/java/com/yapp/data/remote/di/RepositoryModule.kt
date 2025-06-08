@@ -1,11 +1,9 @@
 package com.yapp.data.remote.di
 
-import com.yapp.data.remote.repositoryimpl.DummyRepositoryImpl
 import com.yapp.data.remote.repositoryimpl.FortuneRepositoryImpl
 import com.yapp.data.remote.repositoryimpl.RemoteConfigRepositoryImpl
 import com.yapp.data.remote.repositoryimpl.SignUpRepositoryImpl
 import com.yapp.data.remote.repositoryimpl.UserInfoRepositoryImpl
-import com.yapp.domain.repository.DummyRepository
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.repository.RemoteConfigRepository
 import com.yapp.domain.repository.SignUpRepository
@@ -19,12 +17,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-    @Binds
-    @Singleton
-    abstract fun bindsDummyRepository(
-        dummyRepository: DummyRepositoryImpl,
-    ): DummyRepository
-
     @Binds
     @Singleton
     abstract fun bindsSignUpRepository(

@@ -1,6 +1,6 @@
 package com.yapp.domain.repository
 
-import com.yapp.domain.model.fortune.Fortune
+import com.yapp.domain.model.Fortune
 
 interface FortuneRepository {
     suspend fun postFortune(userId: Long): Result<Fortune>

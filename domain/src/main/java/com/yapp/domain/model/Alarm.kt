@@ -2,11 +2,13 @@ package com.yapp.domain.model
 
 import android.net.Uri
 import android.os.Parcelable
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 @Parcelize
+@Serializable
 data class Alarm(
     val id: Long = 0,
 
@@ -37,11 +39,11 @@ data class Alarm(
 
     companion object {
         fun fromJson(json: String): Alarm {
-            return Gson().fromJson(json, object : TypeToken<Alarm>() {}.type)
+            return Json.decodeFromString(json)
         }
     }
 
-    override fun toString(): String = Uri.encode(Gson().toJson(this))
+    override fun toString(): String = Uri.encode(Json.encodeToString(this))
 }
 
 fun Alarm.copyFrom(source: Alarm): Alarm {

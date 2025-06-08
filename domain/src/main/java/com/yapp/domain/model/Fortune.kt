@@ -1,4 +1,4 @@
-package com.yapp.domain.model.fortune
+package com.yapp.domain.model
 
 data class Fortune(
     val id: Long,

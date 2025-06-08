@@ -25,11 +25,9 @@ sealed class FortuneContract {
     }
 
     sealed class SideEffect : com.yapp.ui.base.SideEffect {
-        data class Navigate(
-            val route: String,
-            val popUpTo: String? = null,
-            val inclusive: Boolean = false,
-        ) : SideEffect()
+        data object NavigateToFortuneReward : SideEffect()
+
+        data object NavigateToHome : SideEffect()
 
         data object NavigateBack : SideEffect()
 

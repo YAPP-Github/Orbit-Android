@@ -88,13 +88,6 @@ fun AlarmAddEditRoute(
                 is AlarmAddEditContract.SideEffect.NavigateBack -> {
                     navigator.navigateBack()
                 }
-                is AlarmAddEditContract.SideEffect.Navigate -> {
-                    navigator.navigateTo(
-                        route = effect.route,
-                        popUpTo = effect.popUpTo,
-                        inclusive = effect.inclusive,
-                    )
-                }
                 is AlarmAddEditContract.SideEffect.SaveAlarm -> {
                     navigator.navController.previousBackStackEntry
                         ?.savedStateHandle

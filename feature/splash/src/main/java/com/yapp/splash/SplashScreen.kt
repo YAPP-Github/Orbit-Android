@@ -19,8 +19,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.navOptions
 import com.yapp.common.navigation.OrbitNavigator
-import com.yapp.common.navigation.destination.SplashDestination
+import com.yapp.common.navigation.route.SplashRoute
 import com.yapp.designsystem.theme.OrbitTheme
 import kotlinx.coroutines.flow.collectLatest
 
@@ -35,11 +36,23 @@ fun SplashRoute(
     LaunchedEffect(sideEffect) {
         sideEffect.collectLatest { effect ->
             when (effect) {
-                is SplashContract.SideEffect.Navigate -> {
-                    navigator.navigateTo(
-                        route = effect.route,
-                        popUpTo = SplashDestination.Route.route,
-                        inclusive = true,
+                is SplashContract.SideEffect.NavigateToOnboarding -> {
+                    navigator.navigateToOnboarding(
+                        navOptions = navOptions {
+                            popUpTo(SplashRoute) {
+                                inclusive = true
+                            }
+                        },
+                    )
+                }
+
+                is SplashContract.SideEffect.NavigateToHome -> {
+                    navigator.navigateToHome(
+                        navOptions = navOptions {
+                            popUpTo(SplashRoute) {
+                                inclusive = true
+                            }
+                        },
                     )
                 }
             }
