@@ -7,13 +7,13 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navOptions
 import androidx.navigation.navigation
-import com.google.gson.Gson
 import com.yapp.alarm.interaction.action.AlarmActionRoute
 import com.yapp.alarm.interaction.snooze.AlarmSnoozeTimerRoute
 import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.common.navigation.route.AlarmInteractionBaseRoute
 import com.yapp.common.navigation.route.AlarmInteractionDestination
 import com.yapp.domain.model.Alarm
+import kotlinx.serialization.json.Json
 import kotlin.reflect.typeOf
 
 val AlarmArgType = object : NavType<Alarm>(isNullableAllowed = false) {
@@ -26,7 +26,7 @@ val AlarmArgType = object : NavType<Alarm>(isNullableAllowed = false) {
     }
 
     override fun put(bundle: Bundle, key: String, value: Alarm) {
-        bundle.putString(key, Gson().toJson(value))
+        bundle.putString(key, Json.encodeToString(Alarm.serializer(), value))
     }
 }
 
