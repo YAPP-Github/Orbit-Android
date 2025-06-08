@@ -16,14 +16,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.core.util.Consumer
 import androidx.navigation.compose.NavHost
 import com.yapp.alarm.AlarmConstants
 import com.yapp.alarm.receivers.AlarmInteractionActivityReceiver
-import com.yapp.common.navigation.destination.AlarmInteractionDestination
 import com.yapp.common.navigation.rememberOrbitNavigator
+import com.yapp.common.navigation.route.AlarmInteractionBaseRoute
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.Alarm
 import dagger.hilt.android.AndroidEntryPoint
@@ -70,11 +69,12 @@ class AlarmInteractionActivity : ComponentActivity() {
             ) {
                 NavHost(
                     navController = navigator.navController,
-                    startDestination = AlarmInteractionDestination.Route.route,
+                    startDestination = AlarmInteractionBaseRoute,
                     modifier = Modifier.navigationBarsPadding(),
                 ) {
                     alarmInteractionNavGraph(
                         navigator = navigator,
+                        alarm = alarm,
                     )
                 }
             }
@@ -89,7 +89,7 @@ class AlarmInteractionActivity : ComponentActivity() {
                     }
                     Log.d("AlarmInteractionActivity", "New Intent: $newIntent")
                     newAlarm?.let { alarm ->
-                        navigator.navController.navigate("${AlarmInteractionDestination.AlarmAction.route}/$alarm")
+                        navigator.navigateToAlarmAction(alarm = alarm)
                     }
                 }
 
@@ -97,13 +97,6 @@ class AlarmInteractionActivity : ComponentActivity() {
 
                 onDispose {
                     this@AlarmInteractionActivity.removeOnNewIntentListener(onNewIntentConsumer)
-                }
-            }
-
-            LaunchedEffect(Unit) {
-                val route = "${AlarmInteractionDestination.AlarmAction.route}/$alarm"
-                navigator.navController.navigate(route) {
-                    popUpTo(AlarmInteractionDestination.Route.route) { inclusive = true }
                 }
             }
         }

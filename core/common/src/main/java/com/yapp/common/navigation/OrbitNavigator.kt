@@ -1,63 +1,88 @@
 package com.yapp.common.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.NavOptions
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navOptions
-import com.yapp.common.navigation.destination.HomeDestination
-import com.yapp.common.navigation.destination.SplashDestination
-import com.yapp.common.navigation.destination.TopLevelDestination
+import com.yapp.common.navigation.route.AlarmInteractionDestination
+import com.yapp.common.navigation.route.FortuneBaseRoute
+import com.yapp.common.navigation.route.FortuneDestination
+import com.yapp.common.navigation.route.HomeBaseRoute
+import com.yapp.common.navigation.route.HomeDestination
+import com.yapp.common.navigation.route.OnboardingBaseRoute
+import com.yapp.common.navigation.route.OnboardingDestination
+import com.yapp.common.navigation.route.SettingBaseRoute
+import com.yapp.common.navigation.route.SettingDestination
+import com.yapp.common.navigation.route.SplashRoute
+import com.yapp.common.navigation.route.WebViewRoute
+import com.yapp.domain.model.Alarm
 
 class OrbitNavigator(
     val navController: NavHostController,
 ) {
-    val startDestination = SplashDestination.Route.route
+    val startDestination = SplashRoute
 
-    private val currentDestination: NavDestination?
-        @Composable get() = navController
-            .currentBackStackEntryAsState().value?.destination
+    fun navigateToOnboarding(navOptions: NavOptions? = null) {
+        navController.navigate(OnboardingBaseRoute, navOptions)
+    }
 
-    val currentTab: TopLevelDestination?
-        @Composable get() = currentDestination
-            ?.route
-            ?.let(TopLevelDestination.Companion::find)
-
-    fun navigateTo(route: String, popUpTo: String? = null, inclusive: Boolean = false) {
-        navController.navigate(route) {
-            popUpTo?.let {
-                popUpTo(it) { this.inclusive = inclusive }
-            }
-            launchSingleTop = true
-            restoreState = true
+    fun navigateToOnboardingNextStep(currentStep: Int, navOptions: NavOptions? = null) {
+        val instance = OnboardingDestination.getNextRouteForStep(currentStep)?.objectInstance
+        if (instance != null) {
+            navController.navigate(instance, navOptions)
+        } else {
+            Log.e("Navigator", "Invalid route at step: $currentStep")
         }
+    }
+
+    fun navigateToAddAlarm(navOptions: NavOptions? = null) {
+        navController.navigate(HomeDestination.AlarmAddEdit(-1), navOptions)
+    }
+
+    fun navigateToEditAlarm(alarmId: Long, navOptions: NavOptions? = null) {
+        navController.navigate(HomeDestination.AlarmAddEdit(alarmId), navOptions)
+    }
+
+    fun navigateToHome(navOptions: NavOptions? = null) {
+        navController.navigate(HomeBaseRoute, navOptions)
+    }
+
+    fun navigateToAlarmAction(alarm: Alarm, navOptions: NavOptions? = null) {
+        navController.navigate(AlarmInteractionDestination.AlarmAction(alarm), navOptions)
+    }
+
+    fun navigateToAlarmSnoozeTimer(alarm: Alarm, navOptions: NavOptions? = null) {
+        navController.navigate(AlarmInteractionDestination.AlarmSnoozeTimer(alarm), navOptions)
+    }
+
+    fun navigateToFortune(navOptions: NavOptions? = null) {
+        navController.navigate(FortuneBaseRoute, navOptions)
+    }
+
+    fun navigateToFortuneReward(navOptions: NavOptions? = null) {
+        navController.navigate(FortuneDestination.Reward, navOptions)
+    }
+
+    fun navigateToSetting(navOptions: NavOptions? = null) {
+        navController.navigate(SettingBaseRoute, navOptions)
+    }
+
+    fun navigateToEditProfile(navOptions: NavOptions? = null) {
+        navController.navigate(SettingDestination.EditProfile, navOptions)
+    }
+
+    fun navigateToEditBirthDay(navOptions: NavOptions? = null) {
+        navController.navigate(SettingDestination.EditBirthday, navOptions)
+    }
+
+    fun navigateToWebView(url: String, navOptions: NavOptions? = null) {
+        navController.navigate(WebViewRoute(url), navOptions)
     }
 
     fun navigateBack() {
         navController.popBackStack()
-    }
-
-    fun navigateToTopLevelDestination(tab: TopLevelDestination) {
-        val navOptions = navOptions {
-            popUpTo(Routes.Home.ROUTE) {
-                saveState = true
-            }
-            launchSingleTop = true
-            restoreState = true
-        }
-
-        when (tab) {
-            TopLevelDestination.HOME -> navController.navigate(Routes.Home.ROUTE, navOptions)
-            TopLevelDestination.MYPAGE -> navController.navigate(Routes.MyPage.ROUTE, navOptions)
-        }
-    }
-
-    @Composable
-    fun shouldHaveNavigationBarsPadding(): Boolean {
-        val currentRoute = currentDestination?.route ?: return false
-        return currentRoute !in HomeDestination.Home.route
     }
 }
 

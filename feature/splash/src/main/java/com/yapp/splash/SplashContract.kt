@@ -9,6 +9,8 @@ sealed class SplashContract {
     ) : UiState
 
     sealed class SideEffect : com.yapp.ui.base.SideEffect {
-        data class Navigate(val route: String) : SideEffect()
+        data object NavigateToHome : SideEffect()
+
+        data object NavigateToOnboarding : SideEffect()
     }
 }

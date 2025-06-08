@@ -57,17 +57,7 @@ internal fun AlarmSnoozeTimerRoute(
     val sideEffect = viewModel.container.sideEffectFlow
 
     LaunchedEffect(sideEffect) {
-        sideEffect.collect { action ->
-            when (action) {
-                is AlarmSnoozeTimerContract.SideEffect.Navigate -> {
-                    navigator.navigateTo(
-                        route = action.route,
-                        popUpTo = action.popUpTo,
-                        inclusive = action.inclusive,
-                    )
-                }
-            }
-        }
+        sideEffect.collect { }
     }
 
     AlarmSnoozeTimerScreen(

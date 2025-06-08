@@ -3,6 +3,7 @@ package com.yapp.home
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yapp.domain.model.Alarm
+import com.yapp.ui.base.SideEffect
 import com.yapp.ui.base.UiState
 
 sealed class HomeContract {
@@ -72,11 +73,13 @@ sealed class HomeContract {
     }
 
     sealed class SideEffect : com.yapp.ui.base.SideEffect {
-        data class Navigate(
-            val route: String,
-            val popUpTo: String? = null,
-            val inclusive: Boolean = false,
-        ) : SideEffect()
+        data object NavigateToAddAlarm : SideEffect()
+
+        data class NavigateToEditAlarm(val alarmId: Long) : SideEffect()
+
+        data object NavigateToFortune : SideEffect()
+
+        data object NavigateToSetting : SideEffect()
 
         data class ShowSnackBar(
             val message: String,

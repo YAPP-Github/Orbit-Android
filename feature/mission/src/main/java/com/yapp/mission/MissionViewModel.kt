@@ -7,9 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
-import com.yapp.common.navigation.destination.FortuneDestination
-import com.yapp.common.navigation.destination.HomeDestination
-import com.yapp.common.navigation.destination.MissionDestination
 import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
@@ -131,13 +128,7 @@ class MissionViewModel @Inject constructor(
                 userPreferences.saveFortuneId(data.id)
                 userPreferences.saveFortuneScore(data.avgFortuneScore)
 
-                emitSideEffect(
-                    MissionContract.SideEffect.Navigate(
-                        route = FortuneDestination.Route.route,
-                        popUpTo = MissionDestination.Route.route,
-                        inclusive = true,
-                    ),
-                )
+                emitSideEffect(MissionContract.SideEffect.NavigateToFortune)
             }.onFailure { error ->
                 Log.e("MissionViewModel", "운세 데이터 요청 실패: ${error.message}")
                 updateState { copy(errorMessage = error.message) }
@@ -159,13 +150,7 @@ class MissionViewModel @Inject constructor(
                 userPreferences.saveFortuneId(data.id)
                 userPreferences.saveFortuneScore(data.avgFortuneScore)
 
-                emitSideEffect(
-                    MissionContract.SideEffect.Navigate(
-                        route = FortuneDestination.Route.route,
-                        popUpTo = MissionDestination.Route.route,
-                        inclusive = true,
-                    ),
-                )
+                emitSideEffect(MissionContract.SideEffect.NavigateToFortune)
             }.onFailure {
                 Log.e("MissionViewModel", "운세 재요청 실패: ${it.message}")
                 navigateToHome()
@@ -195,13 +180,7 @@ class MissionViewModel @Inject constructor(
     }
 
     private fun navigateToHome() {
-        emitSideEffect(
-            MissionContract.SideEffect.Navigate(
-                route = HomeDestination.Route.route,
-                popUpTo = MissionDestination.Route.route,
-                inclusive = true,
-            ),
-        )
+        emitSideEffect(MissionContract.SideEffect.NavigateToFortune)
     }
 
     private fun sendAlarmDismissIntent(id: Long) {

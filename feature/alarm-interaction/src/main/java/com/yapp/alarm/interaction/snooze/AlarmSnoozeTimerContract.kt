@@ -16,11 +16,5 @@ class AlarmSnoozeTimerContract {
         data object Dismiss : Action()
     }
 
-    sealed class SideEffect : com.yapp.ui.base.SideEffect {
-        data class Navigate(
-            val route: String,
-            val popUpTo: String? = null,
-            val inclusive: Boolean = false,
-        ) : SideEffect()
-    }
+    sealed class SideEffect : com.yapp.ui.base.SideEffect
 }

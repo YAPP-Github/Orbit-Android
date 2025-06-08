@@ -5,7 +5,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmSnoozeIntent
-import com.yapp.common.navigation.Routes
 import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.Alarm
 import com.yapp.ui.base.BaseViewModel
@@ -15,7 +14,10 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -57,9 +59,9 @@ class AlarmActionViewModel @Inject constructor(
     private fun startClock() {
         viewModelScope.launch {
             while (isActive) {
-                val now = java.time.LocalTime.now()
-                val today = java.time.LocalDate.now()
-                val dayOfWeek = today.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.KOREAN)
+                val now = LocalTime.now()
+                val today = LocalDate.now()
+                val dayOfWeek = today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.KOREAN)
 
                 updateState {
                     copy(
@@ -94,13 +96,9 @@ class AlarmActionViewModel @Inject constructor(
                 },
             )
         }
-        emitSideEffect(
-            AlarmActionContract.SideEffect.Navigate(
-                route = "${Routes.AlarmInteraction.ALARM_SNOOZE_TIMER}/$alarm",
-                popUpTo = Routes.AlarmInteraction.ALARM_ACTION,
-                inclusive = true,
-            ),
-        )
+        alarm?.let {
+            emitSideEffect(AlarmActionContract.SideEffect.NavigateToAlarmSnooze(it))
+        }
     }
 
     private fun dismiss() {
