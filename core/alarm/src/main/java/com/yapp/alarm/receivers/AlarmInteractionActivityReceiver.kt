@@ -6,7 +6,7 @@ import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.core.net.toUri
 import com.yapp.alarm.AlarmConstants
-import com.yapp.datastore.UserPreferences
+import com.yapp.domain.repository.UserDataRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +20,7 @@ import javax.inject.Inject
 class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) : BroadcastReceiver() {
 
     @Inject
-    lateinit var userPreferences: UserPreferences
+    lateinit var userDataRepository: UserDataRepository
 
     override fun onReceive(context: Context?, intent: Intent?) {
         val isSnoozed = intent?.getBooleanExtra(AlarmConstants.EXTRA_IS_SNOOZED, false) ?: false
@@ -30,7 +30,7 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
 
             if (!isSnoozed) {
                 CoroutineScope(Dispatchers.IO).launch {
-                    val fortuneDate = userPreferences.fortuneDateFlow.firstOrNull()
+                    val fortuneDate = userDataRepository.fortuneDateFlow.firstOrNull()
                     val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
 
                     if (fortuneDate != todayDate) {

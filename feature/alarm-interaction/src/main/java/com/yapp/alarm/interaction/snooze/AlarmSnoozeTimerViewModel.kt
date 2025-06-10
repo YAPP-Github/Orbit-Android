@@ -4,8 +4,8 @@ import android.app.Application
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
-import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.Alarm
+import com.yapp.domain.repository.UserDataRepository
 import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -23,7 +23,7 @@ import kotlin.math.max
 class AlarmSnoozeTimerViewModel @Inject constructor(
     private val app: Application,
     savedStateHandle: SavedStateHandle,
-    private val userPreferences: UserPreferences,
+    private val userDataRepository: UserDataRepository,
 ) : BaseViewModel<AlarmSnoozeTimerContract.State, AlarmSnoozeTimerContract.SideEffect>(
     AlarmSnoozeTimerContract.State(),
 ) {
@@ -37,7 +37,7 @@ class AlarmSnoozeTimerViewModel @Inject constructor(
 
     private fun fetchIsFirstMission() {
         viewModelScope.launch {
-            val fortuneDate = userPreferences.fortuneDateFlow.firstOrNull()
+            val fortuneDate = userDataRepository.fortuneDateFlow.firstOrNull()
             val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
             val isFirstMission = fortuneDate != todayDate
 

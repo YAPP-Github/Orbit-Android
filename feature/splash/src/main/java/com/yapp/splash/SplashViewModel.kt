@@ -1,7 +1,7 @@
 package com.yapp.splash
 
 import androidx.lifecycle.viewModelScope
-import com.yapp.datastore.UserPreferences
+import com.yapp.domain.repository.UserDataRepository
 import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-    private val userPreferences: UserPreferences,
+    private val userDataRepository: UserDataRepository,
 ) : BaseViewModel<SplashContract.State, SplashContract.SideEffect>(
     initialState = SplashContract.State(),
 ) {
@@ -33,8 +33,8 @@ class SplashViewModel @Inject constructor(
     private fun checkUserState() {
         viewModelScope.launch {
             combine(
-                userPreferences.userIdFlow,
-                userPreferences.onboardingCompletedFlow,
+                userDataRepository.userIdFlow,
+                userDataRepository.onboardingCompletedFlow,
             ) { userId, onboardingCompleted ->
                 Pair(userId, onboardingCompleted)
             }.collect { (userId, onboardingCompleted) ->

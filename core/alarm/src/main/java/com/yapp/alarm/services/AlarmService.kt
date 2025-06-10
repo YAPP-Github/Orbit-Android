@@ -23,9 +23,9 @@ import com.yapp.alarm.pendingIntent.interaction.createAlarmAlertPendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissPendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmSnoozePendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createNavigateToMissionPendingIntent
-import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
+import com.yapp.domain.repository.UserDataRepository
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.media.sound.SoundPlayer
 import dagger.hilt.android.AndroidEntryPoint
@@ -54,7 +54,7 @@ class AlarmService : Service() {
     lateinit var alarmHelper: AlarmHelper
 
     @Inject
-    lateinit var userPreferences: UserPreferences
+    lateinit var userDataRepository: UserDataRepository
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -126,7 +126,7 @@ class AlarmService : Service() {
     }
 
     private suspend fun shouldNavigateToMission(): Boolean {
-        val fortuneDate = userPreferences.fortuneDateFlow.firstOrNull()
+        val fortuneDate = userDataRepository.fortuneDateFlow.firstOrNull()
         val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
         return fortuneDate != todayDate
     }

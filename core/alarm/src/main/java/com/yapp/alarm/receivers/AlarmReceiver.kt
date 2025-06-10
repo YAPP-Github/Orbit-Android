@@ -11,9 +11,9 @@ import com.yapp.alarm.AlarmHelper
 import com.yapp.alarm.services.AlarmService
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
-import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.toTimeString
+import com.yapp.domain.repository.UserDataRepository
 import com.yapp.domain.usecase.AlarmUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +34,7 @@ class AlarmReceiver : BroadcastReceiver() {
     lateinit var alarmHelper: AlarmHelper
 
     @Inject
-    lateinit var userPreferences: UserPreferences
+    lateinit var userDataRepository: UserDataRepository
 
     @Inject
     lateinit var alarmUseCase: AlarmUseCase
@@ -107,13 +107,13 @@ class AlarmReceiver : BroadcastReceiver() {
                                 ),
                             ),
                         )
-                        val existingId = userPreferences.firstDismissedAlarmIdFlow.firstOrNull()
+                        val existingId = userDataRepository.firstDismissedAlarmIdFlow.firstOrNull()
                         if (existingId == null) {
                             // 첫 번째 알람 해제 기록
-                            userPreferences.saveFirstDismissedAlarmId(alarmId)
+                            userDataRepository.saveFirstDismissedAlarmId(alarmId)
                         } else if (existingId != alarmId) {
                             // 두 번째 알람 해제 감지 - 기존 기록 삭제
-                            userPreferences.clearDismissedAlarmId()
+                            userDataRepository.clearDismissedAlarmId()
                         }
                     }
 

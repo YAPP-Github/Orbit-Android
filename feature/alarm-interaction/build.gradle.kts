@@ -15,7 +15,6 @@ dependencies {
     implementation(projects.core.alarm)
     implementation(projects.core.media)
     implementation(projects.domain)
-    implementation(projects.core.datastore)
     implementation(libs.orbit.core)
     implementation(libs.orbit.compose)
     implementation(libs.orbit.viewmodel)

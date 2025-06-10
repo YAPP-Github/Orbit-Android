@@ -2,7 +2,7 @@ package com.yapp.setting
 
 import android.util.Log
 import androidx.lifecycle.viewModelScope
-import com.yapp.datastore.UserPreferences
+import com.yapp.domain.repository.UserDataRepository
 import com.yapp.domain.repository.UserInfoRepository
 import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +14,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val userInfoRepository: UserInfoRepository,
-    private val userPreferences: UserPreferences,
+    private val userDataRepository: UserDataRepository,
 ) : BaseViewModel<SettingContract.State, SettingContract.SideEffect>(
     SettingContract.State(),
 ) {
@@ -58,7 +58,7 @@ class SettingViewModel @Inject constructor(
 
     private fun refreshUserInfo() {
         viewModelScope.launch {
-            val userId = userPreferences.userIdFlow.firstOrNull()
+            val userId = userDataRepository.userIdFlow.firstOrNull()
             if (userId != null) {
                 fetchUserInfo(userId)
             }
