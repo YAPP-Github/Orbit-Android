@@ -18,7 +18,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import com.yapp.alarm.AlarmConstants
-import com.yapp.alarm.AlarmHelper
+import com.yapp.alarm.AndroidAlarmScheduler
 import com.yapp.alarm.pendingIntent.interaction.createAlarmAlertPendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissPendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmSnoozePendingIntent
@@ -51,7 +51,7 @@ class AlarmService : Service() {
     private lateinit var vibrator: Vibrator
 
     @Inject
-    lateinit var alarmHelper: AlarmHelper
+    lateinit var androidAlarmScheduler: AndroidAlarmScheduler
 
     @Inject
     lateinit var userDataRepository: UserDataRepository
@@ -103,7 +103,7 @@ class AlarmService : Service() {
         // 반복 요일 알람 시, 다음 주 동일 요일 알람 예약
         if (!isOneTimeAlarm) {
             intent.getStringExtra(AlarmConstants.EXTRA_ALARM_DAY)?.let {
-                alarmHelper.scheduleWeeklyAlarm(alarm, AlarmDay.valueOf(it))
+                androidAlarmScheduler.scheduleWeeklyAlarm(alarm, AlarmDay.valueOf(it))
             }
         }
 

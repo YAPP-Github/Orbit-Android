@@ -2,12 +2,12 @@ package com.yapp.home
 
 import android.util.Log
 import androidx.lifecycle.viewModelScope
-import com.yapp.alarm.AlarmHelper
 import com.yapp.common.util.ResourceProvider
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.toAlarmDays
 import com.yapp.domain.model.toDayOfWeek
 import com.yapp.domain.repository.UserDataRepository
+import com.yapp.domain.scheduler.AlarmScheduler
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,7 +25,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val alarmUseCase: AlarmUseCase,
     private val resourceProvider: ResourceProvider,
-    private val alarmHelper: AlarmHelper,
+    private val alarmScheduler: AlarmScheduler,
     private val userDataRepository: UserDataRepository,
 ) : BaseViewModel<HomeContract.State, HomeContract.SideEffect>(
     initialState = HomeContract.State(),
@@ -175,9 +175,9 @@ class HomeViewModel @Inject constructor(
                 }
 
                 if (updatedAlarm.isAlarmActive) {
-                    alarmHelper.scheduleAlarm(updatedAlarm)
+                    alarmScheduler.scheduleAlarm(updatedAlarm)
                 } else {
-                    alarmHelper.unScheduleAlarm(updatedAlarm)
+                    alarmScheduler.unScheduleAlarm(updatedAlarm)
                 }
             }.onFailure { error ->
                 Log.e("HomeViewModel", "Failed to update alarm state", error)
@@ -239,9 +239,9 @@ class HomeViewModel @Inject constructor(
                 }
 
                 if (updatedAlarm.isAlarmActive) {
-                    alarmHelper.scheduleAlarm(updatedAlarm)
+                    alarmScheduler.scheduleAlarm(updatedAlarm)
                 } else {
-                    alarmHelper.unScheduleAlarm(updatedAlarm)
+                    alarmScheduler.unScheduleAlarm(updatedAlarm)
                 }
             }.onFailure { error ->
                 Log.e("HomeViewModel", "Failed to rollback alarm state", error)
@@ -262,7 +262,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             alarmsToDelete.forEach { alarm ->
                 alarmUseCase.deleteAlarm(alarm.id)
-                alarmHelper.unScheduleAlarm(alarm)
+                alarmScheduler.unScheduleAlarm(alarm)
             }
         }
 
@@ -287,7 +287,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             alarmsWithIndex.forEach { alarm ->
                 alarmUseCase.insertAlarm(alarm)
-                alarmHelper.scheduleAlarm(alarm)
+                alarmScheduler.scheduleAlarm(alarm)
             }
         }
     }

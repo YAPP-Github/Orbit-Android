@@ -7,7 +7,7 @@ import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import com.yapp.alarm.AlarmConstants
-import com.yapp.alarm.AlarmHelper
+import com.yapp.alarm.AndroidAlarmScheduler
 import com.yapp.alarm.services.AlarmService
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
@@ -31,7 +31,7 @@ class AlarmReceiver : BroadcastReceiver() {
     lateinit var analyticsHelper: AnalyticsHelper
 
     @Inject
-    lateinit var alarmHelper: AlarmHelper
+    lateinit var androidAlarmScheduler: AndroidAlarmScheduler
 
     @Inject
     lateinit var userDataRepository: UserDataRepository
@@ -117,11 +117,11 @@ class AlarmReceiver : BroadcastReceiver() {
                         }
                     }
 
-                    alarmHelper.cancelSnoozedAlarm(alarmId)
+                    androidAlarmScheduler.cancelSnoozedAlarm(alarmId)
                 } else {
                     Log.e("AlarmReceiver", "알람 ID 수신 실패")
                 }
-                alarmHelper.cancelSnoozedAlarm(alarmId)
+                androidAlarmScheduler.cancelSnoozedAlarm(alarmId)
                 context.stopService(alarmServiceIntent)
                 sendBroadCastToCloseAlarmInteractionActivity(context)
 
@@ -167,7 +167,7 @@ class AlarmReceiver : BroadcastReceiver() {
         )
 
         context.stopService(Intent(context, AlarmService::class.java))
-        alarmHelper.scheduleAlarm(updatedAlarm)
+        androidAlarmScheduler.scheduleAlarm(updatedAlarm)
     }
 
     private fun sendBroadCastToCloseAlarmInteractionActivity(context: Context) {

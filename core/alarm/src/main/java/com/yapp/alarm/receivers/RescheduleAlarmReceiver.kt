@@ -3,7 +3,7 @@ package com.yapp.alarm.receivers
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.yapp.alarm.AlarmHelper
+import com.yapp.alarm.AndroidAlarmScheduler
 import com.yapp.domain.usecase.AlarmUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +18,7 @@ class RescheduleAlarmReceiver : BroadcastReceiver() {
     lateinit var alarmUseCase: AlarmUseCase
 
     @Inject
-    lateinit var alarmHelper: AlarmHelper
+    lateinit var androidAlarmScheduler: AndroidAlarmScheduler
 
     override fun onReceive(context: Context?, intent: Intent?) {
         context ?: return
@@ -33,7 +33,7 @@ class RescheduleAlarmReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             alarmUseCase.getAllAlarms().collect { alarms ->
                 alarms.forEach { alarm ->
-                    alarmHelper.scheduleAlarm(alarm)
+                    androidAlarmScheduler.scheduleAlarm(alarm)
                 }
             }
         }

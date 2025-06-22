@@ -9,17 +9,18 @@ import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
 import com.yapp.domain.model.toAlarmDays
 import com.yapp.domain.model.toDayOfWeek
+import com.yapp.domain.scheduler.AlarmScheduler
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
-class AlarmHelper @Inject constructor(
+class AndroidAlarmScheduler @Inject constructor(
     private val app: Application,
     private val alarmManager: AlarmManager,
-) {
-    fun scheduleAlarm(alarm: Alarm) {
+) : AlarmScheduler {
+    override fun scheduleAlarm(alarm: Alarm) {
         val selectedDays = alarm.repeatDays.toAlarmDays()
 
         if (selectedDays.isEmpty()) {
@@ -46,7 +47,7 @@ class AlarmHelper @Inject constructor(
         Log.d("AlarmHelper", "Scheduled weekly alarm for $day at: $triggerMillis")
     }
 
-    fun unScheduleAlarm(alarm: Alarm) {
+    override fun unScheduleAlarm(alarm: Alarm) {
         val selectedDays = alarm.repeatDays.toAlarmDays()
 
         if (selectedDays.isEmpty()) {
