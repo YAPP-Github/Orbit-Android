@@ -12,7 +12,6 @@ android {
 
 dependencies {
     implementation(projects.core.common)
-    implementation(projects.core.datastore)
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp.logging)
     implementation(libs.retrofit.core)
