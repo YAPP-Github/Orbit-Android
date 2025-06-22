@@ -1,4 +1,4 @@
-package com.yapp.navigator
+package com.yapp.orbit
 
 import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
