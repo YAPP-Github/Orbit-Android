@@ -2,7 +2,6 @@ package com.yapp.setting
 
 import android.util.Log
 import androidx.lifecycle.viewModelScope
-import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.EditUser
 import com.yapp.domain.repository.UserInfoRepository
 import com.yapp.ui.base.BaseViewModel
@@ -15,7 +14,6 @@ import javax.inject.Inject
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
     private val userInfoRepository: UserInfoRepository,
-    private val userPreferences: UserPreferences,
 ) : BaseViewModel<SettingContract.State, SettingContract.SideEffect>(
     SettingContract.State(),
 ) {
@@ -134,7 +132,7 @@ class EditProfileViewModel @Inject constructor(
     }
 
     private fun submitUserInfo() = viewModelScope.launch {
-        val userId = userPreferences.userIdFlow.firstOrNull() ?: return@launch
+        val userId = userInfoRepository.userIdFlow.firstOrNull() ?: return@launch
         val state = container.stateFlow.value
 
         val updatedUser = EditUser(
@@ -148,7 +146,7 @@ class EditProfileViewModel @Inject constructor(
         val result = userInfoRepository.updateUserInfo(userId, updatedUser)
 
         if (result.isSuccess) {
-            userPreferences.saveUserName(state.name)
+            userInfoRepository.saveUserName(state.name)
             emitSideEffect(SettingContract.SideEffect.NavigateToSettingRoute)
         } else {
             Log.e("EditProfileViewModel", "사용자 정보 수정 실패")
@@ -166,7 +164,7 @@ class EditProfileViewModel @Inject constructor(
 
     private fun refreshUserInfo() {
         viewModelScope.launch {
-            val userId = userPreferences.userIdFlow.firstOrNull()
+            val userId = userInfoRepository.userIdFlow.firstOrNull()
             if (userId != null) {
                 fetchUserInfo(userId)
             }

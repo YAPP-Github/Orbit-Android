@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.yapp.alarm.AlarmHelper
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
 import com.yapp.common.util.ResourceProvider
@@ -15,6 +14,7 @@ import com.yapp.domain.model.copyFrom
 import com.yapp.domain.model.toAlarmDayNames
 import com.yapp.domain.model.toAlarmDays
 import com.yapp.domain.model.toDayOfWeek
+import com.yapp.domain.scheduler.AlarmScheduler
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.media.haptic.HapticFeedbackManager
 import com.yapp.media.haptic.HapticType
@@ -32,7 +32,7 @@ class AlarmAddEditViewModel @Inject constructor(
     private val alarmUseCase: AlarmUseCase,
     private val resourceProvider: ResourceProvider,
     private val hapticFeedbackManager: HapticFeedbackManager,
-    private val alarmHelper: AlarmHelper,
+    private val alarmScheduler: AlarmScheduler,
     savedStateHandle: SavedStateHandle,
 ) : BaseViewModel<AlarmAddEditContract.State, AlarmAddEditContract.SideEffect>(
     initialState = AlarmAddEditContract.State(),
@@ -209,12 +209,12 @@ class AlarmAddEditViewModel @Inject constructor(
         val updatedAlarm = alarm.copy(id = alarmId)
 
         alarmUseCase.getAlarm(alarmId).onSuccess { oldAlarm ->
-            alarmHelper.unScheduleAlarm(oldAlarm)
+            alarmScheduler.unScheduleAlarm(oldAlarm)
         }
 
         alarmUseCase.updateAlarm(updatedAlarm)
             .onSuccess {
-                alarmHelper.scheduleAlarm(updatedAlarm)
+                alarmScheduler.scheduleAlarm(updatedAlarm)
                 emitSideEffect(AlarmAddEditContract.SideEffect.UpdateAlarm(it.id))
             }
             .onFailure {
@@ -268,7 +268,7 @@ class AlarmAddEditViewModel @Inject constructor(
                         ),
                     ),
                 )
-                alarmHelper.scheduleAlarm(it)
+                alarmScheduler.scheduleAlarm(it)
                 emitSideEffect(AlarmAddEditContract.SideEffect.SaveAlarm(it.id))
             }
             .onFailure {

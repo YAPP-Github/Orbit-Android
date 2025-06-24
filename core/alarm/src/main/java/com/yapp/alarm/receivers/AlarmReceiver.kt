@@ -7,13 +7,13 @@ import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import com.yapp.alarm.AlarmConstants
-import com.yapp.alarm.AlarmHelper
+import com.yapp.alarm.AndroidAlarmScheduler
 import com.yapp.alarm.services.AlarmService
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
-import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.toTimeString
+import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.usecase.AlarmUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -31,10 +31,10 @@ class AlarmReceiver : BroadcastReceiver() {
     lateinit var analyticsHelper: AnalyticsHelper
 
     @Inject
-    lateinit var alarmHelper: AlarmHelper
+    lateinit var androidAlarmScheduler: AndroidAlarmScheduler
 
     @Inject
-    lateinit var userPreferences: UserPreferences
+    lateinit var fortuneRepository: FortuneRepository
 
     @Inject
     lateinit var alarmUseCase: AlarmUseCase
@@ -107,21 +107,21 @@ class AlarmReceiver : BroadcastReceiver() {
                                 ),
                             ),
                         )
-                        val existingId = userPreferences.firstDismissedAlarmIdFlow.firstOrNull()
+                        val existingId = fortuneRepository.firstDismissedAlarmIdFlow.firstOrNull()
                         if (existingId == null) {
                             // 첫 번째 알람 해제 기록
-                            userPreferences.saveFirstDismissedAlarmId(alarmId)
+                            fortuneRepository.saveFirstDismissedAlarmId(alarmId)
                         } else if (existingId != alarmId) {
                             // 두 번째 알람 해제 감지 - 기존 기록 삭제
-                            userPreferences.clearDismissedAlarmId()
+                            fortuneRepository.clearDismissedAlarmId()
                         }
                     }
 
-                    alarmHelper.cancelSnoozedAlarm(alarmId)
+                    androidAlarmScheduler.cancelSnoozedAlarm(alarmId)
                 } else {
                     Log.e("AlarmReceiver", "알람 ID 수신 실패")
                 }
-                alarmHelper.cancelSnoozedAlarm(alarmId)
+                androidAlarmScheduler.cancelSnoozedAlarm(alarmId)
                 context.stopService(alarmServiceIntent)
                 sendBroadCastToCloseAlarmInteractionActivity(context)
 
@@ -167,7 +167,7 @@ class AlarmReceiver : BroadcastReceiver() {
         )
 
         context.stopService(Intent(context, AlarmService::class.java))
-        alarmHelper.scheduleAlarm(updatedAlarm)
+        androidAlarmScheduler.scheduleAlarm(updatedAlarm)
     }
 
     private fun sendBroadCastToCloseAlarmInteractionActivity(context: Context) {

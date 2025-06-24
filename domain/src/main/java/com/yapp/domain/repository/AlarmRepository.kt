@@ -6,6 +6,8 @@ import com.yapp.domain.model.AlarmSound
 import kotlinx.coroutines.flow.Flow
 
 interface AlarmRepository {
+    val firstDismissedAlarmIdFlow: Flow<Long?>
+
     suspend fun getAlarmSounds(): Result<List<AlarmSound>>
     fun initializeSoundPlayer(uri: Uri)
     fun playAlarmSound(volume: Int)
@@ -21,4 +23,6 @@ interface AlarmRepository {
     suspend fun updateAlarmActive(id: Long, active: Boolean): Result<Alarm>
     suspend fun getAlarm(id: Long): Result<Alarm>
     suspend fun deleteAlarm(id: Long): Result<Unit>
+    suspend fun saveFirstDismissedAlarmId(alarmId: Long)
+    suspend fun clearDismissedAlarmId()
 }

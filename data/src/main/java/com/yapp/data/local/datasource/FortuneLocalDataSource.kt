@@ -1,9 +1,8 @@
-package com.yapp.domain.repository
+package com.yapp.data.local.datasource
 
-import com.yapp.domain.model.Fortune
 import kotlinx.coroutines.flow.Flow
 
-interface FortuneRepository {
+interface FortuneLocalDataSource {
     val fortuneIdFlow: Flow<Long?>
     val fortuneDateFlow: Flow<String?>
     val fortuneImageIdFlow: Flow<Int?>
@@ -18,6 +17,4 @@ interface FortuneRepository {
     suspend fun saveFirstDismissedAlarmId(alarmId: Long)
     suspend fun clearDismissedAlarmId()
     suspend fun clearFortuneId()
-    suspend fun postFortune(userId: Long): Result<Fortune>
-    suspend fun getFortune(fortuneId: Long): Result<Fortune>
 }

@@ -2,12 +2,13 @@ package com.yapp.home
 
 import android.util.Log
 import androidx.lifecycle.viewModelScope
-import com.yapp.alarm.AlarmHelper
 import com.yapp.common.util.ResourceProvider
-import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.toAlarmDays
 import com.yapp.domain.model.toDayOfWeek
+import com.yapp.domain.repository.FortuneRepository
+import com.yapp.domain.repository.UserInfoRepository
+import com.yapp.domain.scheduler.AlarmScheduler
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,8 +26,9 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val alarmUseCase: AlarmUseCase,
     private val resourceProvider: ResourceProvider,
-    private val alarmHelper: AlarmHelper,
-    private val userPreferences: UserPreferences,
+    private val alarmScheduler: AlarmScheduler,
+    private val fortuneRepository: FortuneRepository,
+    private val userInfoRepository: UserInfoRepository,
 ) : BaseViewModel<HomeContract.State, HomeContract.SideEffect>(
     initialState = HomeContract.State(),
 ) {
@@ -175,9 +177,9 @@ class HomeViewModel @Inject constructor(
                 }
 
                 if (updatedAlarm.isAlarmActive) {
-                    alarmHelper.scheduleAlarm(updatedAlarm)
+                    alarmScheduler.scheduleAlarm(updatedAlarm)
                 } else {
-                    alarmHelper.unScheduleAlarm(updatedAlarm)
+                    alarmScheduler.unScheduleAlarm(updatedAlarm)
                 }
             }.onFailure { error ->
                 Log.e("HomeViewModel", "Failed to update alarm state", error)
@@ -239,9 +241,9 @@ class HomeViewModel @Inject constructor(
                 }
 
                 if (updatedAlarm.isAlarmActive) {
-                    alarmHelper.scheduleAlarm(updatedAlarm)
+                    alarmScheduler.scheduleAlarm(updatedAlarm)
                 } else {
-                    alarmHelper.unScheduleAlarm(updatedAlarm)
+                    alarmScheduler.unScheduleAlarm(updatedAlarm)
                 }
             }.onFailure { error ->
                 Log.e("HomeViewModel", "Failed to rollback alarm state", error)
@@ -262,7 +264,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             alarmsToDelete.forEach { alarm ->
                 alarmUseCase.deleteAlarm(alarm.id)
-                alarmHelper.unScheduleAlarm(alarm)
+                alarmScheduler.unScheduleAlarm(alarm)
             }
         }
 
@@ -287,7 +289,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             alarmsWithIndex.forEach { alarm ->
                 alarmUseCase.insertAlarm(alarm)
-                alarmHelper.scheduleAlarm(alarm)
+                alarmScheduler.scheduleAlarm(alarm)
             }
         }
     }
@@ -392,7 +394,7 @@ class HomeViewModel @Inject constructor(
 
     private fun loadDailyFortune() {
         viewModelScope.launch {
-            val fortuneDate = userPreferences.fortuneDateFlow.firstOrNull()
+            val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
             val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
 
             Log.d("HomeViewModel", "fortuneDate: $fortuneDate, todayDate: $todayDate")
@@ -400,7 +402,7 @@ class HomeViewModel @Inject constructor(
             if (fortuneDate != todayDate) {
                 processAction(HomeContract.Action.ShowNoDailyFortuneDialog)
             } else {
-                userPreferences.markFortuneAsChecked()
+                fortuneRepository.markFortuneAsChecked()
                 emitSideEffect(HomeContract.SideEffect.NavigateToFortune)
             }
         }
@@ -411,9 +413,9 @@ class HomeViewModel @Inject constructor(
             val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
 
             combine(
-                userPreferences.fortuneDateFlow,
-                userPreferences.fortuneScoreFlow,
-                userPreferences.hasNewFortuneFlow,
+                fortuneRepository.fortuneDateFlow,
+                fortuneRepository.fortuneScoreFlow,
+                fortuneRepository.hasNewFortuneFlow,
             ) { fortuneDate, fortuneScore, hasNewFortune ->
                 val isTodayFortuneAvailable = fortuneDate == todayDate
                 val finalFortuneScore = if (isTodayFortuneAvailable) fortuneScore ?: -1 else -1
@@ -433,7 +435,7 @@ class HomeViewModel @Inject constructor(
 
     private fun loadUserName() {
         viewModelScope.launch {
-            userPreferences.userNameFlow.collect { userName ->
+            userInfoRepository.userNameFlow.collect { userName ->
                 updateState { copy(name = userName ?: "") }
             }
         }

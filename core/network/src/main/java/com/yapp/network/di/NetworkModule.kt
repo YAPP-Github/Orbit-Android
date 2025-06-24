@@ -1,9 +1,6 @@
 package com.yapp.network.di
 
 import com.yapp.common.buildconfig.BuildConfigFieldProvider
-import com.yapp.network.TokenRefreshService
-import com.yapp.network.authenticator.AuthenticationIntercept
-import com.yapp.network.authenticator.OrbitAuthenticator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,11 +18,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-
-    @Provides
-    @Singleton
-    fun provideTokenRefreshService(@NoneAuth retrofit: Retrofit) =
-        retrofit.create(TokenRefreshService::class.java)
 
     @Provides
     @Singleton
@@ -51,13 +43,11 @@ object NetworkModule {
     fun provideAuthOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
         authInterceptor: Interceptor,
-        authenticator: OrbitAuthenticator,
     ): OkHttpClient =
         OkHttpClient.Builder()
             .retryOnConnectionFailure(true)
             .addInterceptor(loggingInterceptor)
             .addInterceptor(authInterceptor)
-            .authenticator(authenticator)
             .build()
 
     @Provides
@@ -106,8 +96,4 @@ object NetworkModule {
             .baseUrl(buildConfigFieldProvider.get().baseUrl)
             .client(okHttpClient)
             .build()
-
-    @Provides
-    @Singleton
-    fun provideAuthInterceptor(interceptor: AuthenticationIntercept): Interceptor = interceptor
 }

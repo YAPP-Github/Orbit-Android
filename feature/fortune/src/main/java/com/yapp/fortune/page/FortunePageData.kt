@@ -1,6 +1,6 @@
 package com.yapp.fortune.page
 
-import com.yapp.domain.model.fortune.Fortune
+import com.yapp.domain.model.Fortune
 
 data class FortunePageData(
     val title: String,

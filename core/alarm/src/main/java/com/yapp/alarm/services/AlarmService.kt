@@ -18,14 +18,14 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import com.yapp.alarm.AlarmConstants
-import com.yapp.alarm.AlarmHelper
+import com.yapp.alarm.AndroidAlarmScheduler
 import com.yapp.alarm.pendingIntent.interaction.createAlarmAlertPendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissPendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmSnoozePendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createNavigateToMissionPendingIntent
-import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
+import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.media.sound.SoundPlayer
 import dagger.hilt.android.AndroidEntryPoint
@@ -51,10 +51,10 @@ class AlarmService : Service() {
     private lateinit var vibrator: Vibrator
 
     @Inject
-    lateinit var alarmHelper: AlarmHelper
+    lateinit var androidAlarmScheduler: AndroidAlarmScheduler
 
     @Inject
-    lateinit var userPreferences: UserPreferences
+    lateinit var fortuneRepository: FortuneRepository
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -103,7 +103,7 @@ class AlarmService : Service() {
         // 반복 요일 알람 시, 다음 주 동일 요일 알람 예약
         if (!isOneTimeAlarm) {
             intent.getStringExtra(AlarmConstants.EXTRA_ALARM_DAY)?.let {
-                alarmHelper.scheduleWeeklyAlarm(alarm, AlarmDay.valueOf(it))
+                androidAlarmScheduler.scheduleWeeklyAlarm(alarm, AlarmDay.valueOf(it))
             }
         }
 
@@ -126,7 +126,7 @@ class AlarmService : Service() {
     }
 
     private suspend fun shouldNavigateToMission(): Boolean {
-        val fortuneDate = userPreferences.fortuneDateFlow.firstOrNull()
+        val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
         val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
         return fortuneDate != todayDate
     }

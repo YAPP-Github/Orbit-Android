@@ -30,7 +30,7 @@
             android:value="@string/admob_app_id" />
 
         <activity
-            android:name="com.yapp.navigator.MainActivity"
+            android:name="com.yapp.orbit.MainActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="true"
             android:label="@string/app_name"

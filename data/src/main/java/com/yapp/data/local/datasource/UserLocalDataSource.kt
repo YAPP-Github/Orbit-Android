@@ -1,10 +1,8 @@
-package com.yapp.domain.repository
+package com.yapp.data.local.datasource
 
-import com.yapp.domain.model.EditUser
-import com.yapp.domain.model.User
 import kotlinx.coroutines.flow.Flow
 
-interface UserInfoRepository {
+interface UserLocalDataSource {
     val userIdFlow: Flow<Long?>
     val userNameFlow: Flow<String?>
     val onboardingCompletedFlow: Flow<Boolean>
@@ -13,7 +11,4 @@ interface UserInfoRepository {
     suspend fun saveUserName(userName: String)
     suspend fun setOnboardingCompleted()
     suspend fun clearUserData()
-
-    suspend fun getUserInfo(userId: Long): Result<User>
-    suspend fun updateUserInfo(userId: Long, editUser: EditUser): Result<Unit>
 }

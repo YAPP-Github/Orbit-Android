@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.viewModelScope
-import com.yapp.datastore.UserPreferences
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.repository.ImageRepository
 import com.yapp.fortune.page.toFortunePages
@@ -25,16 +24,15 @@ class FortuneViewModel @Inject constructor(
     private val application: Application,
     private val fortuneRepository: FortuneRepository,
     private val imageRepository: ImageRepository,
-    private val userPreferences: UserPreferences,
 ) : BaseViewModel<FortuneContract.State, FortuneContract.SideEffect>(
     FortuneContract.State(),
 ) {
 
     init {
         viewModelScope.launch {
-            val fortuneId = userPreferences.fortuneIdFlow.firstOrNull()
-            val firstDismissedAlarmId = userPreferences.firstDismissedAlarmIdFlow.firstOrNull()
-            val fortuneDate = userPreferences.fortuneDateFlow.firstOrNull()
+            val fortuneId = fortuneRepository.fortuneIdFlow.firstOrNull()
+            val firstDismissedAlarmId = fortuneRepository.firstDismissedAlarmIdFlow.firstOrNull()
+            val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
             fortuneId?.let { getFortune(it, firstDismissedAlarmId, fortuneDate) }
         }
     }
@@ -42,7 +40,7 @@ class FortuneViewModel @Inject constructor(
         updateState { copy(isLoading = true) }
 
         fortuneRepository.getFortune(fortuneId).onSuccess { fortune ->
-            val savedImageId = userPreferences.fortuneImageIdFlow.firstOrNull()
+            val savedImageId = fortuneRepository.fortuneImageIdFlow.firstOrNull()
             val imageId = savedImageId ?: getRandomImage()
 
             val formattedTitle = fortune.dailyFortuneTitle.replace(",", ",\n").trim()
@@ -66,9 +64,9 @@ class FortuneViewModel @Inject constructor(
     }
 
     fun saveFortuneImageIdIfNeeded(imageId: Int) = viewModelScope.launch {
-        val savedImageId = userPreferences.fortuneImageIdFlow.firstOrNull()
+        val savedImageId = fortuneRepository.fortuneImageIdFlow.firstOrNull()
         if (savedImageId == null || savedImageId != imageId) {
-            userPreferences.saveFortuneImageId(imageId)
+            fortuneRepository.saveFortuneImageId(imageId)
         }
     }
 
