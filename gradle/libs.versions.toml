@@ -64,12 +64,14 @@ firebase-app-distribution = "5.1.0"
 firebase-crashlytics = "3.0.3"
 
 ## Test
-junit = "4.13.2"
+junit4 = "4.13.2"
 mockito = "3.3.3"
+mockk = "1.13.9"
 robolectric = "4.9"
 androidx-test-ext-junit = "1.2.0"
 androidx-test-runner = "1.6.0"
 androidx-test = "1.6.0"
+jacoco = "0.8.10"
 
 ## Others
 timber = "5.0.1"
@@ -163,8 +165,9 @@ timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "tim
 coil = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 
 ## Test Libraries
-junit = { group = "junit", name = "junit", version.ref = "junit" }
+junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
 mockito = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidx-test-runner" }
