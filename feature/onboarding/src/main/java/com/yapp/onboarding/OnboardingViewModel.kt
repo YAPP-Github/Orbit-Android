@@ -10,7 +10,7 @@ import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
 import com.yapp.domain.model.toRepeatDays
 import com.yapp.domain.repository.SignUpRepository
-import com.yapp.domain.repository.UserDataRepository
+import com.yapp.domain.repository.UserInfoRepository
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.media.haptic.HapticFeedbackManager
 import com.yapp.media.haptic.HapticType
@@ -24,7 +24,7 @@ import kotlin.reflect.KClass
 class OnboardingViewModel @Inject constructor(
     private val analyticsHelper: AnalyticsHelper,
     private val signUpRepository: SignUpRepository,
-    private val userDataRepository: UserDataRepository,
+    private val userInfoRepository: UserInfoRepository,
     private val alarmUseCase: AlarmUseCase,
     private val hapticFeedbackManager: HapticFeedbackManager,
     private val savedStateHandle: SavedStateHandle,
@@ -72,8 +72,8 @@ class OnboardingViewModel @Inject constructor(
             if (result.isSuccess) {
                 val userId = result.getOrNull() ?: return@launch
                 val userName = state.userName
-                userDataRepository.saveUserId(userId)
-                userDataRepository.saveUserName(userName)
+                userInfoRepository.saveUserId(userId)
+                userInfoRepository.saveUserName(userName)
 
                 analyticsHelper.setUserId(userId)
                 analyticsHelper.logEvent(
@@ -240,7 +240,7 @@ class OnboardingViewModel @Inject constructor(
 
     private fun completeOnboarding() {
         viewModelScope.launch {
-            userDataRepository.setOnboardingCompleted()
+            userInfoRepository.setOnboardingCompleted()
             emitSideEffect(OnboardingContract.SideEffect.OnboardingCompleted)
         }
     }

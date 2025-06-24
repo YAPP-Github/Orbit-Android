@@ -1,4 +1,4 @@
-package com.yapp.data.local.repositoryimpl
+package com.yapp.data.repositoryimpl
 
 import com.yapp.data.local.datasource.ImageLocalDataSource
 import com.yapp.domain.repository.ImageRepository

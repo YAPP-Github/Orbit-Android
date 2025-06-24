@@ -1,4 +1,4 @@
-package com.yapp.data.remote.repositoryimpl
+package com.yapp.data.repositoryimpl
 
 import android.util.Log
 import com.yapp.data.remote.datasource.SignUpDataSource

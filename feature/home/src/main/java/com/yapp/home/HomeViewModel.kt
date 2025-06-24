@@ -6,7 +6,8 @@ import com.yapp.common.util.ResourceProvider
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.toAlarmDays
 import com.yapp.domain.model.toDayOfWeek
-import com.yapp.domain.repository.UserDataRepository
+import com.yapp.domain.repository.FortuneRepository
+import com.yapp.domain.repository.UserInfoRepository
 import com.yapp.domain.scheduler.AlarmScheduler
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.ui.base.BaseViewModel
@@ -26,7 +27,8 @@ class HomeViewModel @Inject constructor(
     private val alarmUseCase: AlarmUseCase,
     private val resourceProvider: ResourceProvider,
     private val alarmScheduler: AlarmScheduler,
-    private val userDataRepository: UserDataRepository,
+    private val fortuneRepository: FortuneRepository,
+    private val userInfoRepository: UserInfoRepository,
 ) : BaseViewModel<HomeContract.State, HomeContract.SideEffect>(
     initialState = HomeContract.State(),
 ) {
@@ -392,7 +394,7 @@ class HomeViewModel @Inject constructor(
 
     private fun loadDailyFortune() {
         viewModelScope.launch {
-            val fortuneDate = userDataRepository.fortuneDateFlow.firstOrNull()
+            val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
             val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
 
             Log.d("HomeViewModel", "fortuneDate: $fortuneDate, todayDate: $todayDate")
@@ -400,7 +402,7 @@ class HomeViewModel @Inject constructor(
             if (fortuneDate != todayDate) {
                 processAction(HomeContract.Action.ShowNoDailyFortuneDialog)
             } else {
-                userDataRepository.markFortuneAsChecked()
+                fortuneRepository.markFortuneAsChecked()
                 emitSideEffect(HomeContract.SideEffect.NavigateToFortune)
             }
         }
@@ -411,9 +413,9 @@ class HomeViewModel @Inject constructor(
             val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
 
             combine(
-                userDataRepository.fortuneDateFlow,
-                userDataRepository.fortuneScoreFlow,
-                userDataRepository.hasNewFortuneFlow,
+                fortuneRepository.fortuneDateFlow,
+                fortuneRepository.fortuneScoreFlow,
+                fortuneRepository.hasNewFortuneFlow,
             ) { fortuneDate, fortuneScore, hasNewFortune ->
                 val isTodayFortuneAvailable = fortuneDate == todayDate
                 val finalFortuneScore = if (isTodayFortuneAvailable) fortuneScore ?: -1 else -1
@@ -433,7 +435,7 @@ class HomeViewModel @Inject constructor(
 
     private fun loadUserName() {
         viewModelScope.launch {
-            userDataRepository.userNameFlow.collect { userName ->
+            userInfoRepository.userNameFlow.collect { userName ->
                 updateState { copy(name = userName ?: "") }
             }
         }

@@ -1,4 +1,4 @@
-package com.yapp.data.local.repositoryimpl
+package com.yapp.data.repositoryimpl
 
 import android.net.Uri
 import com.yapp.data.local.datasource.AlarmLocalDataSource
@@ -16,6 +16,8 @@ class AlarmRepositoryImpl @Inject constructor(
     private val ringtoneManagerHelper: RingtoneManagerHelper,
     private val soundPlayer: SoundPlayer,
 ) : AlarmRepository {
+    override val firstDismissedAlarmIdFlow: Flow<Long?> = alarmLocalDataSource.firstDismissedAlarmIdFlow
+
     override suspend fun getAlarmSounds(): Result<List<AlarmSound>> = runCatching {
         ringtoneManagerHelper.getAlarmSounds().map { (title, uri) ->
             AlarmSound(title, uri)
@@ -96,5 +98,13 @@ class AlarmRepositoryImpl @Inject constructor(
         } else {
             throw Exception("No rows deleted")
         }
+    }
+
+    override suspend fun saveFirstDismissedAlarmId(alarmId: Long) {
+        alarmLocalDataSource.saveFirstDismissedAlarmId(alarmId)
+    }
+
+    override suspend fun clearDismissedAlarmId() {
+        alarmLocalDataSource.clearDismissedAlarmId()
     }
 }

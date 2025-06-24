@@ -9,7 +9,7 @@ import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
 import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
-import com.yapp.domain.repository.UserDataRepository
+import com.yapp.domain.repository.UserInfoRepository
 import com.yapp.domain.usecase.GetMissionTypeUseCase
 import com.yapp.media.haptic.HapticFeedbackManager
 import com.yapp.media.haptic.HapticType
@@ -27,7 +27,7 @@ class MissionViewModel @Inject constructor(
     private val analyticsHelper: AnalyticsHelper,
     private val hapticFeedbackManager: HapticFeedbackManager,
     private val fortuneRepository: FortuneRepository,
-    private val userDataRepository: UserDataRepository,
+    private val userInfoRepository: UserInfoRepository,
     private val getMissionTypeUseCase: GetMissionTypeUseCase,
     private val app: Application,
     savedStateHandle: SavedStateHandle,
@@ -116,7 +116,7 @@ class MissionViewModel @Inject constructor(
 
     private fun postFortune() {
         viewModelScope.launch {
-            val userId = userDataRepository.userIdFlow.firstOrNull() ?: return@launch
+            val userId = userInfoRepository.userIdFlow.firstOrNull() ?: return@launch
             val result = runCatching {
                 withContext(Dispatchers.IO) {
                     fortuneRepository.postFortune(userId)
@@ -125,8 +125,8 @@ class MissionViewModel @Inject constructor(
 
             result.onSuccess {
                 val data = it.getOrThrow()
-                userDataRepository.saveFortuneId(data.id)
-                userDataRepository.saveFortuneScore(data.avgFortuneScore)
+                fortuneRepository.saveFortuneId(data.id)
+                fortuneRepository.saveFortuneScore(data.avgFortuneScore)
 
                 emitSideEffect(MissionContract.SideEffect.NavigateToFortune)
             }.onFailure { error ->
@@ -138,7 +138,7 @@ class MissionViewModel @Inject constructor(
 
     private fun retryPostFortune() {
         viewModelScope.launch {
-            val userId = userDataRepository.userIdFlow.firstOrNull() ?: return@launch
+            val userId = userInfoRepository.userIdFlow.firstOrNull() ?: return@launch
             val result = runCatching {
                 withContext(Dispatchers.IO) {
                     fortuneRepository.postFortune(userId)
@@ -147,8 +147,8 @@ class MissionViewModel @Inject constructor(
 
             result.onSuccess {
                 val data = it.getOrThrow()
-                userDataRepository.saveFortuneId(data.id)
-                userDataRepository.saveFortuneScore(data.avgFortuneScore)
+                fortuneRepository.saveFortuneId(data.id)
+                fortuneRepository.saveFortuneScore(data.avgFortuneScore)
 
                 emitSideEffect(MissionContract.SideEffect.NavigateToFortune)
             }.onFailure {

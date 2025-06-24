@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmSnoozeIntent
 import com.yapp.domain.model.Alarm
-import com.yapp.domain.repository.UserDataRepository
+import com.yapp.domain.repository.FortuneRepository
 import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -23,7 +23,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AlarmActionViewModel @Inject constructor(
     private val app: Application,
-    private val userDataRepository: UserDataRepository,
+    private val fortuneRepository: FortuneRepository,
     savedStateHandle: SavedStateHandle,
 ) : BaseViewModel<AlarmActionContract.State, AlarmActionContract.SideEffect>(
     AlarmActionContract.State(),
@@ -46,7 +46,7 @@ class AlarmActionViewModel @Inject constructor(
 
     private fun fetchIsFirstMission() {
         viewModelScope.launch {
-            val fortuneDate = userDataRepository.fortuneDateFlow.firstOrNull()
+            val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
             val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
             val isFirstMission = fortuneDate != todayDate
 

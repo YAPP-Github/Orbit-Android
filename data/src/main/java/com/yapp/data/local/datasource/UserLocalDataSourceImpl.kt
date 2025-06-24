@@ -11,12 +11,6 @@ class UserLocalDataSourceImpl @Inject constructor(
     override val userIdFlow: Flow<Long?> = userPreferences.userIdFlow
     override val userNameFlow: Flow<String?> = userPreferences.userNameFlow
     override val onboardingCompletedFlow: Flow<Boolean> = userPreferences.onboardingCompletedFlow
-    override val fortuneIdFlow: Flow<Long?> = userPreferences.fortuneIdFlow
-    override val fortuneDateFlow: Flow<String?> = userPreferences.fortuneDateFlow
-    override val fortuneImageIdFlow: Flow<Int?> = userPreferences.fortuneImageIdFlow
-    override val fortuneScoreFlow: Flow<Int?> = userPreferences.fortuneScoreFlow
-    override val hasNewFortuneFlow: Flow<Boolean> = userPreferences.hasNewFortuneFlow
-    override val firstDismissedAlarmIdFlow: Flow<Long?> = userPreferences.firstDismissedAlarmIdFlow
 
     override suspend fun saveUserId(userId: Long) {
         userPreferences.saveUserId(userId)
@@ -30,35 +24,7 @@ class UserLocalDataSourceImpl @Inject constructor(
         userPreferences.setOnboardingCompleted()
     }
 
-    override suspend fun saveFortuneId(fortuneId: Long) {
-        userPreferences.saveFortuneId(fortuneId)
-    }
-
-    override suspend fun markFortuneAsChecked() {
-        userPreferences.markFortuneAsChecked()
-    }
-
-    override suspend fun saveFortuneImageId(imageResId: Int) {
-        userPreferences.saveFortuneImageId(imageResId)
-    }
-
-    override suspend fun saveFortuneScore(score: Int) {
-        userPreferences.saveFortuneScore(score)
-    }
-
-    override suspend fun saveFirstDismissedAlarmId(alarmId: Long) {
-        userPreferences.saveFirstDismissedAlarmId(alarmId)
-    }
-
-    override suspend fun clearDismissedAlarmId() {
-        userPreferences.clearDismissedAlarmId()
-    }
-
     override suspend fun clearUserData() {
         userPreferences.clearUserData()
-    }
-
-    override suspend fun clearFortuneId() {
-        userPreferences.clearFortuneId()
     }
 }

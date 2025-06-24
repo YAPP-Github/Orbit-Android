@@ -1,4 +1,4 @@
-package com.yapp.data.remote.repositoryimpl
+package com.yapp.data.repositoryimpl
 
 import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.RemoteConfigRepository
