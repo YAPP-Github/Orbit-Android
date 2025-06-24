@@ -81,28 +81,24 @@ jobs:
       - name: Run lint and build
         run: ./gradlew ktlintCheck assembleDebug
 
-          # Run Lint and Build
-      -   name: Run lint and build
-          run: ./gradlew ktlintCheck assembleDebug
+      # Run Unit Test and Generate Coverage
+      - name: Run unit tests and generate coverage
+        run: ./gradlew generateTestCoverageReport
 
-          # Run Unit Test and Generate Coverage
-      -   name: Run unit tests and generate coverage
-          run: ./gradlew generateTestCoverageReport
+      # Comment PR with coverage result
+      - name: Comment coverage report in PR
+        if: github.event_name == 'pull_request'
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+            COVERAGE_PATH="data/build/reports/coverage/test/debug/index.html"
+            if [ -f "$COVERAGE_PATH" ]; then
+              COMMENT="🚀 테스트 완료 및 커버리지 리포트가 생성되었습니다.\n\n➡️ [클릭하여 커버리지 리포트 보기](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}#issuecomment)\n\n리포트 위치: \`${COVERAGE_PATH}\`"
+            else
+              COMMENT="⚠️ 테스트는 완료 됐는데 커버리지 리포트 파일이 존재하지 않습니다. 빌드 설정을 확인해주세요."
+            fi
 
-          # Comment PR with coverage result
-      -   name: Comment coverage report in PR
-          if: github.event_name == 'pull_request'
-          env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          run: |
-              COVERAGE_PATH="data/build/reports/coverage/test/debug/index.html"
-              if [ -f "$COVERAGE_PATH" ]; then
-                COMMENT="🚀 테스트 완료 및 커버리지 리포트가 생성되었습니다.\n\n➡️ [클릭하여 커버리지 리포트 보기](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}#issuecomment)\n\n리포트 위치: \`${COVERAGE_PATH}\`"
-              else
-                COMMENT="️ 테스트는 완료 됐는데 커버리지 리포트 파일이 존재하지 않습니다. 빌드 설정을 확인해주세요."
-              fi
-
-              curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                -X POST \
-                -d "{\"body\": \"$COMMENT\"}" \
-                "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
+            curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              -X POST \
+              -d "{\"body\": \"$COMMENT\"}" \
+              "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
