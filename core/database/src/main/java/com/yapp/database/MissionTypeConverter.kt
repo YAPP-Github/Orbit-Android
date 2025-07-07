@@ -1,4 +1,4 @@
-package com.yapp.data.local
+package com.yapp.database
 
 import androidx.room.TypeConverter
 import com.yapp.domain.model.MissionType

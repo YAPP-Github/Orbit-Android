@@ -1,9 +1,9 @@
-package com.yapp.data.local.di
+package com.yapp.database.di
 
 import android.content.Context
 import androidx.room.Room
-import com.yapp.data.local.AlarmDao
-import com.yapp.data.local.AlarmDatabase
+import com.yapp.database.AlarmDao
+import com.yapp.database.AlarmDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

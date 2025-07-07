@@ -1,4 +1,4 @@
-package com.yapp.data.local
+package com.yapp.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
