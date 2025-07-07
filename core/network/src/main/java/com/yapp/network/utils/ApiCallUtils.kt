@@ -1,17 +1,25 @@
 package com.yapp.network.utils
 
 import com.yapp.network.model.ApiError
+import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import java.io.IOException
 
-inline fun <T> safeApiCall(action: () -> T): Result<T> =
-    runCatching(action).recoverCatching { exception ->
-        when (exception) {
-            is HttpException -> throw mapHttpException(exception)
-            is IOException -> throw ApiError("네트워크 오류 발생")
-            else -> throw exception
+inline fun <T> safeApiCall(action: () -> T): Result<T> {
+    return try {
+        Result.success(action())
+    } catch (exception: Throwable) {
+        if (exception is CancellationException) throw exception
+
+        val mappedException = when (exception) {
+            is HttpException -> mapHttpException(exception)
+            is IOException -> ApiError("네트워크 오류 발생")
+            else -> ApiError("알 수 없는 오류 발생")
         }
+
+        Result.failure(mappedException)
     }
+}
 
 fun mapHttpException(exception: HttpException): ApiError {
     return when (exception.code()) {
