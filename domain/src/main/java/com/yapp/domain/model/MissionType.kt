@@ -1,18 +1,13 @@
 package com.yapp.domain.model
 
-sealed class MissionType {
-    data object Shake : MissionType()
-    data object Click : MissionType()
+enum class MissionType(val value: Int) {
+    TAP(0),
+    SHAKE(1),
+    ;
 
     companion object {
-        fun fromRemoteValue(value: String): MissionType {
-            return when (value) {
-                "tap_mission" -> Click
-                "shake_mission" -> Shake
-                else -> {
-                    Click
-                }
-            }
+        fun fromInt(value: Int): MissionType {
+            return MissionType.entries.find { it.value == value } ?: TAP
         }
     }
 }
