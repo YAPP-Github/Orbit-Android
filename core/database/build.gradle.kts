@@ -2,7 +2,7 @@ import com.yapp.convention.setNamespace
 
 plugins {
     id("orbit.android.library")
-    alias(libs.plugins.room)
+    id("androidx.room")
 }
 
 android {
@@ -22,8 +22,5 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)
 
-    implementation(libs.material)
-    testImplementation(libs.junit4)
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.room.testing)
 }
