@@ -1,9 +1,10 @@
-package com.yapp.data.remote.utils
+package com.yapp.network.utils
 
+import com.yapp.network.model.ApiError
 import retrofit2.HttpException
 import java.io.IOException
 
-internal inline fun <T> safeApiCall(action: () -> T): Result<T> =
+inline fun <T> safeApiCall(action: () -> T): Result<T> =
     runCatching(action).recoverCatching { exception ->
         when (exception) {
             is HttpException -> throw mapHttpException(exception)
@@ -12,7 +13,7 @@ internal inline fun <T> safeApiCall(action: () -> T): Result<T> =
         }
     }
 
-private fun mapHttpException(exception: HttpException): ApiError {
+fun mapHttpException(exception: HttpException): ApiError {
     return when (exception.code()) {
         400 -> ApiError("잘못된 요청")
         401 -> ApiError("인증이 필요합니다")
