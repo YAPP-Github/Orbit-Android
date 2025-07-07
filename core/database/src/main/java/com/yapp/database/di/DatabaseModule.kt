@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.yapp.database.AlarmDao
 import com.yapp.database.AlarmDatabase
+import com.yapp.database.DatabaseMigrations
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,7 +25,9 @@ class DatabaseModule {
             context.applicationContext,
             AlarmDatabase::class.java,
             AlarmDatabase.DATABASE_NAME,
-        ).build()
+        )
+            .addMigrations(DatabaseMigrations.MIGRATION_1_2)
+            .build()
     }
 
     @Provides
