@@ -1,4 +1,4 @@
-package com.yapp.data.local.datasource
+package com.yapp.media.storage
 
 import android.content.ContentResolver
 import android.content.ContentValues
@@ -9,11 +9,11 @@ import android.util.Log
 import java.io.IOException
 import javax.inject.Inject
 
-class ImageLocalDataSourceImpl @Inject constructor(
+class ImageSaver @Inject constructor(
     private val contentResolver: ContentResolver,
-) : ImageLocalDataSource {
+) {
 
-    override suspend fun saveImage(byteArray: ByteArray, fileName: String): Boolean {
+    fun saveImage(byteArray: ByteArray, fileName: String): Boolean {
         return try {
             val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
 
@@ -32,10 +32,10 @@ class ImageLocalDataSourceImpl @Inject constructor(
 
             true
         } catch (e: SecurityException) {
-            Log.e("ImageLocalDataSource", "권한 없음: ${e.message}")
+            Log.e("ImageSaver", "권한 없음: ${e.message}")
             false
         } catch (e: IOException) {
-            Log.e("ImageLocalDataSource", "파일 저장 실패: ${e.message}")
+            Log.e("ImageSaver", "파일 저장 실패: ${e.message}")
             false
         }
     }
