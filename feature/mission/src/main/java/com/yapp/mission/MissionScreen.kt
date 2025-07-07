@@ -148,7 +148,7 @@ fun MissionContent(
         Spacer(modifier = Modifier.heightForScreenPercentage(0.0665f))
 
         when (state.missionType) {
-            is MissionType.Shake -> {
+            MissionType.SHAKE -> {
                 if (state.shakeCount == 0) {
                     MissionShakeInitialImage()
                 } else {
@@ -156,7 +156,7 @@ fun MissionContent(
                 }
             }
 
-            is MissionType.Click -> {
+            MissionType.TAP -> {
                 MissionClickCard(state, eventDispatcher)
             }
         }
@@ -209,8 +209,8 @@ fun MissionProgressBarSection(state: MissionContract.State) {
     Spacer(modifier = Modifier.heightForScreenPercentage(0.0246f))
     MissionProgressBar(
         currentProgress = when (state.missionType) {
-            is MissionType.Shake -> state.shakeCount
-            is MissionType.Click -> state.clickCount
+            MissionType.SHAKE -> state.shakeCount
+            MissionType.TAP -> state.clickCount
         },
         totalProgress = 10,
         modifier = Modifier
@@ -227,8 +227,8 @@ fun MissionProgressBarSection(state: MissionContract.State) {
 @Composable
 fun MissionLabel(state: MissionContract.State) {
     val instruction =
-        if (state.missionType is MissionType.Shake) "10회를 흔들어 부적을 뒤집어줘" else "10회를 눌러 편지를 열어줘"
-    val count = if (state.missionType is MissionType.Shake) state.shakeCount else state.clickCount
+        if (state.missionType == MissionType.SHAKE) "10회를 흔들어 부적을 뒤집어줘" else "10회를 눌러 편지를 열어줘"
+    val count = if (state.missionType == MissionType.SHAKE) state.shakeCount else state.clickCount
 
     Text(
         text = instruction,
@@ -316,8 +316,8 @@ fun ExitDialog(
                     type = "mission_fail",
                     properties = mapOf(
                         AnalyticsEvent.MissionPropertiesKeys.MISSION_TYPE to when (state.missionType) {
-                            is MissionType.Shake -> "shake"
-                            is MissionType.Click -> "click"
+                            MissionType.SHAKE -> "shake"
+                            MissionType.TAP -> "click"
                         },
                     ),
                 ),
@@ -401,7 +401,7 @@ private fun MissionRoutePreview() {
         stateProvider = {
             MissionContract.State(
                 isMissionTypeLoading = false,
-                missionType = MissionType.Shake,
+                missionType = MissionType.SHAKE,
                 shakeCount = 0,
                 clickCount = 0,
                 showFinalAnimation = false,

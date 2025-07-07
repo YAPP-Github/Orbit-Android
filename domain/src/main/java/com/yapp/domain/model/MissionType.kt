@@ -9,5 +9,15 @@ enum class MissionType(val value: Int) {
         fun fromInt(value: Int): MissionType {
             return MissionType.entries.find { it.value == value } ?: TAP
         }
+
+        fun fromRemoteValue(value: String): MissionType {
+            return when (value) {
+                "tap_mission" -> TAP
+                "shake_mission" -> SHAKE
+                else -> {
+                    TAP
+                }
+            }
+        }
     }
 }

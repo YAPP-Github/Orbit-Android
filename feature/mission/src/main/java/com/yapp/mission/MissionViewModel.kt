@@ -72,7 +72,7 @@ class MissionViewModel @Inject constructor(
     }
 
     private fun handleShake() = viewModelScope.launch {
-        if (currentState.missionType !is MissionType.Shake) return@launch
+        if (currentState.missionType != MissionType.SHAKE) return@launch
 
         val currentCount = currentState.shakeCount
         if (currentCount < 9) {
@@ -92,7 +92,7 @@ class MissionViewModel @Inject constructor(
     }
 
     private fun handleClick() = viewModelScope.launch {
-        if (currentState.missionType !is MissionType.Click) return@launch
+        if (currentState.missionType != MissionType.TAP) return@launch
 
         val currentCount = currentState.clickCount
         if (currentCount < 9) {
