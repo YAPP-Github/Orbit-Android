@@ -7,7 +7,7 @@ class MissionTypeConverter {
 
     @TypeConverter
     fun fromString(missionType: String): MissionType {
-        return return try {
+        return try {
             MissionType.valueOf(missionType)
         } catch (e: IllegalArgumentException) {
             MissionType.TAP
@@ -15,7 +15,7 @@ class MissionTypeConverter {
     }
 
     @TypeConverter
-    fun toMissionType(missionType: MissionType): String {
+    fun toString(missionType: MissionType): String {
         return missionType.name
     }
 }
