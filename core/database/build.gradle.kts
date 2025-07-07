@@ -2,10 +2,17 @@ import com.yapp.convention.setNamespace
 
 plugins {
     id("orbit.android.library")
+    alias(libs.plugins.room)
 }
 
 android {
     setNamespace("core.database")
+
+    sourceSets { getByName("androidTest").assets.srcDir("$projectDir/schemas") }
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 dependencies {
