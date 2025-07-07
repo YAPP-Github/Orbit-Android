@@ -10,9 +10,9 @@ android {
 }
 
 dependencies {
-    api(projects.core.network)
-    api(projects.core.database)
-    api(projects.core.datastore)
+    implementation(projects.core.network)
+    implementation(projects.core.database)
+    implementation(projects.core.datastore)
 
     implementation(projects.domain)
     implementation(projects.core.media)
