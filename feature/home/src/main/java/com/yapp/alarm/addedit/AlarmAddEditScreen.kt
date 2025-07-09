@@ -91,6 +91,53 @@ fun AlarmAddEditRoute(
     )
 }
 
+private suspend fun handleSideEffect(
+    sideEffect: AlarmAddEditContract.SideEffect,
+    navigator: OrbitNavigator,
+    snackBarHostState: SnackbarHostState,
+    coroutineScope: CoroutineScope,
+) {
+    when (sideEffect) {
+        is AlarmAddEditContract.SideEffect.NavigateBack -> {
+            navigator.navigateBack()
+        }
+        is AlarmAddEditContract.SideEffect.SaveAlarm -> {
+            navigator.navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set(ADD_ALARM_RESULT_KEY, sideEffect.id)
+            navigator.navController.popBackStack()
+        }
+        is AlarmAddEditContract.SideEffect.UpdateAlarm -> {
+            navigator.navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set(UPDATE_ALARM_RESULT_KEY, sideEffect.id)
+            navigator.navigateBack()
+        }
+        is AlarmAddEditContract.SideEffect.DeleteAlarm -> {
+            navigator.navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set(DELETE_ALARM_RESULT_KEY, sideEffect.id)
+            navigator.navigateBack()
+        }
+        is AlarmAddEditContract.SideEffect.ShowSnackBar -> {
+            val result = showCustomSnackBar(
+                scope = coroutineScope,
+                snackBarHostState = snackBarHostState,
+                message = sideEffect.message,
+                actionLabel = sideEffect.label,
+                iconRes = sideEffect.iconRes,
+                bottomPadding = sideEffect.bottomPadding,
+                durationMillis = sideEffect.durationMillis,
+            )
+
+            when (result) {
+                SnackbarResult.ActionPerformed -> sideEffect.onAction()
+                SnackbarResult.Dismissed -> sideEffect.onDismiss()
+            }
+        }
+    }
+}
+
 @Composable
 fun AlarmAddEditScreen(
     stateProvider: () -> AlarmAddEditContract.State,
@@ -594,53 +641,6 @@ private fun AlarmAddEditDisableHolidaySwitch(
                 processAction(AlarmAddEditContract.Action.ToggleHolidaySkipOption)
             },
         )
-    }
-}
-
-private suspend fun handleSideEffect(
-    effect: AlarmAddEditContract.SideEffect,
-    navigator: OrbitNavigator,
-    snackBarHostState: SnackbarHostState,
-    coroutineScope: CoroutineScope,
-) {
-    when (effect) {
-        is AlarmAddEditContract.SideEffect.NavigateBack -> {
-            navigator.navigateBack()
-        }
-        is AlarmAddEditContract.SideEffect.SaveAlarm -> {
-            navigator.navController.previousBackStackEntry
-                ?.savedStateHandle
-                ?.set(ADD_ALARM_RESULT_KEY, effect.id)
-            navigator.navController.popBackStack()
-        }
-        is AlarmAddEditContract.SideEffect.UpdateAlarm -> {
-            navigator.navController.previousBackStackEntry
-                ?.savedStateHandle
-                ?.set(UPDATE_ALARM_RESULT_KEY, effect.id)
-            navigator.navigateBack()
-        }
-        is AlarmAddEditContract.SideEffect.DeleteAlarm -> {
-            navigator.navController.previousBackStackEntry
-                ?.savedStateHandle
-                ?.set(DELETE_ALARM_RESULT_KEY, effect.id)
-            navigator.navigateBack()
-        }
-        is AlarmAddEditContract.SideEffect.ShowSnackBar -> {
-            val result = showCustomSnackBar(
-                scope = coroutineScope,
-                snackBarHostState = snackBarHostState,
-                message = effect.message,
-                actionLabel = effect.label,
-                iconRes = effect.iconRes,
-                bottomPadding = effect.bottomPadding,
-                durationMillis = effect.durationMillis,
-            )
-
-            when (result) {
-                SnackbarResult.ActionPerformed -> effect.onAction()
-                SnackbarResult.Dismissed -> effect.onDismiss()
-            }
-        }
     }
 }
 

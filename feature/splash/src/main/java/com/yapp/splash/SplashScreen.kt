@@ -38,33 +38,6 @@ fun SplashRoute(
     SplashScreen(state = state)
 }
 
-@Composable
-fun SplashScreen(
-    state: SplashContract.State,
-) {
-    val alpha by animateFloatAsState(
-        targetValue = if (state.isVisible) 1f else 0f,
-        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
-        label = "logoFade",
-    )
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(OrbitTheme.colors.gray_900),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Image(
-            painter = painterResource(id = core.designsystem.R.drawable.ic_splash_logo),
-            contentDescription = "Splash Logo",
-            modifier = Modifier
-                .size(120.dp)
-                .graphicsLayer(alpha = alpha),
-        )
-    }
-}
-
 private fun handleSideEffects(
     sideEffect: SplashContract.SideEffect,
     navigator: OrbitNavigator,
@@ -89,5 +62,32 @@ private fun handleSideEffects(
                 },
             )
         }
+    }
+}
+
+@Composable
+fun SplashScreen(
+    state: SplashContract.State,
+) {
+    val alpha by animateFloatAsState(
+        targetValue = if (state.isVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
+        label = "logoFade",
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(OrbitTheme.colors.gray_900),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Image(
+            painter = painterResource(id = core.designsystem.R.drawable.ic_splash_logo),
+            contentDescription = "Splash Logo",
+            modifier = Modifier
+                .size(120.dp)
+                .graphicsLayer(alpha = alpha),
+        )
     }
 }
