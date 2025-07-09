@@ -1,6 +1,5 @@
 package com.yapp.mission
 
-import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
@@ -8,6 +7,7 @@ import androidx.navigation.navOptions
 import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.common.navigation.extensions.sharedHiltViewModel
 import com.yapp.common.navigation.route.MissionRoute
+import org.orbitmvi.orbit.compose.collectSideEffect
 
 fun NavGraphBuilder.missionScreen(
     navigator: OrbitNavigator,
@@ -21,24 +21,29 @@ fun NavGraphBuilder.missionScreen(
     ) {
         val viewModel = it.sharedHiltViewModel<MissionViewModel>(navigator.navController)
 
-        LaunchedEffect(viewModel) {
-            viewModel.container.sideEffectFlow.collect { sideEffect ->
-                when (sideEffect) {
-                    MissionContract.SideEffect.NavigateToFortune -> {
-                        navigator.navigateToFortune(
-                            navOptions = navOptions {
-                                popUpTo(MissionRoute) {
-                                    inclusive = true
-                                }
-                            },
-                        )
-                    }
-
-                    MissionContract.SideEffect.NavigateBack -> navigator.navigateBack()
-                }
-            }
+        viewModel.collectSideEffect {
+            handleSideEffect(it, navigator)
         }
 
         MissionRoute(viewModel)
+    }
+}
+
+private fun handleSideEffect(
+    sideEffect: MissionContract.SideEffect,
+    navigator: OrbitNavigator,
+) {
+    when (sideEffect) {
+        MissionContract.SideEffect.NavigateToFortune -> {
+            navigator.navigateToFortune(
+                navOptions = navOptions {
+                    popUpTo(MissionRoute) {
+                        inclusive = true
+                    }
+                },
+            )
+        }
+
+        MissionContract.SideEffect.NavigateBack -> navigator.navigateBack()
     }
 }
