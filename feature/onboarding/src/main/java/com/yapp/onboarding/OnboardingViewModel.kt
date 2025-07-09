@@ -2,7 +2,7 @@ package com.yapp.onboarding
 
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.ViewModel
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
 import com.yapp.common.navigation.route.OnboardingDestination
@@ -14,9 +14,13 @@ import com.yapp.domain.repository.UserInfoRepository
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.media.haptic.HapticFeedbackManager
 import com.yapp.media.haptic.HapticType
-import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.launch
+import org.orbitmvi.orbit.Container
+import org.orbitmvi.orbit.ContainerHost
+import org.orbitmvi.orbit.syntax.simple.intent
+import org.orbitmvi.orbit.syntax.simple.postSideEffect
+import org.orbitmvi.orbit.syntax.simple.reduce
+import org.orbitmvi.orbit.viewmodel.container
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -28,15 +32,18 @@ class OnboardingViewModel @Inject constructor(
     private val alarmUseCase: AlarmUseCase,
     private val hapticFeedbackManager: HapticFeedbackManager,
     private val savedStateHandle: SavedStateHandle,
-) : BaseViewModel<OnboardingContract.State, OnboardingContract.SideEffect>(
-    initialState = OnboardingContract.State(
-        currentStep = savedStateHandle["currentStep"] ?: 1,
-        birthDate = savedStateHandle["birthDate"] ?: "",
-        birthType = savedStateHandle["birthType"] ?: "양력",
-    ),
-) {
+) : ViewModel(), ContainerHost<OnboardingContract.State, OnboardingContract.SideEffect> {
+
+    override val container: Container<OnboardingContract.State, OnboardingContract.SideEffect> = container(
+        initialState = OnboardingContract.State(
+            currentStep = savedStateHandle["currentStep"] ?: 1,
+            birthDate = savedStateHandle["birthDate"] ?: "",
+            birthType = savedStateHandle["birthType"] ?: "양력",
+        ),
+    )
+
     private val currentRoute: KClass<out OnboardingDestination>?
-        get() = OnboardingDestination.routes.getOrNull(currentState.currentStep)
+        get() = OnboardingDestination.routes.getOrNull(container.stateFlow.value.currentStep)
 
     fun processAction(action: OnboardingContract.Action) {
         when (action) {
@@ -57,122 +64,116 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
-    private fun submitUserInfo() {
-        viewModelScope.launch {
-            val state = container.stateFlow.value
+    private fun submitUserInfo() = intent {
+        val result = signUpRepository.postSignUp(
+            name = state.userName,
+            calendarType = state.birthType,
+            birthDate = state.birthDate,
+            birthTime = state.birthTime,
+            gender = state.selectedGender ?: "",
+        )
 
-            val result = signUpRepository.postSignUp(
-                name = state.userName,
-                calendarType = state.birthType,
-                birthDate = state.birthDate,
-                birthTime = state.birthTime,
-                gender = state.selectedGender ?: "",
+        if (result.isSuccess) {
+            val userId = result.getOrNull() ?: return@intent
+            val userName = state.userName
+            userInfoRepository.saveUserId(userId)
+            userInfoRepository.saveUserName(userName)
+
+            analyticsHelper.setUserId(userId)
+            analyticsHelper.logEvent(
+                AnalyticsEvent(
+                    type = "onboarding_complete",
+                    properties = mapOf(
+                        AnalyticsEvent.OnboardingPropertiesKeys.STEP to "환영2",
+                    ),
+                ),
             )
 
-            if (result.isSuccess) {
-                val userId = result.getOrNull() ?: return@launch
-                val userName = state.userName
-                userInfoRepository.saveUserId(userId)
-                userInfoRepository.saveUserName(userName)
-
-                analyticsHelper.setUserId(userId)
-                analyticsHelper.logEvent(
-                    AnalyticsEvent(
-                        type = "onboarding_complete",
-                        properties = mapOf(
-                            AnalyticsEvent.OnboardingPropertiesKeys.STEP to "환영2",
-                        ),
-                    ),
-                )
-
-                updateState { copy(isBottomSheetOpen = false) }
-                moveToNextStep()
-            } else {
-                processAction(OnboardingContract.Action.ShowWarningDialog)
-            }
+            reduce { state.copy(isBottomSheetOpen = false) }
+            moveToNextStep()
+        } else {
+            processAction(OnboardingContract.Action.ShowWarningDialog)
         }
     }
 
-    private fun moveToNextStep() {
-        val currentStep = container.stateFlow.value.currentStep
+    private fun moveToNextStep() = intent {
+        val currentStep = state.currentStep
         val nextStep = currentStep + 1
         val nextRoute = OnboardingDestination.getNextRouteForStep(currentStep)
 
-        savedStateHandle["birthDate"] = currentState.birthDate
-        savedStateHandle["birthType"] = currentState.birthType
+        savedStateHandle["birthDate"] = state.birthDate
+        savedStateHandle["birthType"] = state.birthType
 
         if (nextRoute != null) {
             savedStateHandle["currentStep"] = nextStep
-            updateState { copy(currentStep = nextStep) }
-            emitSideEffect(OnboardingContract.SideEffect.NavigateToNextStep(currentStep))
+            reduce { state.copy(currentStep = nextStep) }
+            postSideEffect(OnboardingContract.SideEffect.NavigateToNextStep(currentStep))
         } else {
-            emitSideEffect(OnboardingContract.SideEffect.OnboardingCompleted)
+            postSideEffect(OnboardingContract.SideEffect.OnboardingCompleted)
         }
     }
 
-    private fun moveToPreviousStep() {
-        val currentStep = container.stateFlow.value.currentStep
+    private fun moveToPreviousStep() = intent {
+        val currentStep = state.currentStep
         if (currentStep > 1) {
             val previousStep = currentStep - 1
             savedStateHandle["currentStep"] = previousStep
-            updateState { copy(currentStep = previousStep) }
-            emitSideEffect(OnboardingContract.SideEffect.NavigateBack)
+            reduce { state.copy(currentStep = previousStep) }
+            postSideEffect(OnboardingContract.SideEffect.NavigateBack)
         }
     }
 
-    private fun setAlarmTime(amPm: String, hour: Int, minute: Int) {
+    private fun setAlarmTime(amPm: String, hour: Int, minute: Int) = intent {
         hapticFeedbackManager.performHapticFeedback(HapticType.LIGHT_TICK)
 
-        val newTimeState = currentState.timeState.copy(
+        val newTimeState = state.timeState.copy(
             selectedAmPm = amPm,
             selectedHour = hour,
             selectedMinute = minute,
         )
-        updateState {
-            copy(
+        reduce {
+            state.copy(
                 timeState = newTimeState,
             )
         }
     }
 
-    private fun createAlarm() {
-        viewModelScope.launch {
-            alarmUseCase.getAlarmSounds().onSuccess { sounds ->
-                val defaultSoundIndex = sounds.indexOfFirst { it.title == "Homecoming" }.takeIf { it >= 0 } ?: 0
-                val defaultSoundUri = sounds[defaultSoundIndex]
+    private fun createAlarm() = intent {
+        alarmUseCase.getAlarmSounds().onSuccess { sounds ->
+            val defaultSoundIndex = sounds.indexOfFirst { it.title == "Homecoming" }.takeIf { it >= 0 } ?: 0
+            val defaultSoundUri = sounds[defaultSoundIndex]
 
-                val newAlarm = Alarm(
-                    isAm = currentState.timeState.selectedAmPm == "오전",
-                    hour = currentState.timeState.selectedHour,
-                    minute = currentState.timeState.selectedMinute,
-                    repeatDays = setOf(AlarmDay.MON, AlarmDay.TUE, AlarmDay.WED, AlarmDay.THU, AlarmDay.FRI).toRepeatDays(),
-                    isSnoozeEnabled = true,
-                    snoozeInterval = 5,
-                    snoozeCount = 5,
-                    soundUri = "${defaultSoundUri.uri}",
-                )
+            val newAlarm = Alarm(
+                isAm = state.timeState.selectedAmPm == "오전",
+                hour = state.timeState.selectedHour,
+                minute = state.timeState.selectedMinute,
+                repeatDays = setOf(AlarmDay.MON, AlarmDay.TUE, AlarmDay.WED, AlarmDay.THU, AlarmDay.FRI).toRepeatDays(),
+                isSnoozeEnabled = true,
+                snoozeInterval = 5,
+                snoozeCount = 5,
+                soundUri = "${defaultSoundUri.uri}",
+            )
 
-                alarmUseCase.insertAlarm(
-                    alarm = newAlarm,
-                ).onSuccess {
-                    emitSideEffect(OnboardingContract.SideEffect.OnboardingCompleted)
-                }.onFailure {
-                    Log.e("OnboardingViewModel", "Failed to create alarm", it)
-                }
+            alarmUseCase.insertAlarm(
+                alarm = newAlarm,
+            ).onSuccess {
+                postSideEffect(OnboardingContract.SideEffect.OnboardingCompleted)
             }.onFailure {
-                Log.e("OnboardingViewModel", "Failed to get alarm sounds", it)
+                Log.e("OnboardingViewModel", "Failed to create alarm", it)
             }
+        }.onFailure {
+            Log.e("OnboardingViewModel", "Failed to get alarm sounds", it)
         }
     }
 
-    private fun updateField(value: String, fieldType: OnboardingContract.FieldType) {
+    private fun updateField(value: String, fieldType: OnboardingContract.FieldType) = intent {
         when (fieldType) {
             OnboardingContract.FieldType.TIME -> {
                 val isComplete = value.length == 5
                 val isValid = isComplete && value.matches(fieldType.validationRegex)
 
-                updateState {
-                    copy(
+                reduce {
+                    state.copy(
                         textFieldValue = value,
                         birthTime = if (isValid) value else "",
                         showWarning = isComplete && !isValid,
@@ -187,8 +188,8 @@ class OnboardingViewModel @Inject constructor(
                 val truncatedValue = OnboardingContract.truncateTextToLimit(value)
                 val isValid = truncatedValue.matches(fieldType.validationRegex)
 
-                updateState {
-                    copy(
+                reduce {
+                    state.copy(
                         textFieldValue = truncatedValue,
                         userName = truncatedValue,
                         showWarning = !isValid,
@@ -200,8 +201,8 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
-    private fun updateBirthDate(lunar: String, year: Int, month: Int, day: Int) {
-        if (currentRoute != OnboardingDestination.Birthday::class) return
+    private fun updateBirthDate(lunar: String, year: Int, month: Int, day: Int) = intent {
+        if (currentRoute != OnboardingDestination.Birthday::class) return@intent
 
         val formattedDate = "$year-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}"
 
@@ -209,8 +210,8 @@ class OnboardingViewModel @Inject constructor(
         savedStateHandle["birthDate"] = formattedDate
         savedStateHandle["birthType"] = lunar
 
-        updateState {
-            copy(
+        reduce {
+            state.copy(
                 birthDate = formattedDate,
                 birthType = lunar,
                 isBirthDateValid = true,
@@ -218,9 +219,9 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
-    private fun resetFields() {
-        updateState {
-            copy(
+    private fun resetFields() = intent {
+        reduce {
+            state.copy(
                 textFieldValue = "",
                 showWarning = false,
                 isButtonEnabled = false,
@@ -229,31 +230,29 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
-    private fun updateGender(gender: String) {
-        updateState { copy(selectedGender = gender, isButtonEnabled = true) }
+    private fun updateGender(gender: String) = intent {
+        reduce { state.copy(selectedGender = gender, isButtonEnabled = true) }
     }
 
-    private fun toggleBottomSheet() {
-        val isCurrentlyOpen = container.stateFlow.value.isBottomSheetOpen
-        updateState { copy(isBottomSheetOpen = !isCurrentlyOpen) }
+    private fun toggleBottomSheet() = intent {
+        val isCurrentlyOpen = state.isBottomSheetOpen
+        reduce { state.copy(isBottomSheetOpen = !isCurrentlyOpen) }
     }
 
-    private fun completeOnboarding() {
-        viewModelScope.launch {
-            userInfoRepository.setOnboardingCompleted()
-            emitSideEffect(OnboardingContract.SideEffect.OnboardingCompleted)
-        }
+    private fun completeOnboarding() = intent {
+        userInfoRepository.setOnboardingCompleted()
+        postSideEffect(OnboardingContract.SideEffect.OnboardingCompleted)
     }
 
-    private fun openWebView(url: String) {
-        emitSideEffect(OnboardingContract.SideEffect.OpenWebView(url))
+    private fun openWebView(url: String) = intent {
+        postSideEffect(OnboardingContract.SideEffect.OpenWebView(url))
     }
 
-    private fun showWarningDialog() {
-        updateState { copy(isShowWarningDialog = true) }
+    private fun showWarningDialog() = intent {
+        reduce { state.copy(isShowWarningDialog = true) }
     }
 
-    private fun hideWarningDialog() {
-        updateState { copy(isShowWarningDialog = false) }
+    private fun hideWarningDialog() = intent {
+        reduce { state.copy(isShowWarningDialog = false) }
     }
 }
