@@ -3,18 +3,19 @@ package com.yapp.fortune
 import android.app.Application
 import android.util.Log
 import androidx.annotation.DrawableRes
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.ViewModel
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.fortune.page.toFortunePages
 import com.yapp.media.decoder.ImageUtils
 import com.yapp.media.storage.ImageSaver
-import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
+import org.orbitmvi.orbit.Container
+import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
+import org.orbitmvi.orbit.viewmodel.container
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -24,20 +25,40 @@ class FortuneViewModel @Inject constructor(
     private val application: Application,
     private val fortuneRepository: FortuneRepository,
     private val imageSaver: ImageSaver,
-) : BaseViewModel<FortuneContract.State, FortuneContract.SideEffect>(
-    FortuneContract.State(),
-) {
+) : ViewModel(), ContainerHost<FortuneContract.State, FortuneContract.SideEffect> {
 
-    init {
-        viewModelScope.launch {
-            val fortuneId = fortuneRepository.fortuneIdFlow.firstOrNull()
-            val firstDismissedAlarmId = fortuneRepository.firstDismissedAlarmIdFlow.firstOrNull()
-            val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
-            fortuneId?.let { getFortune(it, firstDismissedAlarmId, fortuneDate) }
+    override val container: Container<FortuneContract.State, FortuneContract.SideEffect> = container(
+        initialState = FortuneContract.State(),
+    ) {
+        loadFortune()
+    }
+
+    fun processAction(action: FortuneContract.Action) {
+        when (action) {
+            is FortuneContract.Action.NextStep -> {
+                moveToNextStep()
+            }
+            is FortuneContract.Action.UpdateStep -> {
+                updateStep(action.step)
+            }
+            is FortuneContract.Action.NavigateToHome -> {
+                navigateToHome()
+            }
+            is FortuneContract.Action.SaveImage -> {
+                saveImage(action.resId)
+            }
         }
     }
-    private fun getFortune(fortuneId: Long, firstDismissedAlarmId: Long?, fortuneDate: String?) = intent {
-        updateState { copy(isLoading = true) }
+
+    private fun loadFortune() = intent {
+        val fortuneId = fortuneRepository.fortuneIdFlow.firstOrNull()
+        val firstDismissedAlarmId = fortuneRepository.firstDismissedAlarmIdFlow.firstOrNull()
+        val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
+        fortuneId?.let { fetchAndUpdateFortune(it, firstDismissedAlarmId, fortuneDate) }
+    }
+
+    private fun fetchAndUpdateFortune(fortuneId: Long, firstDismissedAlarmId: Long?, fortuneDate: String?) = intent {
+        reduce { state.copy(isLoading = true) }
 
         fortuneRepository.getFortune(fortuneId).onSuccess { fortune ->
             val savedImageId = fortuneRepository.fortuneImageIdFlow.firstOrNull()
@@ -46,8 +67,8 @@ class FortuneViewModel @Inject constructor(
             val formattedTitle = fortune.dailyFortuneTitle.replace(",", ",\n").trim()
             val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
             val hasReward = (fortuneDate == todayDate) && (firstDismissedAlarmId != null)
-            updateState {
-                copy(
+            reduce {
+                state.copy(
                     isLoading = false,
                     dailyFortuneTitle = formattedTitle,
                     dailyFortuneDescription = fortune.dailyFortuneDescription,
@@ -59,50 +80,41 @@ class FortuneViewModel @Inject constructor(
             }
         }.onFailure { error ->
             Log.e("FortuneViewModel", "운세 데이터 요청 실패: ${error.message}")
-            updateState { copy(isLoading = false) }
+            reduce { state.copy(isLoading = false) }
         }
     }
 
-    fun saveFortuneImageIdIfNeeded(imageId: Int) = viewModelScope.launch {
+    fun saveFortuneImageIdIfNeeded(imageId: Int) = intent {
         val savedImageId = fortuneRepository.fortuneImageIdFlow.firstOrNull()
         if (savedImageId == null || savedImageId != imageId) {
             fortuneRepository.saveFortuneImageId(imageId)
         }
     }
 
-    fun onAction(action: FortuneContract.Action) = intent {
-        when (action) {
-            is FortuneContract.Action.NextStep -> {
-                if (state.hasReward) {
-                    postSideEffect(FortuneContract.SideEffect.NavigateToFortuneReward)
-                } else {
-                    reduce { state.copy(currentStep = (state.currentStep + 1).coerceAtMost(5)) }
-                }
-            }
-            is FortuneContract.Action.UpdateStep -> {
-                reduce { state.copy(currentStep = action.step) }
-            }
-            is FortuneContract.Action.NavigateToHome -> {
-                navigateToHome()
-            }
-            is FortuneContract.Action.SaveImage -> {
-                saveImage(action.resId)
-            }
+    private fun moveToNextStep() = intent {
+        if (state.hasReward) {
+            postSideEffect(FortuneContract.SideEffect.NavigateToFortuneReward)
+        } else {
+            reduce { state.copy(currentStep = (state.currentStep + 1).coerceAtMost(5)) }
         }
     }
 
-    private fun navigateToHome() {
-        emitSideEffect(FortuneContract.SideEffect.NavigateToHome)
+    private fun updateStep(step: Int) = intent {
+        reduce { state.copy(currentStep = step) }
     }
 
-    private fun saveImage(@DrawableRes resId: Int) = viewModelScope.launch {
+    private fun navigateToHome() = intent {
+        postSideEffect(FortuneContract.SideEffect.NavigateToHome)
+    }
+
+    private fun saveImage(@DrawableRes resId: Int) = intent {
         val bitmap = ImageUtils.getBitmapFromResource(application, resId)
         val byteArray = ImageUtils.bitmapToByteArray(bitmap)
 
         val isSuccess = imageSaver.saveImage(byteArray, "fortune_${System.currentTimeMillis()}.png")
 
         if (isSuccess) {
-            emitSideEffect(
+            postSideEffect(
                 FortuneContract.SideEffect.ShowSnackBar(
                     message = "앨범에 저장되었습니다.",
                     iconRes = core.designsystem.R.drawable.ic_check_green,

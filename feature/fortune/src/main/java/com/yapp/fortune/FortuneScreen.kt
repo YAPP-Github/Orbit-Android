@@ -105,15 +105,15 @@ fun FortuneRoute(
         }
 
         if (state.currentStep != pagerState.currentPage) {
-            viewModel.onAction(FortuneContract.Action.UpdateStep(pagerState.currentPage))
+            viewModel.processAction(FortuneContract.Action.UpdateStep(pagerState.currentPage))
         }
     }
 
     FortuneScreen(
         state = state,
         pagerState = pagerState,
-        onNextStep = { viewModel.onAction(FortuneContract.Action.NextStep) },
-        onNavigateToHome = { viewModel.onAction(FortuneContract.Action.NavigateToHome) },
+        onNextStep = { viewModel.processAction(FortuneContract.Action.NextStep) },
+        onNavigateToHome = { viewModel.processAction(FortuneContract.Action.NavigateToHome) },
         onCloseClick = {
             analyticsHelper.logEvent(
                 AnalyticsEvent(
@@ -123,7 +123,7 @@ fun FortuneRoute(
                     ),
                 ),
             )
-            viewModel.onAction(FortuneContract.Action.NavigateToHome)
+            viewModel.processAction(FortuneContract.Action.NavigateToHome)
         },
     )
 }
