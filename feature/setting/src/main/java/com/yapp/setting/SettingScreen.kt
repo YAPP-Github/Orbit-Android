@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,9 +39,6 @@ fun SettingRoute(
     val state by viewModel.container.stateFlow.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    LaunchedEffect(key1 = Unit) {
-        viewModel.onAction(SettingContract.Action.RefreshUserInfo)
-    }
     SettingScreen(
         state = state,
         onNavigateToEditProfile = {
