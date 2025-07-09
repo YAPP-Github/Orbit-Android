@@ -77,7 +77,8 @@ import com.yapp.ui.component.tooltip.OrbitToolTip
 import com.yapp.ui.utils.heightForScreenPercentage
 import com.yapp.ui.utils.toPx
 import feature.home.R
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.CoroutineScope
+import org.orbitmvi.orbit.compose.collectSideEffect
 
 @Composable
 fun HomeRoute(
@@ -86,7 +87,6 @@ fun HomeRoute(
     snackBarHostState: SnackbarHostState,
 ) {
     val state by viewModel.container.stateFlow.collectAsStateWithLifecycle()
-    val sideEffect = viewModel.container.sideEffectFlow
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -120,49 +120,56 @@ fun HomeRoute(
             }
     }
 
-    LaunchedEffect(sideEffect) {
-        sideEffect.collectLatest { effect ->
-            when (effect) {
-                is HomeContract.SideEffect.NavigateToAddAlarm -> {
-                    navigator.navigateToAddAlarm()
-                }
-
-                is HomeContract.SideEffect.NavigateToEditAlarm -> {
-                    navigator.navigateToEditAlarm(effect.alarmId)
-                }
-
-                is HomeContract.SideEffect.NavigateToFortune -> {
-                    navigator.navigateToFortune()
-                }
-
-                is HomeContract.SideEffect.NavigateToSetting -> {
-                    navigator.navigateToSetting()
-                }
-
-                is HomeContract.SideEffect.ShowSnackBar -> {
-                    val result = showCustomSnackBar(
-                        scope = coroutineScope,
-                        snackBarHostState = snackBarHostState,
-                        message = effect.message,
-                        actionLabel = effect.label,
-                        iconRes = effect.iconRes,
-                        bottomPadding = effect.bottomPadding,
-                        durationMillis = effect.durationMillis,
-                    )
-
-                    when (result) {
-                        SnackbarResult.ActionPerformed -> effect.onAction()
-                        SnackbarResult.Dismissed -> effect.onDismiss()
-                    }
-                }
-            }
-        }
+    viewModel.collectSideEffect {
+        handleSideEffect(it, navigator, snackBarHostState, coroutineScope)
     }
 
     HomeScreen(
         stateProvider = { state },
         eventDispatcher = viewModel::processAction,
     )
+}
+
+private suspend fun handleSideEffect(
+    sideEffect: HomeContract.SideEffect,
+    navigator: OrbitNavigator,
+    snackBarHostState: SnackbarHostState,
+    coroutineScope: CoroutineScope,
+) {
+    when (sideEffect) {
+        is HomeContract.SideEffect.NavigateToAddAlarm -> {
+            navigator.navigateToAddAlarm()
+        }
+
+        is HomeContract.SideEffect.NavigateToEditAlarm -> {
+            navigator.navigateToEditAlarm(sideEffect.alarmId)
+        }
+
+        is HomeContract.SideEffect.NavigateToFortune -> {
+            navigator.navigateToFortune()
+        }
+
+        is HomeContract.SideEffect.NavigateToSetting -> {
+            navigator.navigateToSetting()
+        }
+
+        is HomeContract.SideEffect.ShowSnackBar -> {
+            val result = showCustomSnackBar(
+                scope = coroutineScope,
+                snackBarHostState = snackBarHostState,
+                message = sideEffect.message,
+                actionLabel = sideEffect.label,
+                iconRes = sideEffect.iconRes,
+                bottomPadding = sideEffect.bottomPadding,
+                durationMillis = sideEffect.durationMillis,
+            )
+
+            when (result) {
+                SnackbarResult.ActionPerformed -> sideEffect.onAction()
+                SnackbarResult.Dismissed -> sideEffect.onDismiss()
+            }
+        }
+    }
 }
 
 @Composable
