@@ -2,17 +2,20 @@ package com.yapp.alarm.interaction.action
 
 import android.app.Application
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.ViewModel
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmSnoozeIntent
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.repository.FortuneRepository
-import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import org.orbitmvi.orbit.Container
+import org.orbitmvi.orbit.ContainerHost
+import org.orbitmvi.orbit.syntax.simple.intent
+import org.orbitmvi.orbit.syntax.simple.postSideEffect
+import org.orbitmvi.orbit.syntax.simple.reduce
+import org.orbitmvi.orbit.viewmodel.container
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -25,58 +28,18 @@ class AlarmActionViewModel @Inject constructor(
     private val app: Application,
     private val fortuneRepository: FortuneRepository,
     savedStateHandle: SavedStateHandle,
-) : BaseViewModel<AlarmActionContract.State, AlarmActionContract.SideEffect>(
-    AlarmActionContract.State(),
-) {
-    private val alarmJson: String? = savedStateHandle.get<String>("alarm")
-    private val alarm: Alarm? = alarmJson?.let { Alarm.fromJson(it) }
+) : ViewModel(), ContainerHost<AlarmActionContract.State, AlarmActionContract.SideEffect> {
 
-    init {
+    override val container: Container<AlarmActionContract.State, AlarmActionContract.SideEffect> = container(
+        initialState = AlarmActionContract.State(),
+    ) {
         fetchIsFirstMission()
-        updateState {
-            copy(
-                snoozeEnabled = alarm?.isSnoozeEnabled ?: false,
-                snoozeCount = alarm?.snoozeCount ?: 5,
-                snoozeInterval = alarm?.snoozeInterval ?: 5,
-            )
-        }
-
+        initializeAlarmState()
         startClock()
     }
 
-    private fun fetchIsFirstMission() {
-        viewModelScope.launch {
-            val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
-            val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-            val isFirstMission = fortuneDate != todayDate
-
-            updateState {
-                copy(isFirstMission = isFirstMission)
-            }
-        }
-    }
-
-    private fun startClock() {
-        viewModelScope.launch {
-            while (isActive) {
-                val now = LocalTime.now()
-                val today = LocalDate.now()
-                val dayOfWeek = today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.KOREAN)
-
-                updateState {
-                    copy(
-                        isAm = now.hour < 12,
-                        hour = if (now.hour % 12 == 0) 12 else now.hour % 12,
-                        minute = now.minute,
-                        todayDate = "${today.monthValue}월 ${today.dayOfMonth}일 $dayOfWeek",
-                        initialLoading = false,
-                    )
-                }
-
-                delay(1000L)
-            }
-        }
-    }
+    private val alarmJson: String? = savedStateHandle.get<String>("alarm")
+    private val alarm: Alarm? = alarmJson?.let { Alarm.fromJson(it) }
 
     fun processAction(action: AlarmActionContract.Action) {
         when (action) {
@@ -85,19 +48,59 @@ class AlarmActionViewModel @Inject constructor(
         }
     }
 
-    private fun snooze() {
+    private fun initializeAlarmState() = intent {
+        reduce {
+            state.copy(
+                snoozeEnabled = alarm?.isSnoozeEnabled ?: false,
+                snoozeCount = alarm?.snoozeCount ?: 5,
+                snoozeInterval = alarm?.snoozeInterval ?: 5,
+            )
+        }
+    }
+
+    private fun fetchIsFirstMission() = intent {
+        val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
+        val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+        val isFirstMission = fortuneDate != todayDate
+
+        reduce {
+            state.copy(isFirstMission = isFirstMission)
+        }
+    }
+
+    private fun startClock() = intent {
+        while (true) {
+            val now = LocalTime.now()
+            val today = LocalDate.now()
+            val dayOfWeek = today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.KOREAN)
+
+            reduce {
+                state.copy(
+                    isAm = now.hour < 12,
+                    hour = if (now.hour % 12 == 0) 12 else now.hour % 12,
+                    minute = now.minute,
+                    todayDate = "${today.monthValue}월 ${today.dayOfMonth}일 $dayOfWeek",
+                    initialLoading = false,
+                )
+            }
+
+            delay(1000L)
+        }
+    }
+
+    private fun snooze() = intent {
         sendAlarmSnoozeEventToAlarmReceiver()
-        updateState {
-            copy(
-                snoozeCount = if (currentState.snoozeCount == -1) {
-                    currentState.snoozeCount
+        reduce {
+            state.copy(
+                snoozeCount = if (state.snoozeCount == -1) {
+                    state.snoozeCount
                 } else {
-                    currentState.snoozeCount - 1
+                    state.snoozeCount - 1
                 },
             )
         }
         alarm?.let {
-            emitSideEffect(AlarmActionContract.SideEffect.NavigateToAlarmSnooze(it))
+            postSideEffect(AlarmActionContract.SideEffect.NavigateToAlarmSnooze(it))
         }
     }
 

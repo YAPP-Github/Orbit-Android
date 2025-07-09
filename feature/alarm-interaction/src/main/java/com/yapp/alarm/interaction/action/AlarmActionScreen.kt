@@ -17,7 +17,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +35,7 @@ import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.utils.heightForScreenPercentage
 import feature.alarm.interaction.R
+import org.orbitmvi.orbit.compose.collectSideEffect
 import java.util.Locale
 
 @Composable
@@ -44,22 +44,26 @@ internal fun AlarmActionRoute(
     navigator: OrbitNavigator,
 ) {
     val state by viewModel.container.stateFlow.collectAsStateWithLifecycle()
-    val sideEffect = viewModel.container.sideEffectFlow
 
-    LaunchedEffect(sideEffect) {
-        sideEffect.collect { action ->
-            when (action) {
-                is AlarmActionContract.SideEffect.NavigateToAlarmSnooze -> {
-                    navigator.navigateToAlarmSnoozeTimer(action.alarm)
-                }
-            }
-        }
+    viewModel.collectSideEffect {
+        handleSideEffect(it, navigator)
     }
 
     AlarmActionScreen(
         stateProvider = { state },
         eventDispatcher = viewModel::processAction,
     )
+}
+
+private fun handleSideEffect(
+    sideEffect: AlarmActionContract.SideEffect,
+    navigator: OrbitNavigator,
+) {
+    when (sideEffect) {
+        is AlarmActionContract.SideEffect.NavigateToAlarmSnooze -> {
+            navigator.navigateToAlarmSnoozeTimer(sideEffect.alarm)
+        }
+    }
 }
 
 @Composable
