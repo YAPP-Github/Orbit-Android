@@ -6,16 +6,12 @@ import com.yapp.domain.model.MissionType
 class MissionTypeConverter {
 
     @TypeConverter
-    fun fromString(missionType: String): MissionType {
-        return try {
-            MissionType.valueOf(missionType)
-        } catch (e: IllegalArgumentException) {
-            MissionType.TAP
-        }
+    fun fromInt(value: Int): MissionType {
+        return MissionType.fromInt(value)
     }
 
     @TypeConverter
-    fun toString(missionType: MissionType): String {
-        return missionType.name
+    fun toInt(missionType: MissionType): Int {
+        return missionType.value
     }
 }
