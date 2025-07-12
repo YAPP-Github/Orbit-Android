@@ -29,7 +29,7 @@ sealed class MissionContract {
 
     sealed class SideEffect : com.yapp.ui.base.SideEffect {
         data object NavigateToFortune : SideEffect()
-
+        data object NavigateToHome : SideEffect()
         data object NavigateBack : SideEffect()
     }
 }

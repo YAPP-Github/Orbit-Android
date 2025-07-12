@@ -178,7 +178,7 @@ class MissionViewModel @Inject constructor(
     }
 
     private fun navigateToHome() = intent {
-        postSideEffect(MissionContract.SideEffect.NavigateToFortune)
+        postSideEffect(MissionContract.SideEffect.NavigateToHome)
     }
 
     private fun sendAlarmDismissIntent(id: Long) {

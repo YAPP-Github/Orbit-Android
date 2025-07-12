@@ -44,6 +44,16 @@ private fun handleSideEffect(
             )
         }
 
+        MissionContract.SideEffect.NavigateToHome -> {
+            navigator.navigateToHome(
+                navOptions = navOptions {
+                    popUpTo(MissionRoute) {
+                        inclusive = true
+                    }
+                },
+            )
+        }
+
         MissionContract.SideEffect.NavigateBack -> navigator.navigateBack()
     }
 }
