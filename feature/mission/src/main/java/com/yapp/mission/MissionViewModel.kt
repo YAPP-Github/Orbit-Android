@@ -116,44 +116,30 @@ class MissionViewModel @Inject constructor(
         }
     }
 
-    private fun postFortune() = intent {
+    private fun postFortune(isRetry: Boolean = false) = intent {
         val userId = userInfoRepository.userIdFlow.firstOrNull() ?: return@intent
-        val result = runCatching {
-            withContext(Dispatchers.IO) {
-                fortuneRepository.postFortune(userId)
-            }
+
+        val result = withContext(Dispatchers.IO) {
+            fortuneRepository.postFortune(userId)
         }
 
-        result.onSuccess {
-            val data = it.getOrThrow()
+        result.onSuccess { data ->
             fortuneRepository.saveFortuneId(data.id)
             fortuneRepository.saveFortuneScore(data.avgFortuneScore)
 
             postSideEffect(MissionContract.SideEffect.NavigateToFortune)
         }.onFailure { error ->
-            Log.e("MissionViewModel", "운세 데이터 요청 실패: ${error.message}")
-            reduce { state.copy(errorMessage = error.message) }
+            Log.e("MissionViewModel", "운세 ${if (isRetry) "재요청" else "요청"} 실패: ${error.message}")
+            if (isRetry) {
+                navigateToHome()
+            } else {
+                reduce { state.copy(errorMessage = error.message) }
+            }
         }
     }
 
-    private fun retryPostFortune() = intent {
-        val userId = userInfoRepository.userIdFlow.firstOrNull() ?: return@intent
-        val result = runCatching {
-            withContext(Dispatchers.IO) {
-                fortuneRepository.postFortune(userId)
-            }
-        }
-
-        result.onSuccess {
-            val data = it.getOrThrow()
-            fortuneRepository.saveFortuneId(data.id)
-            fortuneRepository.saveFortuneScore(data.avgFortuneScore)
-
-            postSideEffect(MissionContract.SideEffect.NavigateToFortune)
-        }.onFailure {
-            Log.e("MissionViewModel", "운세 재요청 실패: ${it.message}")
-            navigateToHome()
-        }
+    fun retryPostFortune() {
+        postFortune(isRetry = true)
     }
 
     private fun completeMission(type: String) {
