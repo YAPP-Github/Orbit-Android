@@ -1,8 +1,9 @@
-package com.yapp.data.local
+package com.yapp.database
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.yapp.domain.model.Alarm
+import com.yapp.domain.model.MissionType
 
 @Entity(tableName = AlarmDatabase.DATABASE_NAME)
 data class AlarmEntity(
@@ -10,7 +11,6 @@ data class AlarmEntity(
     val id: Long = 0,
 
     val isAm: Boolean = true,
-
     val hour: Int = 6,
     val minute: Int = 0,
     val second: Int = 0,
@@ -31,6 +31,9 @@ data class AlarmEntity(
     val soundVolume: Int = 70,
 
     val isAlarmActive: Boolean = true,
+
+    val missionType: MissionType = MissionType.TAP,
+    val missionCount: Int = 10,
 )
 
 fun AlarmEntity.toDomain() = Alarm(

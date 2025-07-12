@@ -1,6 +1,6 @@
 package com.yapp.data.local.datasource
 
-import com.yapp.data.local.AlarmEntity
+import com.yapp.database.AlarmEntity
 import com.yapp.domain.model.Alarm
 import kotlinx.coroutines.flow.Flow
 

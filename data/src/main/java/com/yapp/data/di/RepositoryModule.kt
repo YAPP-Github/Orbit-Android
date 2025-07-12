@@ -2,13 +2,11 @@ package com.yapp.data.di
 
 import com.yapp.data.repositoryimpl.AlarmRepositoryImpl
 import com.yapp.data.repositoryimpl.FortuneRepositoryImpl
-import com.yapp.data.repositoryimpl.ImageRepositoryImpl
 import com.yapp.data.repositoryimpl.RemoteConfigRepositoryImpl
 import com.yapp.data.repositoryimpl.SignUpRepositoryImpl
 import com.yapp.data.repositoryimpl.UserInfoRepositoryImpl
 import com.yapp.domain.repository.AlarmRepository
 import com.yapp.domain.repository.FortuneRepository
-import com.yapp.domain.repository.ImageRepository
 import com.yapp.domain.repository.RemoteConfigRepository
 import com.yapp.domain.repository.SignUpRepository
 import com.yapp.domain.repository.UserInfoRepository
@@ -32,12 +30,6 @@ abstract class RepositoryModule {
     abstract fun bindsFortuneRepository(
         fortuneRepository: FortuneRepositoryImpl,
     ): FortuneRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindsImageRepository(
-        imageRepository: ImageRepositoryImpl,
-    ): ImageRepository
 
     @Binds
     @Singleton

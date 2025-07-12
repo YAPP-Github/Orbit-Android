@@ -5,9 +5,9 @@ import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.viewModelScope
 import com.yapp.domain.repository.FortuneRepository
-import com.yapp.domain.repository.ImageRepository
 import com.yapp.fortune.page.toFortunePages
 import com.yapp.media.decoder.ImageUtils
+import com.yapp.media.storage.ImageSaver
 import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.firstOrNull
@@ -23,7 +23,7 @@ import javax.inject.Inject
 class FortuneViewModel @Inject constructor(
     private val application: Application,
     private val fortuneRepository: FortuneRepository,
-    private val imageRepository: ImageRepository,
+    private val imageSaver: ImageSaver,
 ) : BaseViewModel<FortuneContract.State, FortuneContract.SideEffect>(
     FortuneContract.State(),
 ) {
@@ -99,7 +99,7 @@ class FortuneViewModel @Inject constructor(
         val bitmap = ImageUtils.getBitmapFromResource(application, resId)
         val byteArray = ImageUtils.bitmapToByteArray(bitmap)
 
-        val isSuccess = imageRepository.saveImage(byteArray)
+        val isSuccess = imageSaver.saveImage(byteArray, "fortune_${System.currentTimeMillis()}.png")
 
         if (isSuccess) {
             emitSideEffect(

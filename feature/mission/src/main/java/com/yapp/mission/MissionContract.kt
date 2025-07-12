@@ -5,7 +5,7 @@ import com.yapp.domain.model.MissionType
 sealed class MissionContract {
 
     data class State(
-        val missionType: MissionType = MissionType.Click,
+        val missionType: MissionType = MissionType.TAP,
         val isMissionTypeLoading: Boolean = true,
         val isMissionCompleted: Boolean = false,
         val shakeCount: Int = 0,

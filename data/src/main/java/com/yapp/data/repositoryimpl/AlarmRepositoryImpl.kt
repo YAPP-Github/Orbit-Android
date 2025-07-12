@@ -2,7 +2,7 @@ package com.yapp.data.repositoryimpl
 
 import android.net.Uri
 import com.yapp.data.local.datasource.AlarmLocalDataSource
-import com.yapp.data.local.toEntity
+import com.yapp.database.toEntity
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmSound
 import com.yapp.domain.repository.AlarmRepository

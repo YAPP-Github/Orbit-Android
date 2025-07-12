@@ -2,7 +2,7 @@ package com.yapp.data.remote.datasource
 
 import com.yapp.data.remote.dto.response.FortuneResponse
 import com.yapp.data.remote.service.ApiService
-import com.yapp.data.remote.utils.safeApiCall
+import com.yapp.network.utils.safeApiCall
 import javax.inject.Inject
 
 class FortuneDataSourceImpl @Inject constructor(

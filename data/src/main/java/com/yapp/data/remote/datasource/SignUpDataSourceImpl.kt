@@ -3,8 +3,8 @@ package com.yapp.data.remote.datasource
 import android.util.Log
 import com.yapp.data.remote.dto.request.SignUpRequest
 import com.yapp.data.remote.service.ApiService
-import com.yapp.data.remote.utils.ApiError
-import com.yapp.data.remote.utils.safeApiCall
+import com.yapp.network.model.ApiError
+import com.yapp.network.utils.safeApiCall
 import javax.inject.Inject
 
 class SignUpDataSourceImpl @Inject constructor(

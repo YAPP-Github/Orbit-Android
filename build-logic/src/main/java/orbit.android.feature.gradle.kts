@@ -6,12 +6,6 @@ plugins {
     id("orbit.android.compose")
 }
 
-android {
-    defaultConfig {
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-}
-
 configureHiltAndroid()
 
 dependencies {

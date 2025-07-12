@@ -29,7 +29,7 @@ kotlinx-collections = "0.3.7"
 androidx-app-compat = "1.7.0"
 androidx-core = "1.15.0"
 androidx-datastore = "1.1.1"
-androidx-room = "2.6.1"
+androidx-room = "2.7.2"
 
 androidx-lifecycle = "2.8.7"
 
@@ -49,12 +49,7 @@ hilt-navigation-compose = "1.2.0"
 ## Third Party
 okhttp = "4.12.0"
 retrofit = "2.11.0"
-retrofit-kotlinx-serialization-json = "1.0.0"
 coil = "2.4.0"
-sentry = "5.0.0"
-sentry-android = "8.0.0"
-sentry-compose = "8.0.0"
-gson = "2.11.0"
 
 # Google Libraries Versions
 google-service = "4.4.2"
@@ -82,7 +77,6 @@ process-pheonix = "3.0.0"
 lottie = "6.1.0"
 accompanist = "0.37.0"
 materialAndroid = "1.7.5"
-flexible-bottomsheet = "0.1.5"
 amplitude = "1.20.3"
 
 [libraries]
@@ -107,6 +101,7 @@ androidx-datastore = { group = "androidx.datastore", name = "datastore-preferenc
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "androidx-room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
+androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "androidx-room" }
 androidx-room-paging = { group = "androidx.room", name = "room-paging", version.ref = "androidx-room" }
 androidx-annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
 
@@ -137,7 +132,6 @@ hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testi
 hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt-navigation-compose" }
 
-
 # Orbit
 orbit-core = { group = "org.orbit-mvi", name = "orbit-core", version.ref = "orbit" }
 orbit-compose = { group = "org.orbit-mvi", name = "orbit-compose", version.ref = "orbit" }
@@ -148,9 +142,6 @@ retrofit-core = { group = "com.squareup.retrofit2", name = "retrofit", version.r
 retrofit-kotlin-serialization = { module = "com.squareup.retrofit2:converter-kotlinx-serialization", version.ref = "retrofit" }
 okhttp-bom = { group = "com.squareup.okhttp3", name = "okhttp-bom", version.ref = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
-flexible-bottomsheet = { group = "com.github.skydoves", name = "flexible-bottomsheet-material3", version.ref = "flexible-bottomsheet" }
-#sentry-android = { group = "io.sentry", name = "sentry-android", version.ref = "sentry-android" }
-#sentry-compose = { group = "io.sentry", name = "sentry-compose", version.ref = "sentry-compose" }
 
 # Google Libraries
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
@@ -194,10 +185,10 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }
 android-library = { id = "com.android.library", version.ref = "android-gradle-plugin" }
+room = { id = "androidx.room", version.ref = "androidx-room" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 android-test = { id = "com.android.test", version.ref = "android-gradle-plugin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-service = { id = "com.google.gms.google-services", version.ref = "google-service" }
 firebase-app-distribution = { id = "com.google.firebase.appdistribution", version.ref = "firebase-app-distribution" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics" }
-#sentry = { id = "io.sentry.android.gradle", version.ref = "sentry" }

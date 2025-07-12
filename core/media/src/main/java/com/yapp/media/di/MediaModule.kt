@@ -1,9 +1,8 @@
-package com.yapp.data.local.di
+package com.yapp.media.di
 
 import android.content.ContentResolver
 import android.content.Context
-import com.yapp.data.local.datasource.ImageLocalDataSource
-import com.yapp.data.local.datasource.ImageLocalDataSourceImpl
+import com.yapp.media.storage.ImageSaver
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,7 +22,9 @@ object MediaModule {
 
     @Provides
     @Singleton
-    fun provideImageLocalDataSource(contentResolver: ContentResolver): ImageLocalDataSource {
-        return ImageLocalDataSourceImpl(contentResolver)
+    fun provideImageSaver(
+        contentResolver: ContentResolver,
+    ): ImageSaver {
+        return ImageSaver(contentResolver)
     }
 }
