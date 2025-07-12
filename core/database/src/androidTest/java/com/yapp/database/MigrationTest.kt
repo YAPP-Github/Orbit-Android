@@ -25,7 +25,7 @@ class MigrationTest {
 
     @Test
     @Throws(IOException::class)
-    fun migrate1To2() {
+    fun `버전1에서_버전2로_마이그레이션시_새_컬럼이_기본값으로_채워짐`() {
         helper.createDatabase(testDbName, 1).apply {
             execSQL(
                 """
