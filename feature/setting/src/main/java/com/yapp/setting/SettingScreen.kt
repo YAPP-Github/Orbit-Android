@@ -42,9 +42,9 @@ fun SettingRoute(
     SettingScreen(
         state = state,
         onNavigateToEditProfile = {
-            viewModel.onAction(SettingContract.Action.NavigateToEditProfile)
+            viewModel.processAction(SettingContract.Action.NavigateToEditProfile)
         },
-        onBackClick = { viewModel.onAction(SettingContract.Action.PreviousStep) },
+        onBackClick = { viewModel.processAction(SettingContract.Action.PreviousStep) },
         onInquiryClick = {
             val kakaoUrl = "http://pf.kakao.com/_ykqxjn"
             val kakaoSchemeUrl = "kakaoplus://plusfriend/home/_ykqxjn"
@@ -54,18 +54,18 @@ fun SettingRoute(
             try {
                 context.startActivity(kakaoIntent) // 카카오톡 앱으로 이동
             } catch (e: Exception) {
-                viewModel.onAction(
+                viewModel.processAction(
                     SettingContract.Action.OpenWebView(kakaoUrl), // 앱이 없으면 웹뷰로 열기
                 )
             }
         },
         onTermsClick = {
-            viewModel.onAction(
+            viewModel.processAction(
                 SettingContract.Action.OpenWebView("https://www.orbitalarm.net/terms.html"),
             )
         },
         onPrivacyPolicyClick = {
-            viewModel.onAction(
+            viewModel.processAction(
                 SettingContract.Action.OpenWebView("https://www.orbitalarm.net/privacy.html"),
             )
         },

@@ -29,7 +29,7 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    fun onAction(action: SettingContract.Action) = intent {
+    fun processAction(action: SettingContract.Action) = intent {
         when (action) {
             SettingContract.Action.PreviousStep -> navigateBack()
             SettingContract.Action.NavigateToEditProfile -> navigateToEditProfile()
