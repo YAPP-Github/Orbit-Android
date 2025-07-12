@@ -92,7 +92,7 @@ class OnboardingViewModel @Inject constructor(
             reduce { state.copy(isBottomSheetOpen = false) }
             moveToNextStep()
         } else {
-            processAction(OnboardingContract.Action.ShowWarningDialog)
+            showWarningDialog()
         }
     }
 
