@@ -18,4 +18,5 @@ dependencies {
     implementation(libs.orbit.viewmodel)
     implementation(libs.lottie.compose)
     implementation(libs.play.services.ads)
+    implementation(libs.kotlinx.datetime)
 }

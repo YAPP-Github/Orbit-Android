@@ -37,23 +37,29 @@ fun OrbitYearMonthPicker(
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
 
+    val lunarItems = remember { listOf("양력", "음력") }
+    val yearItems = remember { (1900..2024).map { it.toString() } }
+    val monthItems = remember { (1..12).map { it.toString() } }
+
+    val startIndexYear = yearItems.indexOf(initialYear).coerceAtLeast(0)
+    val startIndexMonth = monthItems.indexOf(initialMonth).coerceAtLeast(0)
+
     val lunarState = remember { mutableStateOf(initialLunar) }
     val yearState = remember { mutableIntStateOf(initialYear.toInt()) }
     val monthState = remember { mutableIntStateOf(initialMonth.toInt()) }
-
-    val maxDay = getMaxDaysInMonth(yearState.intValue, monthState.intValue)
-    val dayItems = (1..maxDay).map { it.toString() }
-
-    val startIndexYear = (1900..2024).map { it.toString() }.indexOf(initialYear).takeIf { it >= 0 } ?: 0
-    val startIndexMonth = (1..12).map { it.toString() }.indexOf(initialMonth).takeIf { it >= 0 } ?: 0
-    val startIndexDay = dayItems.indexOf(initialDay).takeIf { it >= 0 } ?: 0
-
     val dayState = remember { mutableIntStateOf(initialDay.toInt()) }
 
-    val yearPickerState = rememberPickerState(startIndex = startIndexYear)
-    val monthPickerState = rememberPickerState(startIndex = startIndexMonth)
-    val dayPickerState = rememberPickerState(startIndex = startIndexDay)
+    val yearPickerState = rememberPickerState(initialIndex = startIndexYear, items = yearItems)
+    val monthPickerState = rememberPickerState(initialIndex = startIndexMonth, items = monthItems)
 
+    // dayItems는 year/month 변경 시마다 동기화
+    val dayItems = remember(yearState.intValue, monthState.intValue) {
+        (1..getMaxDaysInMonth(yearState.intValue, monthState.intValue)).map { it.toString() }
+    }
+    val startIndexDay = dayItems.indexOf(initialDay).coerceAtLeast(0)
+    val dayPickerState = rememberPickerState(initialIndex = startIndexDay, items = dayItems)
+
+    // 일 수 넘어가는 경우 조정
     LaunchedEffect(yearState.intValue, monthState.intValue) {
         val newMaxDay = getMaxDaysInMonth(yearState.intValue, monthState.intValue)
         if (dayState.intValue > newMaxDay) {
@@ -61,25 +67,18 @@ fun OrbitYearMonthPicker(
         }
     }
 
+    // 변경 콜백
     LaunchedEffect(lunarState.value, yearState.intValue, monthState.intValue, dayState.intValue) {
         onValueChange(lunarState.value, yearState.intValue, monthState.intValue, dayState.intValue)
     }
 
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-    ) {
+    Surface(modifier = modifier.fillMaxWidth()) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Bottom,
             modifier = Modifier.background(OrbitTheme.colors.gray_900),
         ) {
-            val lunarItems = listOf("양력", "음력")
-            val yearItems = (1900..2024).map { it.toString() }
-            val monthItems = (1..12).map { it.toString() }
-
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -90,7 +89,9 @@ fun OrbitYearMonthPicker(
                 )
 
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = screenWidth * 0.1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = screenWidth * 0.1f),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     OrbitPickerItem(
@@ -142,9 +143,6 @@ fun OrbitYearMonthPicker(
     }
 }
 
-/**
- * 특정 연도와 월에 따른 최대 일 수를 반환.
- */
 private fun getMaxDaysInMonth(year: Int, month: Int): Int {
     return when (month) {
         1, 3, 5, 7, 8, 10, 12 -> 31
@@ -154,9 +152,6 @@ private fun getMaxDaysInMonth(year: Int, month: Int): Int {
     }
 }
 
-/**
- * 윤년 계산
- */
 private fun isLeapYear(year: Int): Boolean {
     return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
 }
