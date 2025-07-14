@@ -5,6 +5,7 @@ import androidx.compose.ui.unit.dp
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
 import com.yapp.domain.model.AlarmSound
+import com.yapp.domain.model.MissionType
 import com.yapp.domain.model.toRepeatDays
 import com.yapp.ui.base.UiState
 
@@ -16,6 +17,7 @@ sealed class AlarmAddEditContract {
         val timeState: AlarmTimeState = AlarmTimeState(),
         val daySelectionState: AlarmDaySelectionState = AlarmDaySelectionState(),
         val holidayState: AlarmHolidayState = AlarmHolidayState(),
+        val missionState: AlarmMissionState = AlarmMissionState(),
         val snoozeState: AlarmSnoozeState = AlarmSnoozeState(),
         val soundState: AlarmSoundState = AlarmSoundState(),
         val bottomSheetState: BottomSheetType? = null,
@@ -43,6 +45,11 @@ sealed class AlarmAddEditContract {
     data class AlarmHolidayState(
         val isDisableHolidayEnabled: Boolean = false,
         val isDisableHolidayChecked: Boolean = false,
+    )
+
+    data class AlarmMissionState(
+        val isMissionEnabled: Boolean = false,
+        val missionType: MissionType = MissionType.TAP,
     )
 
     data class AlarmSnoozeState(

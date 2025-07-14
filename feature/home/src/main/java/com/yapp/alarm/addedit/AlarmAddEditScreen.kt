@@ -57,6 +57,7 @@ import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.AlarmDay
 import com.yapp.domain.model.AlarmSound
+import com.yapp.domain.model.MissionType
 import com.yapp.home.ADD_ALARM_RESULT_KEY
 import com.yapp.home.DELETE_ALARM_RESULT_KEY
 import com.yapp.home.UPDATE_ALARM_RESULT_KEY
@@ -192,6 +193,13 @@ fun AlarmAddEditContent(
                 eventDispatcher(AlarmAddEditContract.Action.SetAlarmTime(amPm, hour, minute))
             }
         }
+        AlarmAddEditSelectDaysSection(
+            modifier = Modifier.padding(horizontal = 20.dp),
+            daysSelectionState = state.daySelectionState,
+            holidayState = state.holidayState,
+            processAction = eventDispatcher,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
         AlarmAddEditSettingsSection(
             modifier = Modifier.padding(horizontal = 20.dp),
             state = state,
@@ -409,13 +417,22 @@ private fun AlarmAddEditSettingsSection(
                 shape = RoundedCornerShape(12.dp),
             ),
     ) {
-        AlarmAddEditSelectDaysSection(
-            state = state.daySelectionState,
-            processAction = processAction,
-        )
-        AlarmAddEditDisableHolidaySwitch(
-            state = state.holidayState,
-            processAction = processAction,
+        AlarmAddEditSettingItem(
+            label = stringResource(id = R.string.alarm_add_edit_mission),
+            description = if (state.missionState.isMissionEnabled) {
+                when (state.missionState.missionType) {
+                    MissionType.TAP -> {
+                        stringResource(id = R.string.alarm_add_edit_selected_mission_tap)
+                    }
+                    MissionType.SHAKE -> {
+                        stringResource(id = R.string.alarm_add_edit_selected_mission_shake)
+                    }
+                }
+            } else {
+                stringResource(id = R.string.alarm_add_edit_selected_mission_none)
+            },
+            onClick = {
+            },
         )
         Spacer(
             modifier = Modifier
@@ -424,7 +441,6 @@ private fun AlarmAddEditSettingsSection(
                 .padding(horizontal = 20.dp)
                 .background(OrbitTheme.colors.gray_700),
         )
-
         AlarmAddEditSettingItem(
             label = stringResource(id = R.string.alarm_add_edit_alarm_snooze),
             description = if (state.snoozeState.isSnoozeEnabled) {
@@ -545,79 +561,96 @@ private fun AlarmAddEditSettingItem(
 
 @Composable
 private fun AlarmAddEditSelectDaysSection(
-    state: AlarmAddEditContract.AlarmDaySelectionState,
+    modifier: Modifier = Modifier,
+    daysSelectionState: AlarmAddEditContract.AlarmDaySelectionState,
+    holidayState: AlarmAddEditContract.AlarmHolidayState,
     processAction: (AlarmAddEditContract.Action) -> Unit,
 ) {
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp.dp
 
     Column(
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                color = OrbitTheme.colors.gray_800,
+                shape = RoundedCornerShape(12.dp),
+            )
+            .clip(
+                shape = RoundedCornerShape(12.dp),
+            ),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
         ) {
-            Text(
-                text = stringResource(id = R.string.alarm_add_edit_repeat),
-                style = OrbitTheme.typography.body1SemiBold,
-                color = OrbitTheme.colors.white,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(id = R.string.alarm_add_edit_repeat),
+                    style = OrbitTheme.typography.body1SemiBold,
+                    color = OrbitTheme.colors.white,
+                )
 
-            Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.weight(1f))
 
-            AlarmCheckItem(
-                label = stringResource(id = R.string.alarm_add_edit_weekdays),
-                isPressed = state.isWeekdaysChecked,
-                onClick = {
-                    processAction(AlarmAddEditContract.Action.ToggleWeekdaysSelection)
-                },
-            )
-            Spacer(modifier = Modifier.width(2.dp))
-            AlarmCheckItem(
-                label = stringResource(id = R.string.alarm_add_edit_weekends),
-                isPressed = state.isWeekendsChecked,
-                onClick = {
-                    processAction(AlarmAddEditContract.Action.ToggleWeekendsSelection)
-                },
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            state.days.forEach { day ->
-                AlarmDayButton(
-                    modifier = Modifier.size(
-                        if (screenWidthDp > 360.dp) 36.dp else 34.dp,
-                    ),
-                    label = stringResource(id = day.getLabelStringRes()),
-                    isPressed = state.selectedDays.contains(day),
+                AlarmCheckItem(
+                    label = stringResource(id = R.string.alarm_add_edit_weekdays),
+                    isPressed = daysSelectionState.isWeekdaysChecked,
                     onClick = {
-                        processAction(AlarmAddEditContract.Action.ToggleSpecificDaySelection(day))
+                        processAction(AlarmAddEditContract.Action.ToggleWeekdaysSelection)
+                    },
+                )
+                Spacer(modifier = Modifier.width(2.dp))
+                AlarmCheckItem(
+                    label = stringResource(id = R.string.alarm_add_edit_weekends),
+                    isPressed = daysSelectionState.isWeekendsChecked,
+                    onClick = {
+                        processAction(AlarmAddEditContract.Action.ToggleWeekendsSelection)
                     },
                 )
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                daysSelectionState.days.forEach { day ->
+                    AlarmDayButton(
+                        modifier = Modifier.size(
+                            if (screenWidthDp > 360.dp) 36.dp else 34.dp,
+                        ),
+                        label = stringResource(id = day.getLabelStringRes()),
+                        isPressed = daysSelectionState.selectedDays.contains(day),
+                        onClick = {
+                            processAction(AlarmAddEditContract.Action.ToggleSpecificDaySelection(day))
+                        },
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            AlarmAddEditDisableHolidaySwitch(
+                state = holidayState,
+                processAction = processAction,
+            )
         }
     }
 }
 
 @Composable
 private fun AlarmAddEditDisableHolidaySwitch(
+    modifier: Modifier = Modifier,
     state: AlarmAddEditContract.AlarmHolidayState,
     processAction: (AlarmAddEditContract.Action) -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                start = 20.dp,
-                end = 20.dp,
-                bottom = 16.dp,
-            ),
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -681,25 +714,34 @@ fun AlarmAddEditSettingItemPreview() {
 @Preview
 @Composable
 fun AlarmAddEditScreenPreview() {
-    AlarmAddEditScreen(
-        stateProvider = {
-            AlarmAddEditContract.State(
-                timeState = AlarmAddEditContract.AlarmTimeState(
-                    currentAmPm = "AM",
-                    currentHour = 9,
-                    currentMinute = 30,
-                ),
-                daySelectionState = AlarmAddEditContract.AlarmDaySelectionState(
-                    isWeekdaysChecked = true,
-                    isWeekendsChecked = false,
-                    selectedDays = setOf(AlarmDay.MON, AlarmDay.TUE),
-                    days = AlarmDay.entries.toSet(),
-                ),
-                holidayState = AlarmAddEditContract.AlarmHolidayState(
-                    isDisableHolidayChecked = false,
-                ),
+    OrbitTheme {
+        Box(
+            modifier = Modifier.background(
+                color = OrbitTheme.colors.gray_900,
+            ),
+        ) {
+            AlarmAddEditScreen(
+                stateProvider = {
+                    AlarmAddEditContract.State(
+                        initialLoading = false,
+                        timeState = AlarmAddEditContract.AlarmTimeState(
+                            currentAmPm = "AM",
+                            currentHour = 9,
+                            currentMinute = 30,
+                        ),
+                        daySelectionState = AlarmAddEditContract.AlarmDaySelectionState(
+                            isWeekdaysChecked = true,
+                            isWeekendsChecked = false,
+                            selectedDays = setOf(AlarmDay.MON, AlarmDay.TUE),
+                            days = AlarmDay.entries.toSet(),
+                        ),
+                        holidayState = AlarmAddEditContract.AlarmHolidayState(
+                            isDisableHolidayChecked = false,
+                        ),
+                    )
+                },
+                eventDispatcher = { },
             )
-        },
-        eventDispatcher = { },
-    )
+        }
+    }
 }

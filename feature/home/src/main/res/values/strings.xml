@@ -32,6 +32,11 @@
     <string name="alarm_add_edit_saturday">토</string>
     <string name="alarm_add_edit_disable_holiday">공휴일 알람 끄기</string>
 
+    <string name="alarm_add_edit_mission">미션</string>
+    <string name="alarm_add_edit_selected_mission_shake">흔들기</string>
+    <string name="alarm_add_edit_selected_mission_tap">터치하기</string>
+    <string name="alarm_add_edit_selected_mission_none">없음</string>
+
     <string name="alarm_add_edit_alarm_selected_option">%s, %s</string>
     <string name="alarm_add_edit_alarm_selected_option_none">안 함</string>
 
