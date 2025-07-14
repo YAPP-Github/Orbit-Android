@@ -71,7 +71,7 @@ fun OrbitPicker(
                         .fillMaxWidth()
                         .align(Alignment.Center)
                         .padding(horizontal = 20.dp)
-                        .height(50.dp)
+                        .height(45.dp)
                         .background(OrbitTheme.colors.gray_700, shape = RoundedCornerShape(12.dp)),
                 )
 
@@ -86,7 +86,7 @@ fun OrbitPicker(
                         items = amPmItems,
                         visibleItemsCount = 3,
                         itemSpacing = itemSpacing,
-                        textStyle = OrbitTheme.typography.title2Medium,
+                        textStyle = OrbitTheme.typography.heading1SemiBold,
                         modifier = Modifier.weight(1f),
                         textModifier = Modifier.padding(8.dp),
                         infiniteScroll = false,
@@ -105,7 +105,7 @@ fun OrbitPicker(
                         items = hourItems,
                         visibleItemsCount = 5,
                         itemSpacing = itemSpacing,
-                        textStyle = OrbitTheme.typography.title2Medium,
+                        textStyle = OrbitTheme.typography.heading1SemiBold,
                         modifier = Modifier.weight(1f),
                         textModifier = Modifier.padding(8.dp),
                         infiniteScroll = true,
@@ -131,7 +131,7 @@ fun OrbitPicker(
                         items = minuteItems,
                         visibleItemsCount = 5,
                         itemSpacing = itemSpacing,
-                        textStyle = OrbitTheme.typography.title2Medium,
+                        textStyle = OrbitTheme.typography.heading1SemiBold,
                         modifier = Modifier.weight(1f),
                         textModifier = Modifier.padding(8.dp),
                         infiniteScroll = true,
