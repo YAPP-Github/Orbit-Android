@@ -32,7 +32,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -68,8 +67,9 @@ import com.yapp.ui.component.snackbar.showCustomSnackBar
 import com.yapp.ui.component.switch.OrbitSwitch
 import com.yapp.ui.component.timepicker.OrbitPicker
 import feature.home.R
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.orbitmvi.orbit.compose.collectSideEffect
 
 @Composable
 fun AlarmAddEditRoute(
@@ -78,58 +78,64 @@ fun AlarmAddEditRoute(
     snackBarHostState: SnackbarHostState,
 ) {
     val state by viewModel.container.stateFlow.collectAsStateWithLifecycle()
-    val sideEffect = viewModel.container.sideEffectFlow
 
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(sideEffect) {
-        sideEffect.collectLatest { effect ->
-            when (effect) {
-                is AlarmAddEditContract.SideEffect.NavigateBack -> {
-                    navigator.navigateBack()
-                }
-                is AlarmAddEditContract.SideEffect.SaveAlarm -> {
-                    navigator.navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set(ADD_ALARM_RESULT_KEY, effect.id)
-                    navigator.navController.popBackStack()
-                }
-                is AlarmAddEditContract.SideEffect.UpdateAlarm -> {
-                    navigator.navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set(UPDATE_ALARM_RESULT_KEY, effect.id)
-                    navigator.navigateBack()
-                }
-                is AlarmAddEditContract.SideEffect.DeleteAlarm -> {
-                    navigator.navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set(DELETE_ALARM_RESULT_KEY, effect.id)
-                    navigator.navigateBack()
-                }
-                is AlarmAddEditContract.SideEffect.ShowSnackBar -> {
-                    val result = showCustomSnackBar(
-                        scope = coroutineScope,
-                        snackBarHostState = snackBarHostState,
-                        message = effect.message,
-                        actionLabel = effect.label,
-                        iconRes = effect.iconRes,
-                        bottomPadding = effect.bottomPadding,
-                        durationMillis = effect.durationMillis,
-                    )
-
-                    when (result) {
-                        SnackbarResult.ActionPerformed -> effect.onAction()
-                        SnackbarResult.Dismissed -> effect.onDismiss()
-                    }
-                }
-            }
-        }
+    viewModel.collectSideEffect {
+        handleSideEffect(it, navigator, snackBarHostState, coroutineScope)
     }
 
     AlarmAddEditScreen(
         stateProvider = { state },
         eventDispatcher = viewModel::processAction,
     )
+}
+
+private suspend fun handleSideEffect(
+    sideEffect: AlarmAddEditContract.SideEffect,
+    navigator: OrbitNavigator,
+    snackBarHostState: SnackbarHostState,
+    coroutineScope: CoroutineScope,
+) {
+    when (sideEffect) {
+        is AlarmAddEditContract.SideEffect.NavigateBack -> {
+            navigator.navigateBack()
+        }
+        is AlarmAddEditContract.SideEffect.SaveAlarm -> {
+            navigator.navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set(ADD_ALARM_RESULT_KEY, sideEffect.id)
+            navigator.navController.popBackStack()
+        }
+        is AlarmAddEditContract.SideEffect.UpdateAlarm -> {
+            navigator.navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set(UPDATE_ALARM_RESULT_KEY, sideEffect.id)
+            navigator.navigateBack()
+        }
+        is AlarmAddEditContract.SideEffect.DeleteAlarm -> {
+            navigator.navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set(DELETE_ALARM_RESULT_KEY, sideEffect.id)
+            navigator.navigateBack()
+        }
+        is AlarmAddEditContract.SideEffect.ShowSnackBar -> {
+            val result = showCustomSnackBar(
+                scope = coroutineScope,
+                snackBarHostState = snackBarHostState,
+                message = sideEffect.message,
+                actionLabel = sideEffect.label,
+                iconRes = sideEffect.iconRes,
+                bottomPadding = sideEffect.bottomPadding,
+                durationMillis = sideEffect.durationMillis,
+            )
+
+            when (result) {
+                SnackbarResult.ActionPerformed -> sideEffect.onAction()
+                SnackbarResult.Dismissed -> sideEffect.onDismiss()
+            }
+        }
+    }
 }
 
 @Composable

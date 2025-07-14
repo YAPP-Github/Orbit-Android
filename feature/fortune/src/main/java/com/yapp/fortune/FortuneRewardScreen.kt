@@ -55,15 +55,15 @@ fun FortuneRewardRoute(
 
     FortuneRewardScreen(
         state = state,
-        onCloseClick = { viewModel.onAction(FortuneContract.Action.NavigateToHome) },
-        onCompleteClick = { viewModel.onAction(FortuneContract.Action.NavigateToHome) },
+        onCloseClick = { viewModel.processAction(FortuneContract.Action.NavigateToHome) },
+        onCompleteClick = { viewModel.processAction(FortuneContract.Action.NavigateToHome) },
         onSaveImage = {
             analyticsHelper.logEvent(
                 AnalyticsEvent(
                     type = "fortune_talisman_save",
                 ),
             )
-            viewModel.onAction(FortuneContract.Action.SaveImage(it))
+            viewModel.processAction(FortuneContract.Action.SaveImage(it))
         },
     )
 }

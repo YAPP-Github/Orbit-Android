@@ -32,14 +32,14 @@ fun EditBirthdayRoute(
 
     EditBirthdayScreen(
         state = state,
-        onBack = { viewModel.onAction(SettingContract.Action.PreviousStep) },
+        onBack = { viewModel.processAction(SettingContract.Action.PreviousStep) },
         onConfirmExit = {
-            viewModel.onAction(SettingContract.Action.HideDialog)
-            viewModel.onAction(SettingContract.Action.PreviousStep)
+            viewModel.processAction(SettingContract.Action.HideDialog)
+            viewModel.processAction(SettingContract.Action.PreviousStep)
         },
-        onCancelDialog = { viewModel.onAction(SettingContract.Action.HideDialog) },
+        onCancelDialog = { viewModel.processAction(SettingContract.Action.HideDialog) },
         onUpdateBirthDate = { lunar, year, month, day ->
-            viewModel.onAction(
+            viewModel.processAction(
                 SettingContract.Action.UpdateBirthDate(
                     lunar,
                     year,
@@ -48,7 +48,7 @@ fun EditBirthdayRoute(
                 ),
             )
         },
-        onConfirm = { viewModel.onAction(SettingContract.Action.ConfirmAndNavigateBack) },
+        onConfirm = { viewModel.processAction(SettingContract.Action.ConfirmAndNavigateBack) },
     )
 }
 

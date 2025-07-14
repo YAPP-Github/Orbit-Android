@@ -3,7 +3,7 @@ package com.yapp.mission
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.ViewModel
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
@@ -13,13 +13,17 @@ import com.yapp.domain.repository.UserInfoRepository
 import com.yapp.domain.usecase.GetMissionTypeUseCase
 import com.yapp.media.haptic.HapticFeedbackManager
 import com.yapp.media.haptic.HapticType
-import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.orbitmvi.orbit.Container
+import org.orbitmvi.orbit.ContainerHost
+import org.orbitmvi.orbit.syntax.simple.intent
+import org.orbitmvi.orbit.syntax.simple.postSideEffect
+import org.orbitmvi.orbit.syntax.simple.reduce
+import org.orbitmvi.orbit.viewmodel.container
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,26 +35,15 @@ class MissionViewModel @Inject constructor(
     private val getMissionTypeUseCase: GetMissionTypeUseCase,
     private val app: Application,
     savedStateHandle: SavedStateHandle,
-) : BaseViewModel<MissionContract.State, MissionContract.SideEffect>(
-    MissionContract.State(),
-) {
-    init {
+) : ViewModel(), ContainerHost<MissionContract.State, MissionContract.SideEffect> {
+
+    override val container: Container<MissionContract.State, MissionContract.SideEffect> = container(
+        initialState = MissionContract.State(),
+    ) {
         savedStateHandle.get<String>("notificationId")?.toLong()?.let {
             sendAlarmDismissIntent(it)
         }
         loadRemoteMissionType()
-    }
-
-    private fun loadRemoteMissionType() {
-        viewModelScope.launch {
-            val missionType = getMissionTypeUseCase.execute()
-            updateState {
-                copy(
-                    missionType = missionType,
-                    isMissionTypeLoading = false,
-                )
-            }
-        }
     }
 
     fun processAction(action: MissionContract.Action) {
@@ -63,25 +56,35 @@ class MissionViewModel @Inject constructor(
         }
     }
 
-    private fun showExitDialog() {
-        updateState { copy(showExitDialog = true) }
+    private fun loadRemoteMissionType() = intent {
+        val missionType = getMissionTypeUseCase.execute()
+        reduce {
+            state.copy(
+                missionType = missionType,
+                isMissionTypeLoading = false,
+            )
+        }
     }
 
-    private fun hideExitDialog() {
-        updateState { copy(showExitDialog = false) }
+    private fun showExitDialog() = intent {
+        reduce { state.copy(showExitDialog = true) }
     }
 
-    private fun handleShake() = viewModelScope.launch {
-        if (currentState.missionType != MissionType.SHAKE) return@launch
+    private fun hideExitDialog() = intent {
+        reduce { state.copy(showExitDialog = false) }
+    }
 
-        val currentCount = currentState.shakeCount
+    private fun handleShake() = intent {
+        if (state.missionType != MissionType.SHAKE) return@intent
+
+        val currentCount = state.shakeCount
         if (currentCount < 9) {
             performHapticSuccess()
-            updateState { copy(shakeCount = currentCount + 1) }
-        } else if (!currentState.isFlipped) {
+            reduce { state.copy(shakeCount = currentCount + 1) }
+        } else if (!state.isFlipped) {
             completeMission(type = "shake")
-            updateState {
-                copy(
+            reduce {
+                state.copy(
                     isMissionCompleted = true,
                     shakeCount = 10,
                     isFlipped = true,
@@ -91,71 +94,52 @@ class MissionViewModel @Inject constructor(
         }
     }
 
-    private fun handleClick() = viewModelScope.launch {
-        if (currentState.missionType != MissionType.TAP) return@launch
+    private fun handleClick() = intent {
+        if (state.missionType != MissionType.TAP) return@intent
 
-        val currentCount = currentState.clickCount
+        val currentCount = state.clickCount
         if (currentCount < 9) {
             performHapticSuccess()
-            logMissionSuccess("click")
-            updateState { copy(clickCount = currentCount + 1, playWhenClick = true) }
+            reduce { state.copy(clickCount = currentCount + 1, playWhenClick = true) }
             delay(500)
-            updateState { copy(playWhenClick = false) }
+            reduce { state.copy(playWhenClick = false) }
         } else {
-            updateState {
-                copy(
+            completeMission("click")
+            reduce {
+                state.copy(
+                    isMissionCompleted = true,
                     clickCount = 10,
                     showFinalAnimation = true,
                 )
             }
-            postFortune()
             delay(500)
-            updateState { copy(isMissionCompleted = true) }
         }
     }
 
-    private fun postFortune() {
-        viewModelScope.launch {
-            val userId = userInfoRepository.userIdFlow.firstOrNull() ?: return@launch
-            val result = runCatching {
-                withContext(Dispatchers.IO) {
-                    fortuneRepository.postFortune(userId)
-                }
-            }
+    private fun postFortune(isRetry: Boolean = false) = intent {
+        val userId = userInfoRepository.userIdFlow.firstOrNull() ?: return@intent
 
-            result.onSuccess {
-                val data = it.getOrThrow()
-                fortuneRepository.saveFortuneId(data.id)
-                fortuneRepository.saveFortuneScore(data.avgFortuneScore)
-
-                emitSideEffect(MissionContract.SideEffect.NavigateToFortune)
-            }.onFailure { error ->
-                Log.e("MissionViewModel", "운세 데이터 요청 실패: ${error.message}")
-                updateState { copy(errorMessage = error.message) }
-            }
+        val result = withContext(Dispatchers.IO) {
+            fortuneRepository.postFortune(userId)
         }
-    }
 
-    private fun retryPostFortune() {
-        viewModelScope.launch {
-            val userId = userInfoRepository.userIdFlow.firstOrNull() ?: return@launch
-            val result = runCatching {
-                withContext(Dispatchers.IO) {
-                    fortuneRepository.postFortune(userId)
-                }
-            }
+        result.onSuccess { data ->
+            fortuneRepository.saveFortuneId(data.id)
+            fortuneRepository.saveFortuneScore(data.avgFortuneScore)
 
-            result.onSuccess {
-                val data = it.getOrThrow()
-                fortuneRepository.saveFortuneId(data.id)
-                fortuneRepository.saveFortuneScore(data.avgFortuneScore)
-
-                emitSideEffect(MissionContract.SideEffect.NavigateToFortune)
-            }.onFailure {
-                Log.e("MissionViewModel", "운세 재요청 실패: ${it.message}")
+            postSideEffect(MissionContract.SideEffect.NavigateToFortune)
+        }.onFailure { error ->
+            Log.e("MissionViewModel", "운세 ${if (isRetry) "재요청" else "요청"} 실패: ${error.message}")
+            if (isRetry) {
                 navigateToHome()
+            } else {
+                reduce { state.copy(errorMessage = error.message) }
             }
         }
+    }
+
+    fun retryPostFortune() {
+        postFortune(isRetry = true)
     }
 
     private fun completeMission(type: String) {
@@ -179,8 +163,8 @@ class MissionViewModel @Inject constructor(
         )
     }
 
-    private fun navigateToHome() {
-        emitSideEffect(MissionContract.SideEffect.NavigateToFortune)
+    private fun navigateToHome() = intent {
+        postSideEffect(MissionContract.SideEffect.NavigateToHome)
     }
 
     private fun sendAlarmDismissIntent(id: Long) {

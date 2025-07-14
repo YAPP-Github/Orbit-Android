@@ -33,6 +33,7 @@ class FortuneRepositoryImpl @Inject constructor(
                 fortuneResponse.toDomain()
             }
     }
+
     override suspend fun getFortune(fortuneId: Long): Result<Fortune> {
         return fortuneRemoteDataSource.getFortune(fortuneId)
             .mapCatching { fortuneResponse ->
