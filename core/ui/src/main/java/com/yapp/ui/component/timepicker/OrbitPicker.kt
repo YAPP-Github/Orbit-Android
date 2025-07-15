@@ -26,10 +26,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yapp.designsystem.theme.OrbitTheme
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import java.time.LocalTime
 
 enum class TimePeriod(val displayName: String) {
     AM("오전"),
@@ -43,7 +40,7 @@ enum class TimePeriod(val displayName: String) {
 fun OrbitPicker(
     modifier: Modifier = Modifier,
     itemSpacing: Dp = 2.dp,
-    initialTime: LocalTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time,
+    initialTime: LocalTime = LocalTime.now(),
     onValueChange: (LocalTime) -> Unit,
 ) {
     Surface(
@@ -153,6 +150,7 @@ fun OrbitPicker(
                         modifier = Modifier.weight(1f),
                         textModifier = Modifier.padding(8.dp),
                         infiniteScroll = true,
+                        itemFormatter = { it.toString().padStart(2, '0') },
                         onValueChange = {
                             onPickerValueChange(
                                 amPmPickerState,
@@ -186,7 +184,7 @@ private fun onPickerValueChange(
         hour
     }
 
-    val newTime = LocalTime(adjustedHour, minute)
+    val newTime = LocalTime.of(adjustedHour, minute)
 
     onValueChange(newTime)
 }
