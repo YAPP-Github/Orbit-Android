@@ -323,26 +323,21 @@ class HomeViewModel @Inject constructor(
         val earliestAlarm = alarms
             .filter { it.isAlarmActive }
             .minByOrNull { alarm ->
-                getNextAlarmDateWithTime(alarm.isAm, alarm.hour, alarm.minute, alarm.repeatDays)
+                getNextAlarmDateWithTime(alarm.hour, alarm.minute, alarm.repeatDays)
             }
 
         val deliveryTime = earliestAlarm?.let { alarm ->
-            val alarmDateTime = getNextAlarmDateWithTime(alarm.isAm, alarm.hour, alarm.minute, alarm.repeatDays)
+            val alarmDateTime = getNextAlarmDateWithTime(alarm.hour, alarm.minute, alarm.repeatDays)
             alarmDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"))
         } ?: "NONE"
 
         reduce { state.copy(deliveryTime = formatDeliveryTime(deliveryTime)) }
     }
 
-    private fun getNextAlarmDateWithTime(isAm: Boolean, hour: Int, minute: Int, repeatDays: Int): LocalDateTime {
+    private fun getNextAlarmDateWithTime(hour: Int, minute: Int, repeatDays: Int): LocalDateTime {
         val now = LocalDateTime.now()
 
-        val alarmHour = when {
-            isAm && hour == 12 -> 0
-            !isAm && hour != 12 -> hour + 12
-            else -> hour
-        }
-        val alarmTime = LocalTime.of(alarmHour, minute)
+        val alarmTime = LocalTime.of(hour, minute)
         val todayAlarm = LocalDateTime.of(now.toLocalDate(), alarmTime)
 
         // 반복 요일이 설정되지 않은 경우 → 단일 알람
@@ -396,8 +391,6 @@ class HomeViewModel @Inject constructor(
     private fun loadDailyFortune() = intent {
         val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
         val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-
-        Log.d("HomeViewModel", "fortuneDate: $fortuneDate, todayDate: $todayDate")
 
         if (fortuneDate != todayDate) {
             processAction(HomeContract.Action.ShowNoDailyFortuneDialog)

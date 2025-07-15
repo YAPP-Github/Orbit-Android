@@ -27,6 +27,8 @@ import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
+import java.time.Duration
+import java.time.LocalDateTime
 import java.time.LocalTime
 import javax.inject.Inject
 
@@ -68,21 +70,14 @@ class AlarmAddEditViewModel @Inject constructor(
         alarmUseCase.initializeSoundPlayer(defaultSound.uri)
 
         val now = LocalTime.now()
-        val initialAmPm = if (now.hour < 12) "오전" else "오후"
-        val initialHour = if (now.hour == 0 || now.hour == 12) 12 else now.hour % 12
-        val initialMinute = now.minute
 
         reduce {
             state.copy(
                 initialLoading = false,
                 timeState = state.timeState.copy(
-                    initialAmPm = initialAmPm,
-                    initialHour = "$initialHour",
-                    initialMinute = initialMinute.toString().padStart(2, '0'),
-                    currentAmPm = initialAmPm,
-                    currentHour = initialHour,
-                    currentMinute = initialMinute,
-                    alarmMessage = getAlarmMessage(initialAmPm, initialHour, initialMinute, emptySet()),
+                    initialTime = now,
+                    currentTime = now,
+                    alarmMessage = getAlarmMessage(now, emptySet()),
                 ),
                 soundState = state.soundState.copy(sounds = sounds, soundIndex = defaultSoundIndex),
             )
@@ -92,8 +87,6 @@ class AlarmAddEditViewModel @Inject constructor(
     private fun loadExistingAlarm(sounds: List<AlarmSound>) = intent {
         alarmUseCase.getAlarm(alarmId).onSuccess { alarm ->
             val repeatDays = alarm.repeatDays.toAlarmDays()
-            val isAM = alarm.isAm
-            val hour = alarm.hour
             val selectedSoundIndex = sounds.indexOfFirst { it.uri.toString() == alarm.soundUri }
             val selectedSound = sounds.getOrNull(selectedSoundIndex) ?: sounds.first()
 
@@ -103,13 +96,12 @@ class AlarmAddEditViewModel @Inject constructor(
                 state.copy(
                     initialLoading = false,
                     timeState = state.timeState.copy(
-                        initialAmPm = if (isAM) "오전" else "오후",
-                        initialHour = "$hour",
-                        initialMinute = alarm.minute.toString().padStart(2, '0'),
-                        currentAmPm = if (isAM) "오전" else "오후",
-                        currentHour = hour,
-                        currentMinute = alarm.minute,
-                        alarmMessage = getAlarmMessage(if (isAM) "오전" else "오후", hour, alarm.minute, repeatDays),
+                        initialTime = LocalTime.of(alarm.hour, alarm.minute),
+                        currentTime = LocalTime.of(alarm.hour, alarm.minute),
+                        alarmMessage = getAlarmMessage(
+                            LocalTime.of(alarm.hour, alarm.minute),
+                            repeatDays,
+                        ),
                     ),
                     daySelectionState = setupDaySelectionState(repeatDays, state),
                     holidayState = state.holidayState.copy(
@@ -172,7 +164,7 @@ class AlarmAddEditViewModel @Inject constructor(
             is AlarmAddEditContract.Action.ShowUnsavedChangesDialog -> showUnsavedChangesDialog()
             is AlarmAddEditContract.Action.HideUnsavedChangesDialog -> hideUnsavedChangesDialog()
             is AlarmAddEditContract.Action.DeleteAlarm -> deleteAlarm()
-            is AlarmAddEditContract.Action.SetAlarmTime -> setAlarmTime(action.amPm, action.hour, action.minute)
+            is AlarmAddEditContract.Action.SetAlarmTime -> setAlarmTime(action.newTime)
             is AlarmAddEditContract.Action.ToggleWeekdaysSelection -> toggleWeekdaysSelection()
             is AlarmAddEditContract.Action.ToggleWeekendsSelection -> toggleWeekendsSelection()
             is AlarmAddEditContract.Action.ToggleSpecificDaySelection -> toggleSpecificDaySelection(action.day)
@@ -234,7 +226,7 @@ class AlarmAddEditViewModel @Inject constructor(
     }
 
     private suspend fun checkAndCreateAlarm(newAlarm: Alarm) {
-        val timeMatchedAlarms = alarmUseCase.getAlarmsByTime(newAlarm.hour, newAlarm.minute, newAlarm.isAm)
+        val timeMatchedAlarms = alarmUseCase.getAlarmsByTime(newAlarm.hour, newAlarm.minute)
             .first()
 
         when {
@@ -287,12 +279,10 @@ class AlarmAddEditViewModel @Inject constructor(
             }
     }
 
-    private fun setAlarmTime(amPm: String, hour: Int, minute: Int) = intent {
+    private fun setAlarmTime(newTime: LocalTime) = intent {
         val newTimeState = state.timeState.copy(
-            currentAmPm = amPm,
-            currentHour = hour,
-            currentMinute = minute,
-            alarmMessage = getAlarmMessage(amPm, hour, minute, state.daySelectionState.selectedDays),
+            currentTime = newTime,
+            alarmMessage = getAlarmMessage(newTime, state.daySelectionState.selectedDays),
         )
 
         hapticFeedbackManager.performHapticFeedback(HapticType.LIGHT_TICK)
@@ -337,7 +327,7 @@ class AlarmAddEditViewModel @Inject constructor(
         reduce {
             state.copy(
                 timeState = state.timeState.copy(
-                    alarmMessage = getAlarmMessage(state.timeState.currentAmPm, state.timeState.currentHour, state.timeState.currentMinute, newDayState.selectedDays),
+                    alarmMessage = getAlarmMessage(state.timeState.currentTime, newDayState.selectedDays),
                 ),
                 daySelectionState = newDayState,
                 holidayState = state.holidayState.copy(
@@ -363,7 +353,7 @@ class AlarmAddEditViewModel @Inject constructor(
         reduce {
             state.copy(
                 timeState = state.timeState.copy(
-                    alarmMessage = getAlarmMessage(state.timeState.currentAmPm, state.timeState.currentHour, state.timeState.currentMinute, newDayState.selectedDays),
+                    alarmMessage = getAlarmMessage(state.timeState.currentTime, newDayState.selectedDays),
                 ),
                 daySelectionState = newDayState,
                 holidayState = state.holidayState.copy(
@@ -391,7 +381,7 @@ class AlarmAddEditViewModel @Inject constructor(
         reduce {
             state.copy(
                 timeState = state.timeState.copy(
-                    alarmMessage = getAlarmMessage(state.timeState.currentAmPm, state.timeState.currentHour, state.timeState.currentMinute, newDayState.selectedDays),
+                    alarmMessage = getAlarmMessage(state.timeState.currentTime, newDayState.selectedDays),
                 ),
                 daySelectionState = newDayState,
                 holidayState = state.holidayState.copy(
@@ -512,12 +502,16 @@ class AlarmAddEditViewModel @Inject constructor(
         }
     }
 
-    private fun getAlarmMessage(amPm: String, hour: Int, minute: Int, selectedDays: Set<AlarmDay>): String {
-        val now = java.time.LocalDateTime.now()
-        val alarmHour = convertTo24HourFormat(amPm, hour)
-        val alarmTimeToday = now.toLocalDate().atTime(alarmHour, minute)
-        val nextAlarmDateTime = calculateNextAlarmDateTime(now, alarmTimeToday, selectedDays)
-        val duration = java.time.Duration.between(now, nextAlarmDateTime)
+    private fun getAlarmMessage(currentTime: LocalTime, selectedDays: Set<AlarmDay>): String {
+        val now = LocalDateTime.now()
+        val alarmDateTimeToday = now.toLocalDate().atTime(currentTime.hour, currentTime.minute)
+
+        val nextAlarmDateTime: LocalDateTime = calculateNextAlarmDateTime(
+            now,
+            alarmDateTimeToday,
+            selectedDays,
+        )
+        val duration = Duration.between(now, nextAlarmDateTime)
         val totalMinutes = duration.toMinutes()
         val days = totalMinutes / (24 * 60)
         val hours = (totalMinutes % (24 * 60)) / 60
@@ -531,17 +525,11 @@ class AlarmAddEditViewModel @Inject constructor(
         }
     }
 
-    private fun convertTo24HourFormat(amPm: String, hour: Int): Int = when {
-        amPm == "오후" && hour != 12 -> hour + 12
-        amPm == "오전" && hour == 12 -> 0
-        else -> hour
-    }
-
     private fun calculateNextAlarmDateTime(
-        now: java.time.LocalDateTime,
-        alarmTimeToday: java.time.LocalDateTime,
+        now: LocalDateTime,
+        alarmTimeToday: LocalDateTime,
         selectedDays: Set<AlarmDay>,
-    ): java.time.LocalDateTime {
+    ): LocalDateTime {
         if (selectedDays.isEmpty()) {
             return if (alarmTimeToday.isBefore(now)) {
                 alarmTimeToday.plusDays(1)

@@ -71,6 +71,7 @@ import feature.home.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.compose.collectSideEffect
+import java.time.LocalTime
 
 @Composable
 fun AlarmAddEditRoute(
@@ -186,11 +187,9 @@ fun AlarmAddEditContent(
             contentAlignment = Alignment.Center,
         ) {
             OrbitPicker(
-                initialAmPm = state.timeState.initialAmPm,
-                initialHour = state.timeState.initialHour,
-                initialMinute = state.timeState.initialMinute,
-            ) { amPm, hour, minute ->
-                eventDispatcher(AlarmAddEditContract.Action.SetAlarmTime(amPm, hour, minute))
+                initialTime = state.timeState.initialTime,
+            ) { newTime ->
+                eventDispatcher(AlarmAddEditContract.Action.SetAlarmTime(newTime))
             }
         }
         AlarmAddEditSelectDaysSection(
@@ -419,20 +418,12 @@ private fun AlarmAddEditSettingsSection(
     ) {
         AlarmAddEditSettingItem(
             label = stringResource(id = R.string.alarm_add_edit_mission),
-            description = if (state.missionState.isMissionEnabled) {
-                when (state.missionState.missionType) {
-                    MissionType.TAP -> {
-                        stringResource(id = R.string.alarm_add_edit_selected_mission_tap)
-                    }
-                    MissionType.SHAKE -> {
-                        stringResource(id = R.string.alarm_add_edit_selected_mission_shake)
-                    }
-                }
-            } else {
-                stringResource(id = R.string.alarm_add_edit_selected_mission_none)
+            description = when (state.missionState.missionType) {
+                MissionType.TAP -> stringResource(id = R.string.alarm_add_edit_selected_mission_tap)
+                MissionType.SHAKE -> stringResource(id = R.string.alarm_add_edit_selected_mission_shake)
+                else -> stringResource(id = R.string.alarm_add_edit_selected_mission_none)
             },
-            onClick = {
-            },
+            onClick = { },
         )
         Spacer(
             modifier = Modifier
@@ -683,9 +674,7 @@ fun AlarmAddEditSettingsSectionPreview() {
     AlarmAddEditSettingsSection(
         state = AlarmAddEditContract.State(
             timeState = AlarmAddEditContract.AlarmTimeState(
-                currentAmPm = "AM",
-                currentHour = 9,
-                currentMinute = 30,
+                currentTime = LocalTime.of(19, 30),
             ),
             daySelectionState = AlarmAddEditContract.AlarmDaySelectionState(
                 isWeekdaysChecked = true,
@@ -725,9 +714,7 @@ fun AlarmAddEditScreenPreview() {
                     AlarmAddEditContract.State(
                         initialLoading = false,
                         timeState = AlarmAddEditContract.AlarmTimeState(
-                            currentAmPm = "AM",
-                            currentHour = 9,
-                            currentMinute = 30,
+                            currentTime = LocalTime.of(19, 30),
                         ),
                         daySelectionState = AlarmAddEditContract.AlarmDaySelectionState(
                             isWeekdaysChecked = true,

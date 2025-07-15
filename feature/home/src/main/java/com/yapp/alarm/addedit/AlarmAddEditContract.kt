@@ -8,6 +8,7 @@ import com.yapp.domain.model.AlarmSound
 import com.yapp.domain.model.MissionType
 import com.yapp.domain.model.toRepeatDays
 import com.yapp.ui.base.UiState
+import java.time.LocalTime
 
 sealed class AlarmAddEditContract {
 
@@ -26,12 +27,8 @@ sealed class AlarmAddEditContract {
     ) : UiState
 
     data class AlarmTimeState(
-        val initialAmPm: String = "오전",
-        val initialHour: String = "1",
-        val initialMinute: String = "00",
-        val currentAmPm: String = "오전",
-        val currentHour: Int = 1,
-        val currentMinute: Int = 0,
+        val initialTime: LocalTime = LocalTime.of(1, 0),
+        val currentTime: LocalTime = LocalTime.of(1, 0),
         val alarmMessage: String = "",
     )
 
@@ -48,7 +45,6 @@ sealed class AlarmAddEditContract {
     )
 
     data class AlarmMissionState(
-        val isMissionEnabled: Boolean = false,
         val missionType: MissionType = MissionType.TAP,
     )
 
@@ -81,7 +77,7 @@ sealed class AlarmAddEditContract {
         data object ShowUnsavedChangesDialog : Action()
         data object HideUnsavedChangesDialog : Action()
         data object DeleteAlarm : Action()
-        data class SetAlarmTime(val amPm: String, val hour: Int, val minute: Int) : Action()
+        data class SetAlarmTime(val newTime: LocalTime) : Action()
         data object ToggleWeekdaysSelection : Action()
         data object ToggleWeekendsSelection : Action()
         data class ToggleSpecificDaySelection(val day: AlarmDay) : Action()
@@ -125,9 +121,8 @@ sealed class AlarmAddEditContract {
 internal fun AlarmAddEditContract.State.toAlarm(id: Long = 0): Alarm {
     return Alarm(
         id = id,
-        isAm = timeState.currentAmPm == "오전",
-        hour = timeState.currentHour,
-        minute = timeState.currentMinute,
+        hour = timeState.currentTime.hour,
+        minute = timeState.currentTime.minute,
         repeatDays = daySelectionState.selectedDays.toRepeatDays(),
         isHolidayAlarmOff = holidayState.isDisableHolidayChecked,
         isSnoozeEnabled = snoozeState.isSnoozeEnabled,

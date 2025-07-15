@@ -1,12 +1,13 @@
 package com.yapp.onboarding
 
 import com.yapp.ui.base.UiState
+import java.time.LocalTime
 
 sealed class OnboardingContract {
 
     data class State(
         val currentStep: Int = 1,
-        val timeState: AlarmTimeState = AlarmTimeState(),
+        val selectedTime: LocalTime = LocalTime.of(1, 0),
         val textFieldValue: String = "",
         val showWarning: Boolean = false,
         val isButtonEnabled: Boolean = false,
@@ -43,16 +44,10 @@ sealed class OnboardingContract {
             }
     }
 
-    data class AlarmTimeState(
-        val selectedAmPm: String = "오전",
-        val selectedHour: Int = 1,
-        val selectedMinute: Int = 0,
-    )
-
     sealed class Action {
         data object NextStep : Action()
         data object PreviousStep : Action()
-        data class SetAlarmTime(val isAm: String, val hour: Int, val minute: Int) : Action()
+        data class SetAlarmTime(val newTime: LocalTime) : Action()
         data object CreateAlarm : Action()
         data class UpdateField(val value: String, val fieldType: FieldType) : Action()
         data object Reset : Action()

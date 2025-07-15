@@ -905,7 +905,6 @@ private fun AlarmWithMenu(
             swipeable = false,
             selectable = false,
             selected = selectedAlarmIds.contains(activeItemMenu.id),
-            isAm = activeItemMenu.isAm,
             hour = activeItemMenu.hour,
             minute = activeItemMenu.minute,
             isActive = activeItemMenu.isAlarmActive,

@@ -253,7 +253,6 @@ internal fun AlarmBottomSheetContent(
                     onClick = onClickAlarm,
                     onLongPress = onLongPressAlarm,
                     onToggleSelect = onToggleSelect,
-                    isAm = alarm.isAm,
                     hour = alarm.hour,
                     minute = alarm.minute,
                     isActive = alarm.isAlarmActive,

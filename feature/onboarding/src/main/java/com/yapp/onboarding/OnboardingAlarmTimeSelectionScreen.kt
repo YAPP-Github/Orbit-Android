@@ -20,6 +20,7 @@ import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.ui.component.timepicker.OrbitPicker
 import com.yapp.ui.utils.heightForScreenPercentage
 import feature.onboarding.R
+import java.time.LocalTime
 
 @Composable
 fun OnboardingAlarmTimeSelectionRoute(
@@ -57,8 +58,8 @@ fun OnboardingAlarmTimeSelectionRoute(
             )
         },
         onBackClick = { viewModel.processAction(OnboardingContract.Action.PreviousStep) },
-        setAlarmTime = { isAm, hour, minute ->
-            viewModel.processAction(OnboardingContract.Action.SetAlarmTime(isAm, hour, minute))
+        setAlarmTime = { newTime ->
+            viewModel.processAction(OnboardingContract.Action.SetAlarmTime(newTime))
         },
     )
 }
@@ -69,7 +70,7 @@ fun OnboardingAlarmTimeSelectionScreen(
     totalSteps: Int,
     onNextClick: () -> Unit,
     onBackClick: () -> Unit,
-    setAlarmTime: (String, Int, Int) -> Unit,
+    setAlarmTime: (LocalTime) -> Unit,
 ) {
     OnboardingScreen(
         currentStep = currentStep,
@@ -100,8 +101,8 @@ fun OnboardingAlarmTimeSelectionScreen(
 
             OrbitPicker(
                 modifier = Modifier.padding(top = 90.dp),
-            ) { amPm, hour, minute ->
-                setAlarmTime(amPm, hour, minute)
+            ) { newTime ->
+                setAlarmTime(newTime)
             }
         }
     }
@@ -116,7 +117,7 @@ fun OnboardingAlarmTimeSelectionScreenPreview() {
             totalSteps = 0,
             onNextClick = {},
             onBackClick = {},
-            setAlarmTime = { _, _, _ -> },
+            setAlarmTime = { _ -> },
         )
     }
 }

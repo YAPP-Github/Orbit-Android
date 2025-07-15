@@ -18,7 +18,7 @@ class AlarmUseCase @Inject constructor(
     fun releaseSoundPlayer() = alarmRepository.releaseSoundPlayer()
     fun getAllAlarms(): Flow<List<Alarm>> = alarmRepository.getAllAlarms()
     fun getPagedAlarms(limit: Int, offset: Int): Flow<List<Alarm>> = alarmRepository.getPagedAlarms(limit, offset)
-    fun getAlarmsByTime(hour: Int, minute: Int, isAm: Boolean): Flow<List<Alarm>> = alarmRepository.getAlarmsByTime(hour, minute, isAm)
+    fun getAlarmsByTime(hour: Int, minute: Int): Flow<List<Alarm>> = alarmRepository.getAlarmsByTime(hour, minute)
     fun getAlarmCount(): Flow<Int> = alarmRepository.getAlarmCount()
     suspend fun insertAlarm(alarm: Alarm): Result<Alarm> = alarmRepository.insertAlarm(alarm)
     suspend fun updateAlarm(alarm: Alarm): Result<Alarm> = alarmRepository.updateAlarm(alarm)

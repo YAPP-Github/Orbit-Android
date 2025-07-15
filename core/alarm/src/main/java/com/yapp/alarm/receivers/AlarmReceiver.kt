@@ -152,8 +152,7 @@ class AlarmReceiver : BroadcastReceiver() {
             .plusMinutes(alarm.snoozeInterval.toLong())
 
         val updatedAlarm = alarm.copy(
-            isAm = snoozeDateTime.hour < 12,
-            hour = if (snoozeDateTime.hour == 0) 12 else if (snoozeDateTime.hour > 12) snoozeDateTime.hour - 12 else snoozeDateTime.hour,
+            hour = snoozeDateTime.hour,
             minute = snoozeDateTime.minute,
             second = snoozeDateTime.second,
             repeatDays = 0,

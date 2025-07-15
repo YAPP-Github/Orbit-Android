@@ -28,8 +28,8 @@ class AlarmLocalDataSourceImpl @Inject constructor(
             .map { alarmEntities -> alarmEntities.map { it.toDomain() } }
     }
 
-    override fun getAlarmsByTime(hour: Int, minute: Int, isAm: Boolean): Flow<List<Alarm>> {
-        return alarmDao.getAlarmsByTime(hour, minute, isAm).map { alarmEntities ->
+    override fun getAlarmsByTime(hour: Int, minute: Int): Flow<List<Alarm>> {
+        return alarmDao.getAlarmsByTime(hour, minute).map { alarmEntities ->
             alarmEntities.map { it.toDomain() }
         }
     }

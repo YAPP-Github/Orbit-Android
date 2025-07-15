@@ -108,13 +108,7 @@ class AndroidAlarmScheduler @Inject constructor(
     private fun getNextAlarmTimeMillis(alarm: Alarm, day: AlarmDay?): Long {
         val now = LocalDateTime.now().withNano(0) // 밀리초 제거하여 정확한 초 기준 설정
 
-        val alarmHour = when {
-            alarm.isAm && alarm.hour == 12 -> 0
-            !alarm.isAm && alarm.hour != 12 -> alarm.hour + 12
-            else -> alarm.hour
-        }
-
-        var alarmDateTime = now.withHour(alarmHour).withMinute(alarm.minute).withSecond(alarm.second)
+        var alarmDateTime = now.withHour(alarm.hour).withMinute(alarm.minute).withSecond(alarm.second)
 
         if (day != null) {
             val targetDayOfWeek = day.toDayOfWeek()

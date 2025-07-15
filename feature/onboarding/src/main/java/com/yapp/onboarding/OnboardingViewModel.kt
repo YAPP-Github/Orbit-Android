@@ -21,6 +21,7 @@ import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
+import java.time.LocalTime
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -49,7 +50,7 @@ class OnboardingViewModel @Inject constructor(
         when (action) {
             is OnboardingContract.Action.NextStep -> moveToNextStep()
             is OnboardingContract.Action.PreviousStep -> moveToPreviousStep()
-            is OnboardingContract.Action.SetAlarmTime -> setAlarmTime(action.isAm, action.hour, action.minute)
+            is OnboardingContract.Action.SetAlarmTime -> setAlarmTime(action.newTime)
             is OnboardingContract.Action.CreateAlarm -> createAlarm()
             is OnboardingContract.Action.UpdateField -> updateField(action.value, action.fieldType)
             is OnboardingContract.Action.UpdateBirthDate -> updateBirthDate(action.lunar, action.year, action.month, action.day)
@@ -123,19 +124,10 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
-    private fun setAlarmTime(amPm: String, hour: Int, minute: Int) = intent {
+    private fun setAlarmTime(newTime: LocalTime) = intent {
         hapticFeedbackManager.performHapticFeedback(HapticType.LIGHT_TICK)
 
-        val newTimeState = state.timeState.copy(
-            selectedAmPm = amPm,
-            selectedHour = hour,
-            selectedMinute = minute,
-        )
-        reduce {
-            state.copy(
-                timeState = newTimeState,
-            )
-        }
+        reduce { state.copy(selectedTime = newTime) }
     }
 
     private fun createAlarm() = intent {
@@ -144,9 +136,8 @@ class OnboardingViewModel @Inject constructor(
             val defaultSoundUri = sounds[defaultSoundIndex]
 
             val newAlarm = Alarm(
-                isAm = state.timeState.selectedAmPm == "오전",
-                hour = state.timeState.selectedHour,
-                minute = state.timeState.selectedMinute,
+                hour = state.selectedTime.hour,
+                minute = state.selectedTime.minute,
                 repeatDays = setOf(AlarmDay.MON, AlarmDay.TUE, AlarmDay.WED, AlarmDay.THU, AlarmDay.FRI).toRepeatDays(),
                 isSnoozeEnabled = true,
                 snoozeInterval = 5,
