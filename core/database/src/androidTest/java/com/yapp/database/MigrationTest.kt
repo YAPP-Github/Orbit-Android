@@ -47,7 +47,7 @@ class MigrationTest {
                     isAlarmActive
                 ) VALUES (
                     null,        -- id (autoGenerate)
-                    1,           -- isAm = true
+                    0,           -- isAm = false
                     7,           -- hour
                     30,          -- minute
                     0,           -- second
@@ -73,8 +73,10 @@ class MigrationTest {
         cursor.use {
             assertEquals(1, it.count)
             it.moveToFirst()
-            assertEquals("TAP", it.getString(it.getColumnIndexOrThrow("missionType")))
+            assertEquals(1, it.getInt(it.getColumnIndexOrThrow("missionType")))
             assertEquals(10, it.getInt(it.getColumnIndexOrThrow("missionCount")))
+            // assertEquals(19, it.getInt(it.getColumnIndexOrThrow("hour")))
         }
+        db.close()
     }
 }

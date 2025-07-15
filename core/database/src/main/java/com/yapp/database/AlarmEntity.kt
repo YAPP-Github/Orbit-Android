@@ -1,5 +1,6 @@
 package com.yapp.database
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.yapp.domain.model.Alarm
@@ -10,7 +11,6 @@ data class AlarmEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
 
-    val isAm: Boolean = true,
     val hour: Int = 6,
     val minute: Int = 0,
     val second: Int = 0,
@@ -32,13 +32,14 @@ data class AlarmEntity(
 
     val isAlarmActive: Boolean = true,
 
+    @ColumnInfo(defaultValue = "1")
     val missionType: MissionType = MissionType.TAP,
+    @ColumnInfo(defaultValue = "10")
     val missionCount: Int = 10,
 )
 
 fun AlarmEntity.toDomain() = Alarm(
     id = id,
-    isAm = isAm,
     hour = hour,
     minute = minute,
     second = second,
@@ -56,7 +57,6 @@ fun AlarmEntity.toDomain() = Alarm(
 
 fun Alarm.toEntity() = AlarmEntity(
     id = id,
-    isAm = isAm,
     hour = hour,
     minute = minute,
     second = second,
