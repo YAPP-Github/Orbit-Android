@@ -47,14 +47,8 @@ class AlarmRepositoryImpl @Inject constructor(
     override fun getAllAlarms(): Flow<List<Alarm>> =
         alarmLocalDataSource.getAllAlarms()
 
-    override fun getPagedAlarms(limit: Int, offset: Int): Flow<List<Alarm>> =
-        alarmLocalDataSource.getPagedAlarms(limit, offset)
-
     override fun getAlarmsByTime(hour: Int, minute: Int): Flow<List<Alarm>> =
         alarmLocalDataSource.getAlarmsByTime(hour, minute)
-
-    override fun getAlarmCount(): Flow<Int> =
-        alarmLocalDataSource.getAlarmCount()
 
     override suspend fun insertAlarm(alarm: Alarm): Result<Alarm> = runCatching {
         val alarmId = alarmLocalDataSource.insertAlarm(alarm.toEntity())

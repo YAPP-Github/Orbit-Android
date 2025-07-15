@@ -20,22 +20,10 @@ class AlarmLocalDataSourceImpl @Inject constructor(
             .map { alarmEntities -> alarmEntities.map { it.toDomain() } }
     }
 
-    override fun getPagedAlarms(
-        limit: Int,
-        offset: Int,
-    ): Flow<List<Alarm>> {
-        return alarmDao.getPagedAlarms(limit, offset)
-            .map { alarmEntities -> alarmEntities.map { it.toDomain() } }
-    }
-
     override fun getAlarmsByTime(hour: Int, minute: Int): Flow<List<Alarm>> {
         return alarmDao.getAlarmsByTime(hour, minute).map { alarmEntities ->
             alarmEntities.map { it.toDomain() }
         }
-    }
-
-    override fun getAlarmCount(): Flow<Int> {
-        return alarmDao.getAlarmCount()
     }
 
     override suspend fun insertAlarm(alarm: AlarmEntity): Long {
