@@ -1,5 +1,6 @@
 package com.yapp.mission
 
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
@@ -100,7 +101,7 @@ fun MissionScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        if (state.isMissionTypeLoading) {
+        if (state.isMissionTypeLoading || state.missionType == MissionType.NONE) {
             MissionLoadingScreen()
             return
         }
@@ -159,6 +160,10 @@ fun MissionContent(
             MissionType.TAP -> {
                 MissionClickCard(state, eventDispatcher)
             }
+
+            MissionType.NONE -> {
+                Log.e("MissionContent", "Invalid or NONE MissionType: ${state.missionType}")
+            }
         }
     }
 }
@@ -211,6 +216,7 @@ fun MissionProgressBarSection(state: MissionContract.State) {
         currentProgress = when (state.missionType) {
             MissionType.SHAKE -> state.shakeCount
             MissionType.TAP -> state.clickCount
+            else -> 0
         },
         totalProgress = 10,
         modifier = Modifier
@@ -318,6 +324,7 @@ fun ExitDialog(
                         AnalyticsEvent.MissionPropertiesKeys.MISSION_TYPE to when (state.missionType) {
                             MissionType.SHAKE -> "shake"
                             MissionType.TAP -> "click"
+                            else -> ""
                         },
                     ),
                 ),
