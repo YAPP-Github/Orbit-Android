@@ -1,9 +1,8 @@
 package com.yapp.domain.formatter
 
-import android.util.Log
-import com.yapp.domain.model.Alarm // 프로젝트의 Alarm 모델 경로에 맞게 수정
-import com.yapp.domain.model.toAlarmDays // domain 모듈의 확장 함수 경로
-import com.yapp.domain.model.toDayOfWeek // domain 모듈의 확장 함수 경로
+import com.yapp.domain.model.Alarm
+import com.yapp.domain.model.toAlarmDays
+import com.yapp.domain.model.toDayOfWeek
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -12,6 +11,11 @@ import java.time.format.DateTimeParseException
 import javax.inject.Inject
 
 class AlarmDateTimeFormatter @Inject constructor() {
+
+    companion object {
+        private const val NO_ALARM_STRING = "NONE"
+        private const val DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm"
+    }
 
     data class DeliveryTimeFormats(
         val noAlarm: String,
@@ -84,11 +88,11 @@ class AlarmDateTimeFormatter @Inject constructor() {
         now: LocalDateTime,
     ): String {
         return try {
-            if (deliveryDateTimeString.equals("NONE", ignoreCase = true)) {
+            if (deliveryDateTimeString.equals(NO_ALARM_STRING, ignoreCase = true)) {
                 return formats.noAlarm
             }
 
-            val inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
+            val inputFormatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)
             val alarmOccurrenceDateTime = LocalDateTime.parse(deliveryDateTimeString, inputFormatter) // 변수명 inputDateTime -> alarmOccurrenceDateTime
             val today = now.toLocalDate()
             val tomorrow = today.plusDays(1)
@@ -118,23 +122,12 @@ class AlarmDateTimeFormatter @Inject constructor() {
                 }
             }
         } catch (e: DateTimeParseException) {
-            Log.e("Formatter", "Failed to parse deliveryDateTimeString: $deliveryDateTimeString", e) // 로깅 고려
             formats.noAlarm
         } catch (e: Exception) {
-            Log.e("Formatter", "Unexpected error formatting deliveryDateTimeString: $deliveryDateTimeString", e)
             formats.noAlarm
         }
     }
 
-    /**
-     * 활성화된 알람 목록에서 가장 먼저 울릴 알람 시간을 찾아,
-     * 지정된 포맷에 맞춰 사용자에게 보여줄 문자열로 변환합니다.
-     *
-     * @param alarms 알람 목록
-     * @param formats 포맷팅 규칙을 담은 데이터 클래스
-     * @param now 현재 시간 (테스트 용이성을 위해 주입받음)
-     * @return 포맷팅된 다음 알람 시간 문자열. 활성화된 알람이 없으면 formats.noAlarm 반환.
-     */
     fun getFormattedEarliestUpcomingAlarmDeliveryTime(
         alarms: List<Alarm>,
         formats: DeliveryTimeFormats,
@@ -146,15 +139,14 @@ class AlarmDateTimeFormatter @Inject constructor() {
                 try {
                     calculateNextOccurrence(alarm.hour, alarm.minute, alarm.repeatDays, now)
                 } catch (e: Exception) {
-                    Log.e("Formatter", "Error calculating next occurrence for alarm: $alarm", e)
                     null // 예외 발생 시 null로 처리
                 }
             }
             .minOrNull()
 
         val deliveryDateTimeString = earliestAlarmDateTime?.format(
-            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"),
-        ) ?: "NONE"
+            DateTimeFormatter.ofPattern(DATE_TIME_FORMAT),
+        ) ?: NO_ALARM_STRING
 
         return formatDeliveryDateTimeString(deliveryDateTimeString, formats, now)
     }
