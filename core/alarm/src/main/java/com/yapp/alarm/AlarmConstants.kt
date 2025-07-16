@@ -16,8 +16,6 @@ object AlarmConstants {
 
     const val SNOOZE_ID_OFFSET = 10000
 
-    const val WEEK_INTERVAL_MILLIS: Long = 7 * 24 * 60 * 60 * 1000
-
     val HOLIDAYS_2025 = setOf(
         "2025-01-01", "2025-01-27", "2025-01-28", "2025-01-29", "2025-01-30",
         "2025-03-01", "2025-03-03", "2025-05-05", "2025-05-06", "2025-06-06",
