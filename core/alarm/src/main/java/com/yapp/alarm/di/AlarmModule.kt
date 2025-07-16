@@ -26,10 +26,6 @@ abstract class AlarmModule {
     companion object {
         @Provides
         @Singleton
-        fun provideClock(): Clock = Clock.systemDefaultZone()
-
-        @Provides
-        @Singleton
         fun provideAlarmTimeCalculator(clock: Clock): AlarmTimeCalculator {
             return AlarmTimeCalculator(clock)
         }

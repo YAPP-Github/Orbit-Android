@@ -12,7 +12,7 @@ import java.time.format.DateTimeParseException
 import javax.inject.Inject
 
 class AlarmDateTimeFormatter @Inject constructor(
-    private val clock: Clock = Clock.systemDefaultZone(),
+    private val clock: Clock,
 ) {
 
     companion object {
