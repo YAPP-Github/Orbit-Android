@@ -7,13 +7,13 @@ import androidx.lifecycle.ViewModel
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
 import com.yapp.common.util.ResourceProvider
+import com.yapp.domain.formatter.AlarmDateTimeFormatter
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
 import com.yapp.domain.model.AlarmSound
 import com.yapp.domain.model.copyFrom
 import com.yapp.domain.model.toAlarmDayNames
 import com.yapp.domain.model.toAlarmDays
-import com.yapp.domain.model.toDayOfWeek
 import com.yapp.domain.scheduler.AlarmScheduler
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.media.haptic.HapticFeedbackManager
@@ -27,7 +27,6 @@ import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
-import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalTime
 import javax.inject.Inject
@@ -503,57 +502,16 @@ class AlarmAddEditViewModel @Inject constructor(
     }
 
     private fun getAlarmMessage(currentTime: LocalTime, selectedDays: Set<AlarmDay>): String {
-        val now = LocalDateTime.now()
-        val alarmDateTimeToday = now.toLocalDate().atTime(currentTime.hour, currentTime.minute)
-
-        val nextAlarmDateTime: LocalDateTime = calculateNextAlarmDateTime(
-            now,
-            alarmDateTimeToday,
-            selectedDays,
+        return alarmUseCase.getFormattedNextAlarmMessage(
+            currentTime = currentTime,
+            formats = AlarmDateTimeFormatter.TimeDifferenceFormats(
+                daysHoursMinutesFormat = resourceProvider.getString(R.string.alarm_remaining_time_days_hours),
+                hoursMinutesFormat = resourceProvider.getString(R.string.alarm_remaining_time_hours_minutes),
+                minutesFormat = resourceProvider.getString(R.string.alarm_remaining_time_minutes_only),
+                soonFormat = resourceProvider.getString(R.string.alarm_remaining_time_soon),
+            ),
+            selectedDays = selectedDays,
+            now = LocalDateTime.now(),
         )
-        val duration = Duration.between(now, nextAlarmDateTime)
-        val totalMinutes = duration.toMinutes()
-        val days = totalMinutes / (24 * 60)
-        val hours = (totalMinutes % (24 * 60)) / 60
-        val minutes = totalMinutes % 60
-
-        return when {
-            days > 0 -> "${days}일 ${hours}시간 후에 울려요"
-            hours > 0 -> "${hours}시간 ${minutes}분 후에 울려요"
-            minutes == 0L -> "곧 울려요"
-            else -> "${minutes}분 후에 울려요"
-        }
-    }
-
-    private fun calculateNextAlarmDateTime(
-        now: LocalDateTime,
-        alarmTimeToday: LocalDateTime,
-        selectedDays: Set<AlarmDay>,
-    ): LocalDateTime {
-        if (selectedDays.isEmpty()) {
-            return if (alarmTimeToday.isBefore(now)) {
-                alarmTimeToday.plusDays(1)
-            } else {
-                alarmTimeToday
-            }
-        }
-
-        val currentDayOfWeek = now.dayOfWeek.value
-        val selectedDaysOfWeek = selectedDays.map { it.toDayOfWeek().value }.sorted()
-
-        if (selectedDaysOfWeek.contains(currentDayOfWeek) && now.toLocalTime().isBefore(alarmTimeToday.toLocalTime())) {
-            return alarmTimeToday
-        }
-
-        val nextDay = selectedDaysOfWeek.firstOrNull { it > currentDayOfWeek }
-            ?: selectedDaysOfWeek.first()
-        val daysToAdd = if (nextDay > currentDayOfWeek) {
-            nextDay - currentDayOfWeek
-        } else {
-            7 - (currentDayOfWeek - nextDay)
-        }
-
-        val nextAlarmDate = now.toLocalDate().plusDays(daysToAdd.toLong())
-        return nextAlarmDate.atTime(alarmTimeToday.toLocalTime())
     }
 }
