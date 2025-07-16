@@ -5,16 +5,19 @@ import com.yapp.domain.model.AlarmDay
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 class AlarmDateTimeFormatterTest {
 
     private lateinit var formatter: AlarmDateTimeFormatter
     private val fixedNow: LocalDateTime = LocalDateTime.of(2023, 10, 26, 10, 0, 0) // 목요일
+    private val fixedClock: Clock = Clock.fixed(fixedNow.atZone(ZoneId.of("Asia/Seoul")).toInstant(), ZoneId.of("Asia/Seoul"))
 
     @Before
     fun `테스트_준비`() {
-        formatter = AlarmDateTimeFormatter()
+        formatter = AlarmDateTimeFormatter(clock = fixedClock)
     }
 
     private val deliveryFormats = AlarmDateTimeFormatter.DeliveryTimeFormats(

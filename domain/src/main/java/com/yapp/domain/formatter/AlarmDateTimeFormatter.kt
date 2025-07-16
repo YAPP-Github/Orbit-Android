@@ -3,6 +3,7 @@ package com.yapp.domain.formatter
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.toAlarmDays
 import com.yapp.domain.model.toDayOfWeek
+import java.time.Clock
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -10,7 +11,9 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import javax.inject.Inject
 
-class AlarmDateTimeFormatter @Inject constructor() {
+class AlarmDateTimeFormatter @Inject constructor(
+    private val clock: Clock = Clock.systemDefaultZone(),
+) {
 
     companion object {
         private const val NO_ALARM_STRING = "NONE"
@@ -39,7 +42,7 @@ class AlarmDateTimeFormatter @Inject constructor() {
         hour: Int,
         minute: Int,
         repeatDays: Int,
-        now: LocalDateTime,
+        now: LocalDateTime = LocalDateTime.now(clock),
     ): LocalDateTime {
         val alarmTime = LocalTime.of(hour, minute)
         val todayAlarmDateTime = LocalDateTime.of(now.toLocalDate(), alarmTime)
@@ -83,7 +86,7 @@ class AlarmDateTimeFormatter @Inject constructor() {
     private fun formatDeliveryDateTimeString(
         deliveryDateTimeString: String, // "yyyy-MM-dd'T'HH:mm" 포맷 또는 "NONE"
         formats: DeliveryTimeFormats,
-        now: LocalDateTime,
+        now: LocalDateTime = LocalDateTime.now(clock),
     ): String {
         return try {
             if (deliveryDateTimeString.equals(NO_ALARM_STRING, ignoreCase = true)) {
@@ -129,7 +132,7 @@ class AlarmDateTimeFormatter @Inject constructor() {
     fun getFormattedEarliestUpcomingAlarmDeliveryTime(
         alarms: List<Alarm>,
         formats: DeliveryTimeFormats,
-        now: LocalDateTime = LocalDateTime.now(), // 기본값으로 현재 시간 사용
+        now: LocalDateTime = LocalDateTime.now(clock),
     ): String {
         val earliestAlarmDateTime = alarms
             .filter { it.isAlarmActive }
