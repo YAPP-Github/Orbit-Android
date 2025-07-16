@@ -67,19 +67,17 @@ class AlarmDateTimeFormatter @Inject constructor() {
             return todayAlarmDateTime
         }
 
-        for (dayOffset in 0..7) {
+        for (dayOffset in 1..7) {
             val nextPotentialDate = now.toLocalDate().plusDays(dayOffset.toLong())
             val dayOfWeekPotentialDate = nextPotentialDate.dayOfWeek
             val potentialAlarmDateTime = nextPotentialDate.atTime(alarmTime)
 
             if (selectedDaysOfWeek.contains(dayOfWeekPotentialDate)) {
-                if (potentialAlarmDateTime.isAfter(now)) {
-                    return potentialAlarmDateTime
-                }
+                return potentialAlarmDateTime
             }
         }
 
-        return now.toLocalDate().plusDays(1).atTime(alarmTime) // fallback: 다음 날 같은 시간
+        error("반복 알람의 다음 발생 시간을 계산할 수 없습니다. selectedDaysOfWeek: $selectedDaysOfWeek")
     }
 
     private fun formatDeliveryDateTimeString(
