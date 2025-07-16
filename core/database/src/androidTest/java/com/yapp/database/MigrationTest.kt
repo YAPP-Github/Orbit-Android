@@ -48,7 +48,7 @@ class MigrationTest {
                 ) VALUES (
                     null,        -- id (autoGenerate)
                     0,           -- isAm = false
-                    7,           -- hour
+                    11,           -- hour
                     30,          -- minute
                     0,           -- second
                     0,           -- repeatDays
@@ -69,13 +69,13 @@ class MigrationTest {
 
         val db = helper.runMigrationsAndValidate(testDbName, 2, true, DatabaseMigrations.MIGRATION_1_2)
 
-        val cursor = db.query("SELECT missionType, missionCount FROM ${AlarmDatabase.DATABASE_NAME}")
+        val cursor = db.query("SELECT hour, missionType, missionCount FROM ${AlarmDatabase.DATABASE_NAME}")
         cursor.use {
             assertEquals(1, it.count)
             it.moveToFirst()
             assertEquals(1, it.getInt(it.getColumnIndexOrThrow("missionType")))
             assertEquals(10, it.getInt(it.getColumnIndexOrThrow("missionCount")))
-            // assertEquals(19, it.getInt(it.getColumnIndexOrThrow("hour")))
+            assertEquals(23, it.getInt(it.getColumnIndexOrThrow("hour")))
         }
         db.close()
     }

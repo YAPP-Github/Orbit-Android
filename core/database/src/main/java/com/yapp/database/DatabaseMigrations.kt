@@ -42,9 +42,28 @@ internal object DatabaseMigrations {
                     -- missionType, missionCount는 CREATE TABLE에서 정의된 기본값으로 자동 채워짐
                 )
                 SELECT
-                    id, hour, minute, second, repeatDays, isHolidayAlarmOff,
-                    isSnoozeEnabled, snoozeInterval, snoozeCount, isVibrationEnabled,
-                    isSoundEnabled, soundUri, soundVolume, isAlarmActive
+                    id,
+                    -- hour를 24시간 형식으로 변환합니다.
+                    -- 예시: isAm 컬럼이 0 (PM)이고 hour가 12가 아니면 hour + 12
+                    -- 예시: isAm 컬럼이 1 (AM)이고 hour가 12 (자정)이면 0으로 변환
+                    -- 실제 isAm 컬럼의 의미와 값에 따라 아래 로직을 조정해야 합니다.
+                    CASE
+                        WHEN isAm = 0 AND hour != 12 THEN hour + 12 -- 오후 1시 ~ 11시 -> 13 ~ 23시
+                        WHEN isAm = 1 AND hour = 12 THEN 0          -- 오전 12시 (자정) -> 0시
+                        ELSE hour                                   -- 그 외 (오전 1시 ~ 11시, 오후 12시(정오))
+                    END AS hour_24,
+                    minute,
+                    second,
+                    repeatDays,
+                    isHolidayAlarmOff,
+                    isSnoozeEnabled,
+                    snoozeInterval,
+                    snoozeCount,
+                    isVibrationEnabled,
+                    isSoundEnabled,
+                    soundUri,
+                    soundVolume,
+                    isAlarmActive
                 FROM $DATABASE_NAME
                 """.trimIndent(),
             )
