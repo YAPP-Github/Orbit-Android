@@ -8,9 +8,11 @@ internal object DatabaseMigrations {
 
     val MIGRATION_1_2 = object : Migration(1, 2) {
         override fun migrate(database: SupportSQLiteDatabase) {
-            // 1. 새 스키마로 임시 테이블 생성 (isAm 컬럼 제외, missionType, missionCount 추가 및 기본값 변경)
-            database.execSQL(
-                """
+            database.beginTransaction()
+            try {
+                // 1. 새 스키마로 임시 테이블 생성 (isAm 컬럼 제외, missionType, missionCount 추가 및 기본값 변경)
+                database.execSQL(
+                    """
                 CREATE TABLE ${DATABASE_NAME}_new (
                     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                     hour INTEGER NOT NULL,
@@ -29,12 +31,12 @@ internal object DatabaseMigrations {
                     missionType INTEGER NOT NULL DEFAULT 1,  -- 타입 INTEGER, 기본값 1
                     missionCount INTEGER NOT NULL DEFAULT 10 -- 타입 INTEGER, 기본값 10
                 )
-                """.trimIndent(),
-            )
+                    """.trimIndent(),
+                )
 
-            // 2. 기존 테이블에서 새 임시 테이블로 데이터 복사 (isAm 컬럼은 복사하지 않음)
-            database.execSQL(
-                """
+                // 2. 기존 테이블에서 새 임시 테이블로 데이터 복사 (isAm 컬럼은 복사하지 않음)
+                database.execSQL(
+                    """
                 INSERT INTO ${DATABASE_NAME}_new (
                     id, hour, minute, second, repeatDays, isHolidayAlarmOff,
                     isSnoozeEnabled, snoozeInterval, snoozeCount, isVibrationEnabled,
@@ -65,14 +67,20 @@ internal object DatabaseMigrations {
                     soundVolume,
                     isAlarmActive
                 FROM $DATABASE_NAME
-                """.trimIndent(),
-            )
+                    """.trimIndent(),
+                )
 
-            // 3. 기존 테이블 삭제
-            database.execSQL("DROP TABLE $DATABASE_NAME")
+                // 3. 기존 테이블 삭제
+                database.execSQL("DROP TABLE $DATABASE_NAME")
 
-            // 4. 임시 테이블의 이름을 기존 테이블 이름으로 변경
-            database.execSQL("ALTER TABLE ${DATABASE_NAME}_new RENAME TO $DATABASE_NAME")
+                // 4. 임시 테이블의 이름을 기존 테이블 이름으로 변경
+                database.execSQL("ALTER TABLE ${DATABASE_NAME}_new RENAME TO $DATABASE_NAME")
+
+                // 5. 커밋
+                database.setTransactionSuccessful()
+            } finally {
+                database.endTransaction()
+            }
         }
     }
 }
