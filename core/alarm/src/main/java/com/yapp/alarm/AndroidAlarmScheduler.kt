@@ -29,7 +29,7 @@ class AndroidAlarmScheduler @Inject constructor(
     }
 
     private fun setRepeatingAlarm(day: AlarmDay, alarm: Alarm) {
-        val triggerMillis = alarmTimeCalculator.calculateNextTriggerTimeForRepeatingDay(alarm, day)
+        val triggerMillis = alarmTimeCalculator.calculateNextRepeatingTimeMillis(alarm, day)
         val pendingIntent = createAlarmReceiverPendingIntentForSchedule(app, alarm, day)
 
         alarmManager.setExactAndAllowWhileIdle(
@@ -40,7 +40,7 @@ class AndroidAlarmScheduler @Inject constructor(
     }
 
     private fun setNonRepeatingAlarm(alarm: Alarm) {
-        val triggerMillis = alarmTimeCalculator.calculateNextTriggerTimeForNonRepeating(alarm)
+        val triggerMillis = alarmTimeCalculator.calculateNonRepeatingTimeMillis(alarm)
         val pendingIntent = createAlarmReceiverPendingIntentForSchedule(app, alarm)
 
         alarmManager.setExactAndAllowWhileIdle(
@@ -50,8 +50,8 @@ class AndroidAlarmScheduler @Inject constructor(
         )
     }
 
-    fun scheduleUpcomingWeeklyAlarm(alarm: Alarm, day: AlarmDay) {
-        val triggerMillis = alarmTimeCalculator.calculateNextUpcomingWeeklyAlarmTime(alarm, day)
+    fun rescheduleUpcomingWeeklyAlarm(alarm: Alarm, day: AlarmDay) {
+        val triggerMillis = alarmTimeCalculator.calculateNextWeeklyRescheduledTimeMillis(alarm, day)
         val pendingIntent = createAlarmReceiverPendingIntentForSchedule(app, alarm, day)
 
         alarmManager.setExactAndAllowWhileIdle(

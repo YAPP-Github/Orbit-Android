@@ -14,15 +14,26 @@ class AlarmTimeCalculator @Inject constructor(
 ) {
     private val holidayDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-    private fun isHoliday(date: LocalDateTime): Boolean {
-        val dateString = date.format(holidayDateFormatter)
-        if (date.year == 2025) {
+    private fun isHoliday(dateToCheck: LocalDateTime): Boolean {
+        if (dateToCheck.year == 2025) {
+            val dateString = dateToCheck.format(holidayDateFormatter)
             return AlarmConstants.HOLIDAYS_2025.contains(dateString)
         }
         return false
     }
 
-    private fun createInitialAlarmDateTime(alarm: Alarm, now: LocalDateTime): LocalDateTime {
+    private fun skipHolidaysIfEnabled(initialDateTime: LocalDateTime, alarm: Alarm): LocalDateTime {
+        if (!alarm.isHolidayAlarmOff) return initialDateTime
+
+        var adjustedDateTime = initialDateTime
+        while (isHoliday(adjustedDateTime)) {
+            adjustedDateTime = adjustedDateTime.plusWeeks(1)
+        }
+
+        return adjustedDateTime
+    }
+
+    private fun getAlarmDateTimeOnDate(alarm: Alarm, now: LocalDateTime): LocalDateTime {
         return now
             .withHour(alarm.hour)
             .withMinute(alarm.minute)
@@ -30,58 +41,58 @@ class AlarmTimeCalculator @Inject constructor(
             .withNano(0)
     }
 
-    fun calculateNextTriggerTimeForRepeatingDay(
+    fun calculateNextRepeatingTimeMillis(
         alarm: Alarm,
-        day: AlarmDay,
+        alarmDay: AlarmDay,
         zoneId: ZoneId = clock.zone,
     ): Long {
-        val now = createInitialAlarmDateTime(alarm, LocalDateTime.now(clock))
-        var alarmDateTime = now
-            .withHour(alarm.hour)
-            .withMinute(alarm.minute)
-            .withSecond(alarm.second)
-            .withNano(0)
-        val targetDayOfWeek = day.toDayOfWeek()
+        val now = LocalDateTime.now(clock)
+        val targetDayOfWeek = alarmDay.toDayOfWeek()
 
-        while (alarmDateTime.dayOfWeek != targetDayOfWeek || alarmDateTime.isBefore(now)) {
-            alarmDateTime = alarmDateTime.plusDays(1)
+        val alarmDateTimeToday = getAlarmDateTimeOnDate(alarm, now)
+
+        var nextAlarmDateTimeCandidate = alarmDateTimeToday
+
+        while (nextAlarmDateTimeCandidate.dayOfWeek != targetDayOfWeek || nextAlarmDateTimeCandidate.isBefore(now)) {
+            nextAlarmDateTimeCandidate = nextAlarmDateTimeCandidate.plusDays(1)
         }
-        return alarmDateTime.atZone(zoneId).toInstant().toEpochMilli()
+
+        nextAlarmDateTimeCandidate = skipHolidaysIfEnabled(nextAlarmDateTimeCandidate, alarm)
+
+        return nextAlarmDateTimeCandidate.atZone(zoneId).toInstant().toEpochMilli()
     }
 
-    fun calculateNextTriggerTimeForNonRepeating(
+    fun calculateNonRepeatingTimeMillis(
         alarm: Alarm,
         zoneId: ZoneId = clock.zone,
     ): Long {
         val now = LocalDateTime.now(clock)
-        var alarmDateTime = createInitialAlarmDateTime(alarm, now)
+        var alarmDateTime = getAlarmDateTimeOnDate(alarm, now)
 
         if (alarmDateTime.isBefore(now)) {
             alarmDateTime = alarmDateTime.plusDays(1)
         }
+
         return alarmDateTime.atZone(zoneId).toInstant().toEpochMilli()
     }
 
-    fun calculateNextUpcomingWeeklyAlarmTime(
+    fun calculateNextWeeklyRescheduledTimeMillis(
         alarm: Alarm,
-        targetDay: AlarmDay,
+        alarmTargetDay: AlarmDay,
         zoneId: ZoneId = clock.zone,
     ): Long {
         val now = LocalDateTime.now(clock)
-        // 주간 알람은 'now'를 기준으로 targetDay의 alarm 시간을 찾고 그 다음 주를 계산
-        var alarmDateTimeCandidate = createInitialAlarmDateTime(alarm, now)
-        val dayOfWeekForTarget = targetDay.toDayOfWeek()
+        val targetDayOfWeek = alarmTargetDay.toDayOfWeek()
 
-        while (alarmDateTimeCandidate.dayOfWeek != dayOfWeekForTarget || alarmDateTimeCandidate.isBefore(now)) {
-            alarmDateTimeCandidate = alarmDateTimeCandidate.plusDays(1)
+        var initialAlarmDateTimeCandidate = getAlarmDateTimeOnDate(alarm, now)
+
+        while (initialAlarmDateTimeCandidate.dayOfWeek != targetDayOfWeek || initialAlarmDateTimeCandidate.isBefore(now)) {
+            initialAlarmDateTimeCandidate = initialAlarmDateTimeCandidate.plusDays(1)
         }
 
-        val initialTriggerTimeCandidate = alarmDateTimeCandidate.plusWeeks(1)
-        var finalTriggerDateTime = initialTriggerTimeCandidate
+        val nextWeeklyAlarmDateTimeCandidate = initialAlarmDateTimeCandidate.plusWeeks(1)
+        val nextWeeklyAlarmDateTime = skipHolidaysIfEnabled(nextWeeklyAlarmDateTimeCandidate, alarm)
 
-        while (isHoliday(finalTriggerDateTime)) {
-            finalTriggerDateTime = finalTriggerDateTime.plusWeeks(1)
-        }
-        return finalTriggerDateTime.atZone(zoneId).toInstant().toEpochMilli()
+        return nextWeeklyAlarmDateTime.atZone(zoneId).toInstant().toEpochMilli()
     }
 }
