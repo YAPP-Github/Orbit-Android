@@ -56,8 +56,8 @@ class AlarmDateTimeFormatter @Inject constructor() {
             .map { it.toDayOfWeek() }
             .sortedBy { it.value }
 
-        if (selectedDaysOfWeek.isEmpty()) { // 방어 코드: 실제로는 toAlarmDays가 빈 리스트를 반환하지 않도록 설계되어야 함
-            return if (todayAlarmDateTime.isAfter(now)) todayAlarmDateTime else todayAlarmDateTime.plusDays(1)
+        require(selectedDaysOfWeek.isNotEmpty()) {
+            "반복 알람은 최소 하나 이상의 요일을 선택해야 합니다. repeatDays: $repeatDays"
         }
 
         val currentDayOfWeek = now.dayOfWeek
