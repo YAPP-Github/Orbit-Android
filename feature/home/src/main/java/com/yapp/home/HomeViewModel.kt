@@ -7,7 +7,6 @@ import com.yapp.domain.formatter.AlarmDateTimeFormatter
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.repository.UserInfoRepository
-import com.yapp.domain.scheduler.AlarmScheduler
 import com.yapp.domain.usecase.AlarmUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import feature.home.R
@@ -29,7 +28,6 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val alarmUseCase: AlarmUseCase,
     private val resourceProvider: ResourceProvider,
-    private val alarmScheduler: AlarmScheduler,
     private val fortuneRepository: FortuneRepository,
     private val userInfoRepository: UserInfoRepository,
 ) : ViewModel(), ContainerHost<HomeContract.State, HomeContract.SideEffect> {
@@ -184,9 +182,9 @@ class HomeViewModel @Inject constructor(
             }
 
             if (updatedAlarm.isAlarmActive) {
-                alarmScheduler.scheduleAlarm(updatedAlarm)
+                alarmUseCase.scheduleAlarm(updatedAlarm)
             } else {
-                alarmScheduler.unScheduleAlarm(updatedAlarm)
+                alarmUseCase.unScheduleAlarm(updatedAlarm)
             }
         }.onFailure { error ->
             Log.e("HomeViewModel", "Failed to update alarm state", error)
@@ -246,9 +244,9 @@ class HomeViewModel @Inject constructor(
             }
 
             if (updatedAlarm.isAlarmActive) {
-                alarmScheduler.scheduleAlarm(updatedAlarm)
+                alarmUseCase.scheduleAlarm(updatedAlarm)
             } else {
-                alarmScheduler.unScheduleAlarm(updatedAlarm)
+                alarmUseCase.unScheduleAlarm(updatedAlarm)
             }
         }.onFailure { error ->
             Log.e("HomeViewModel", "Failed to rollback alarm state", error)
@@ -267,7 +265,7 @@ class HomeViewModel @Inject constructor(
 
         alarmsToDelete.forEach { alarm ->
             alarmUseCase.deleteAlarm(alarm.id)
-            alarmScheduler.unScheduleAlarm(alarm)
+            alarmUseCase.unScheduleAlarm(alarm)
         }
 
         if (state.activeItemMenu != null) {
@@ -290,7 +288,7 @@ class HomeViewModel @Inject constructor(
     private fun restoreDeletedAlarms(alarmsWithIndex: List<Alarm>) = intent {
         alarmsWithIndex.forEach { alarm ->
             alarmUseCase.insertAlarm(alarm)
-            alarmScheduler.scheduleAlarm(alarm)
+            alarmUseCase.scheduleAlarm(alarm)
         }
     }
 

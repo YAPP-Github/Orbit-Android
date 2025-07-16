@@ -7,6 +7,7 @@ import com.yapp.domain.model.AlarmDay
 import com.yapp.domain.model.AlarmSound
 import com.yapp.domain.model.toRepeatDays
 import com.yapp.domain.repository.AlarmRepository
+import com.yapp.domain.scheduler.AlarmScheduler
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -15,6 +16,7 @@ import javax.inject.Inject
 class AlarmUseCase @Inject constructor(
     private val alarmRepository: AlarmRepository,
     private val alarmDateTimeFormatter: AlarmDateTimeFormatter,
+    private val alarmScheduler: AlarmScheduler,
 ) {
     suspend fun getAlarmSounds(): Result<List<AlarmSound>> = alarmRepository.getAlarmSounds()
     fun initializeSoundPlayer(uri: Uri) = alarmRepository.initializeSoundPlayer(uri)
@@ -29,6 +31,9 @@ class AlarmUseCase @Inject constructor(
     suspend fun updateAlarmActive(id: Long, active: Boolean): Result<Alarm> = alarmRepository.updateAlarmActive(id, active)
     suspend fun getAlarm(id: Long): Result<Alarm> = alarmRepository.getAlarm(id)
     suspend fun deleteAlarm(id: Long): Result<Unit> = alarmRepository.deleteAlarm(id)
+
+    fun scheduleAlarm(alarm: Alarm) = alarmScheduler.scheduleAlarm(alarm)
+    fun unScheduleAlarm(alarm: Alarm) = alarmScheduler.unScheduleAlarm(alarm)
 
     fun getFormattedNextAlarmMessage(
         currentTime: LocalTime,

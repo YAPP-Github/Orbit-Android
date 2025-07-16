@@ -14,7 +14,6 @@ import com.yapp.domain.model.AlarmSound
 import com.yapp.domain.model.copyFrom
 import com.yapp.domain.model.toAlarmDayNames
 import com.yapp.domain.model.toAlarmDays
-import com.yapp.domain.scheduler.AlarmScheduler
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.media.haptic.HapticFeedbackManager
 import com.yapp.media.haptic.HapticType
@@ -37,7 +36,6 @@ class AlarmAddEditViewModel @Inject constructor(
     private val alarmUseCase: AlarmUseCase,
     private val resourceProvider: ResourceProvider,
     private val hapticFeedbackManager: HapticFeedbackManager,
-    private val alarmScheduler: AlarmScheduler,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel(), ContainerHost<AlarmAddEditContract.State, AlarmAddEditContract.SideEffect> {
 
@@ -211,12 +209,12 @@ class AlarmAddEditViewModel @Inject constructor(
         val updatedAlarm = alarm.copy(id = alarmId)
 
         alarmUseCase.getAlarm(alarmId).onSuccess { oldAlarm ->
-            alarmScheduler.unScheduleAlarm(oldAlarm)
+            alarmUseCase.unScheduleAlarm(oldAlarm)
         }
 
         alarmUseCase.updateAlarm(updatedAlarm)
             .onSuccess {
-                alarmScheduler.scheduleAlarm(updatedAlarm)
+                alarmUseCase.scheduleAlarm(updatedAlarm)
                 postSideEffect(AlarmAddEditContract.SideEffect.UpdateAlarm(it.id))
             }
             .onFailure {
@@ -270,7 +268,7 @@ class AlarmAddEditViewModel @Inject constructor(
                         ),
                     ),
                 )
-                alarmScheduler.scheduleAlarm(it)
+                alarmUseCase.scheduleAlarm(it)
                 postSideEffect(AlarmAddEditContract.SideEffect.SaveAlarm(it.id))
             }
             .onFailure {
