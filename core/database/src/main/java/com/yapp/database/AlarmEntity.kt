@@ -53,6 +53,8 @@ fun AlarmEntity.toDomain() = Alarm(
     soundUri = soundUri,
     soundVolume = soundVolume,
     isAlarmActive = isAlarmActive,
+    missionType = missionType,
+    missionCount = missionCount,
 )
 
 fun Alarm.toEntity() = AlarmEntity(
@@ -70,4 +72,6 @@ fun Alarm.toEntity() = AlarmEntity(
     soundUri = soundUri,
     soundVolume = soundVolume,
     isAlarmActive = isAlarmActive,
+    missionType = missionType,
+    missionCount = missionCount,
 )
