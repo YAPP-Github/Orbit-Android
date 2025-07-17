@@ -1,4 +1,4 @@
-package com.yapp.domain.formatter
+package com.yapp.home.util
 
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.toAlarmDays
