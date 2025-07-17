@@ -81,14 +81,18 @@ class AlarmTimeCalculatorTest {
         // 현재: 2024-07-22 (월) 10:00:00
         // 알람: 오늘 14:00:00, 비반복
         // 기대: 2024-07-22 (월) 14:00:00
+
+        // given
         val calculator = AlarmTimeCalculator(clockMonday2024_10am)
         val alarmTime = LocalTime.of(14, 0)
         val alarm = createTestAlarm(alarmTime.hour, alarmTime.minute) // repeatDays = 0 (비반복)
 
+        // when
+        val actualMillis = calculator.calculateNonRepeatingTimeMillis(alarm, testZoneId)
+
+        // then
         val expectedDateTime = MONDAY_2024_07_22_10AM.with(alarmTime)
         val expectedMillis = getExpectedMillis(expectedDateTime)
-
-        val actualMillis = calculator.calculateNonRepeatingTimeMillis(alarm, testZoneId)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -97,14 +101,18 @@ class AlarmTimeCalculatorTest {
         // 현재: 2024-07-22 (월) 10:00:00
         // 알람: 오늘 08:00:00 (이미 지남), 비반복
         // 기대: 2024-07-23 (화) 08:00:00
+
+        // given
         val calculator = AlarmTimeCalculator(clockMonday2024_10am)
         val alarmTime = LocalTime.of(8, 0)
         val alarm = createTestAlarm(alarmTime.hour, alarmTime.minute) // repeatDays = 0 (비반복)
 
+        // when
+        val actualMillis = calculator.calculateNonRepeatingTimeMillis(alarm, testZoneId)
+
+        // then
         val expectedDateTime = MONDAY_2024_07_22_10AM.plusDays(1).with(alarmTime)
         val expectedMillis = getExpectedMillis(expectedDateTime)
-
-        val actualMillis = calculator.calculateNonRepeatingTimeMillis(alarm, testZoneId)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -114,6 +122,8 @@ class AlarmTimeCalculatorTest {
         // 현재: 2024-07-22 (월) 10:00:00
         // 알람: 매주 월요일 14:00:00, 공휴일 건너뛰기 비활성
         // 기대: 2024-07-22 (월) 14:00:00
+
+        // given
         val calculator = AlarmTimeCalculator(clockMonday2024_10am)
         val alarmTime = LocalTime.of(14, 0)
         val alarm = createTestAlarm(
@@ -123,11 +133,13 @@ class AlarmTimeCalculatorTest {
             repeatDays = AlarmDay.MON.bitValue // 월요일 반복
         )
 
-        val expectedDateTime = MONDAY_2024_07_22_10AM.with(alarmTime)
-        val expectedMillis = getExpectedMillis(expectedDateTime)
-
+        // when
         val actualMillis =
             calculator.calculateNextRepeatingTimeMillis(alarm, AlarmDay.MON, testZoneId)
+
+        // then
+        val expectedDateTime = MONDAY_2024_07_22_10AM.with(alarmTime)
+        val expectedMillis = getExpectedMillis(expectedDateTime)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -136,6 +148,8 @@ class AlarmTimeCalculatorTest {
         // 현재: 2025-01-27 (월, 공휴일) 10:00:00
         // 알람: 매주 월요일 14:00:00, 공휴일 건너뛰기 비활성
         // 기대: 2025-01-27 (월, 공휴일) 14:00:00 (건너뛰기 비활성이므로 오늘 공휴일이어도 울림)
+
+        // given
         val calculator = AlarmTimeCalculator(clockMondayHoliday2025_10am)
         val alarmTime = LocalTime.of(14, 0)
         val alarm = createTestAlarm(
@@ -145,11 +159,13 @@ class AlarmTimeCalculatorTest {
             repeatDays = AlarmDay.MON.bitValue // 월요일 반복
         )
 
-        val expectedDateTime = MONDAY_HOLIDAY_2025_01_27_10AM.with(alarmTime)
-        val expectedMillis = getExpectedMillis(expectedDateTime)
-
+        // when
         val actualMillis =
             calculator.calculateNextRepeatingTimeMillis(alarm, AlarmDay.MON, testZoneId)
+
+        // then
+        val expectedDateTime = MONDAY_HOLIDAY_2025_01_27_10AM.with(alarmTime)
+        val expectedMillis = getExpectedMillis(expectedDateTime)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -159,6 +175,8 @@ class AlarmTimeCalculatorTest {
         // 알람: 매주 월요일 09:00:00, 공휴일 건너뛰기 비활성
         // 다음 주 월요일: 2025-01-27 (공휴일)
         // 기대: 2025-01-27 (월, 공휴일) 09:00:00 (건너뛰기 비활성이므로 다음 주 공휴일이어도 울림)
+
+        // given
         val calculator = AlarmTimeCalculator(clockMonday2025_01_20_10am)
         val alarmTime = LocalTime.of(9, 0)
         val alarm = createTestAlarm(
@@ -168,11 +186,13 @@ class AlarmTimeCalculatorTest {
             repeatDays = AlarmDay.MON.bitValue // 월요일 반복
         )
 
-        val expectedDateTime = LocalDateTime.of(2025, 1, 27, 9, 0, 0)
-        val expectedMillis = getExpectedMillis(expectedDateTime)
-
+        // when
         val actualMillis =
             calculator.calculateNextRepeatingTimeMillis(alarm, AlarmDay.MON, testZoneId)
+
+        // then
+        val expectedDateTime = LocalDateTime.of(2025, 1, 27, 9, 0, 0)
+        val expectedMillis = getExpectedMillis(expectedDateTime)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -181,6 +201,8 @@ class AlarmTimeCalculatorTest {
         // 현재: 2024-07-22 (월) 10:00:00
         // 알람: 매주 수요일 11:00:00, 공휴일 건너뛰기 비활성
         // 기대: 2024-07-24 (수) 11:00:00
+
+        // given
         val calculator = AlarmTimeCalculator(clockMonday2024_10am)
         val alarmTime = LocalTime.of(11, 0)
         val alarm = createTestAlarm(
@@ -190,12 +212,14 @@ class AlarmTimeCalculatorTest {
             repeatDays = AlarmDay.WED.bitValue // 수요일 반복
         )
 
+        // when
+        val actualMillis =
+            calculator.calculateNextRepeatingTimeMillis(alarm, AlarmDay.WED, testZoneId)
+
+        // then
         val expectedDateTime =
             MONDAY_2024_07_22_10AM.plusDays(2).with(alarmTime) // 2024-07-24 (수) 11:00
         val expectedMillis = getExpectedMillis(expectedDateTime)
-
-        val actualMillis =
-            calculator.calculateNextRepeatingTimeMillis(alarm, AlarmDay.WED, testZoneId)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -205,6 +229,8 @@ class AlarmTimeCalculatorTest {
         // 알람: 매주 월요일 14:00, isHolidayAlarmOff = false
         // 다음주 월요일: 2025-01-27 (공휴일)
         // 기대: 2025-01-27 (월) 14:00 (옵션 Off이므로 공휴일이어도 울림)
+
+        // given
         val calculator = AlarmTimeCalculator(clockMonday2025_PrevHoliday_2_01pm)
         val alarmTime = LocalTime.of(14, 0)
         val alarm = createTestAlarm(
@@ -214,11 +240,13 @@ class AlarmTimeCalculatorTest {
             repeatDays = AlarmDay.MON.bitValue // 월요일 반복
         )
 
-        val expectedDateTime = LocalDateTime.of(2025, 1, 27, 14, 0, 0)
-        val expectedMillis = getExpectedMillis(expectedDateTime)
-
+        // when
         val actualMillis =
             calculator.calculateNextRepeatingTimeMillis(alarm, AlarmDay.MON, testZoneId)
+
+        // then
+        val expectedDateTime = LocalDateTime.of(2025, 1, 27, 14, 0, 0)
+        val expectedMillis = getExpectedMillis(expectedDateTime)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -228,6 +256,8 @@ class AlarmTimeCalculatorTest {
         // 알람: 매주 월요일 14:00, isHolidayAlarmOff = true
         // 다음주 월요일: 2025-01-27 (공휴일)
         // 기대: 다다음주 월요일 2025-02-03 (월) 14:00
+
+        // given
         val calculator = AlarmTimeCalculator(clockMonday2025_PrevHoliday_2_01pm)
         val alarmTime = LocalTime.of(14, 0)
         val alarm = createTestAlarm(
@@ -237,11 +267,13 @@ class AlarmTimeCalculatorTest {
             repeatDays = AlarmDay.MON.bitValue // 월요일 반복
         )
 
-        val expectedDateTime = LocalDateTime.of(2025, 2, 3, 14, 0, 0)
-        val expectedMillis = getExpectedMillis(expectedDateTime)
-
+        // when
         val actualMillis =
             calculator.calculateNextRepeatingTimeMillis(alarm, AlarmDay.MON, testZoneId)
+
+        // then
+        val expectedDateTime = LocalDateTime.of(2025, 2, 3, 14, 0, 0)
+        val expectedMillis = getExpectedMillis(expectedDateTime)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -250,6 +282,8 @@ class AlarmTimeCalculatorTest {
         // 현재: 2025-01-27 (월, 공휴일) 10:00
         // 알람: 매주 월요일 14:00, isHolidayAlarmOff = true
         // 기대: 다음주 월요일 2025-02-03 (월) 14:00
+
+        // given
         val calculator = AlarmTimeCalculator(clockMondayHoliday2025_10am)
         val alarmTime = LocalTime.of(14, 0)
         val alarm = createTestAlarm(
@@ -259,11 +293,13 @@ class AlarmTimeCalculatorTest {
             repeatDays = AlarmDay.MON.bitValue // 월요일 반복
         )
 
-        val expectedDateTime = LocalDateTime.of(2025, 2, 3, 14, 0, 0)
-        val expectedMillis = getExpectedMillis(expectedDateTime)
-
+        // when
         val actualMillis =
             calculator.calculateNextRepeatingTimeMillis(alarm, AlarmDay.MON, testZoneId)
+
+        // then
+        val expectedDateTime = LocalDateTime.of(2025, 2, 3, 14, 0, 0)
+        val expectedMillis = getExpectedMillis(expectedDateTime)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -272,6 +308,8 @@ class AlarmTimeCalculatorTest {
         // 현재: 2025-01-27 (월, 공휴일) 10:00
         // 알람: 매주 월요일 14:00, isHolidayAlarmOff = false
         // 기대: 오늘 2025-01-27 (월) 14:00
+
+        // given
         val calculator = AlarmTimeCalculator(clockMondayHoliday2025_10am)
         val alarmTime = LocalTime.of(14, 0)
         val alarm = createTestAlarm(
@@ -281,11 +319,13 @@ class AlarmTimeCalculatorTest {
             repeatDays = AlarmDay.MON.bitValue // 월요일 반복
         )
 
-        val expectedDateTime = MONDAY_HOLIDAY_2025_01_27_10AM.with(alarmTime)
-        val expectedMillis = getExpectedMillis(expectedDateTime)
-
+        // when
         val actualMillis =
             calculator.calculateNextRepeatingTimeMillis(alarm, AlarmDay.MON, testZoneId)
+
+        // then
+        val expectedDateTime = MONDAY_HOLIDAY_2025_01_27_10AM.with(alarmTime)
+        val expectedMillis = getExpectedMillis(expectedDateTime)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -297,6 +337,8 @@ class AlarmTimeCalculatorTest {
         // 알람: 매주 월요일 14:00, isHolidayAlarmOff = false
         // 다음주 월요일: 2024-07-29 (공휴일 아님)
         // 기대: 2024-07-29 (월) 14:00
+
+        // given
         val calculator = AlarmTimeCalculator(clockMonday2024_10am)
         val alarmTime = LocalTime.of(14, 0)
         val alarm = createTestAlarm(
@@ -306,11 +348,13 @@ class AlarmTimeCalculatorTest {
             repeatDays = AlarmDay.MON.bitValue // 월요일 반복
         )
 
-        val expectedDateTime = LocalDateTime.of(2024, 7, 29, 14, 0, 0)
-        val expectedMillis = getExpectedMillis(expectedDateTime)
-
+        // when
         val actualMillis =
             calculator.calculateNextWeeklyRescheduledTimeMillis(alarm, AlarmDay.MON, testZoneId)
+
+        // then
+        val expectedDateTime = LocalDateTime.of(2024, 7, 29, 14, 0, 0)
+        val expectedMillis = getExpectedMillis(expectedDateTime)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -320,6 +364,8 @@ class AlarmTimeCalculatorTest {
         // 알람: 매주 월요일 14:00:00, 공휴일 건너뛰기 비활성
         // 다음주 월요일: 2025-01-27 (공휴일)
         // 기대: 2025-01-27 (월, 공휴일) 14:00:00 (건너뛰기 비활성이므로 다음주 공휴일이어도 울림)
+
+        // given
         val calculator = AlarmTimeCalculator(clockMonday2025_01_20_10am)
         val alarmTime = LocalTime.of(14, 0)
         val alarm = createTestAlarm(
@@ -329,11 +375,13 @@ class AlarmTimeCalculatorTest {
             repeatDays = AlarmDay.MON.bitValue // 월요일 반복
         )
 
-        val expectedDateTime = LocalDateTime.of(2025, 1, 27, 14, 0, 0)
-        val expectedMillis = getExpectedMillis(expectedDateTime)
-
+        // when
         val actualMillis =
             calculator.calculateNextWeeklyRescheduledTimeMillis(alarm, AlarmDay.MON, testZoneId)
+
+        // then
+        val expectedDateTime = LocalDateTime.of(2025, 1, 27, 14, 0, 0)
+        val expectedMillis = getExpectedMillis(expectedDateTime)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -343,6 +391,8 @@ class AlarmTimeCalculatorTest {
         // 알람: 매주 월요일 14:00, isHolidayAlarmOff = false
         // 로직: 가장 가까운 다음 월요일(29일)의 그 다음 주 월요일(5일)
         // 기대: 2024-08-05 (월) 14:00
+
+        // given
         val calculator = AlarmTimeCalculator(clockFriday2024_3pm)
         val alarmTime = LocalTime.of(14, 0)
         val alarm = createTestAlarm(
@@ -352,11 +402,13 @@ class AlarmTimeCalculatorTest {
             repeatDays = AlarmDay.MON.bitValue // 월요일 반복
         )
 
-        val expectedDateTime = LocalDateTime.of(2024, 8, 5, 14, 0, 0)
-        val expectedMillis = getExpectedMillis(expectedDateTime)
-
+        // when
         val actualMillis =
             calculator.calculateNextWeeklyRescheduledTimeMillis(alarm, AlarmDay.MON, testZoneId)
+
+        // then
+        val expectedDateTime = LocalDateTime.of(2024, 8, 5, 14, 0, 0)
+        val expectedMillis = getExpectedMillis(expectedDateTime)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -366,6 +418,8 @@ class AlarmTimeCalculatorTest {
         // 알람: 매주 월요일 14:00, isHolidayAlarmOff = true
         // 다음주 월요일: 2025-01-27 (공휴일)
         // 기대: 다다음주 월요일 2025-02-03 (월) 14:00
+
+        // given
         val calculator = AlarmTimeCalculator(clockMonday2025_01_20_10am)
         val alarmTime = LocalTime.of(14, 0)
         val alarm = createTestAlarm(
@@ -375,11 +429,13 @@ class AlarmTimeCalculatorTest {
             repeatDays = AlarmDay.MON.bitValue // 월요일 반복
         )
 
-        val expectedDateTime = LocalDateTime.of(2025, 2, 3, 14, 0, 0)
-        val expectedMillis = getExpectedMillis(expectedDateTime)
-
+        // when
         val actualMillis =
             calculator.calculateNextWeeklyRescheduledTimeMillis(alarm, AlarmDay.MON, testZoneId)
+
+        // then
+        val expectedDateTime = LocalDateTime.of(2025, 2, 3, 14, 0, 0)
+        val expectedMillis = getExpectedMillis(expectedDateTime)
         assertEquals(expectedMillis, actualMillis)
     }
 
@@ -389,6 +445,8 @@ class AlarmTimeCalculatorTest {
         // 알람: 매주 월요일 14:00, isHolidayAlarmOff = true
         // 다음주 월요일: 2025-02-24 (공휴일 아님)
         // 기대: 2025-02-24 (월) 14:00
+
+        // given
         val calculator = AlarmTimeCalculator(clockMonday2025_02_17_10am)
         val alarmTime = LocalTime.of(14, 0)
         val alarm = createTestAlarm(
@@ -398,11 +456,13 @@ class AlarmTimeCalculatorTest {
             repeatDays = AlarmDay.MON.bitValue // 월요일 반복
         )
 
-        val expectedDateTime = LocalDateTime.of(2025, 2, 24, 14, 0, 0)
-        val expectedMillis = getExpectedMillis(expectedDateTime)
-
+        // when
         val actualMillis =
             calculator.calculateNextWeeklyRescheduledTimeMillis(alarm, AlarmDay.MON, testZoneId)
+
+        // then
+        val expectedDateTime = LocalDateTime.of(2025, 2, 24, 14, 0, 0)
+        val expectedMillis = getExpectedMillis(expectedDateTime)
         assertEquals(expectedMillis, actualMillis)
     }
 }
