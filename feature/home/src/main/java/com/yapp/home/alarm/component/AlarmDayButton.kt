@@ -1,4 +1,4 @@
-package com.yapp.alarm.component
+package com.yapp.home.alarm.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

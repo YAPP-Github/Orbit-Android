@@ -1,4 +1,4 @@
-package com.yapp.alarm.component.bottomsheet
+package com.yapp.home.alarm.component.bottomsheet
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

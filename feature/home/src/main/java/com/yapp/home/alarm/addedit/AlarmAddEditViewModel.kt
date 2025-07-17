@@ -1,4 +1,4 @@
-package com.yapp.alarm.addedit
+package com.yapp.home.alarm.addedit
 
 import android.util.Log
 import androidx.compose.ui.unit.dp
@@ -7,14 +7,15 @@ import androidx.lifecycle.ViewModel
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
 import com.yapp.common.util.ResourceProvider
-import com.yapp.domain.formatter.AlarmDateTimeFormatter
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
 import com.yapp.domain.model.AlarmSound
 import com.yapp.domain.model.copyFrom
 import com.yapp.domain.model.toAlarmDayNames
 import com.yapp.domain.model.toAlarmDays
+import com.yapp.domain.model.toRepeatDays
 import com.yapp.domain.usecase.AlarmUseCase
+import com.yapp.home.util.AlarmDateTimeFormatter
 import com.yapp.media.haptic.HapticFeedbackManager
 import com.yapp.media.haptic.HapticType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,6 +36,7 @@ class AlarmAddEditViewModel @Inject constructor(
     private val analyticsHelper: AnalyticsHelper,
     private val alarmUseCase: AlarmUseCase,
     private val resourceProvider: ResourceProvider,
+    private val alarmDateTimeFormatter: AlarmDateTimeFormatter,
     private val hapticFeedbackManager: HapticFeedbackManager,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel(), ContainerHost<AlarmAddEditContract.State, AlarmAddEditContract.SideEffect> {
@@ -500,16 +502,23 @@ class AlarmAddEditViewModel @Inject constructor(
     }
 
     private fun getAlarmMessage(currentTime: LocalTime, selectedDays: Set<AlarmDay>): String {
-        return alarmUseCase.getFormattedNextAlarmMessage(
-            currentTime = currentTime,
+        val repeatDays = selectedDays.toRepeatDays()
+        val nextOccurrence = alarmDateTimeFormatter.calculateNextOccurrence(
+            hour = currentTime.hour,
+            minute = currentTime.minute,
+            repeatDays = repeatDays,
+            now = LocalDateTime.now(),
+        )
+
+        return alarmDateTimeFormatter.formatTimeDifference(
+            baseTime = LocalDateTime.now(),
+            futureTime = nextOccurrence,
             formats = AlarmDateTimeFormatter.TimeDifferenceFormats(
                 daysHoursMinutesFormat = resourceProvider.getString(R.string.alarm_remaining_time_days_hours),
                 hoursMinutesFormat = resourceProvider.getString(R.string.alarm_remaining_time_hours_minutes),
                 minutesFormat = resourceProvider.getString(R.string.alarm_remaining_time_minutes_only),
                 soonFormat = resourceProvider.getString(R.string.alarm_remaining_time_soon),
             ),
-            selectedDays = selectedDays,
-            now = LocalDateTime.now(),
         )
     }
 }

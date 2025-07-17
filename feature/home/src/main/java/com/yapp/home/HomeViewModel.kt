@@ -3,11 +3,11 @@ package com.yapp.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.yapp.common.util.ResourceProvider
-import com.yapp.domain.formatter.AlarmDateTimeFormatter
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.repository.UserInfoRepository
 import com.yapp.domain.usecase.AlarmUseCase
+import com.yapp.home.util.AlarmDateTimeFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import feature.home.R
 import kotlinx.coroutines.flow.combine
@@ -28,6 +28,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val alarmUseCase: AlarmUseCase,
     private val resourceProvider: ResourceProvider,
+    private val alarmDateTimeFormatter: AlarmDateTimeFormatter,
     private val fortuneRepository: FortuneRepository,
     private val userInfoRepository: UserInfoRepository,
 ) : ViewModel(), ContainerHost<HomeContract.State, HomeContract.SideEffect> {
@@ -323,7 +324,7 @@ class HomeViewModel @Inject constructor(
             otherYear = resourceProvider.getString(R.string.home_fortune_delivery_other_year, "%s"),
         )
 
-        val formattedTime = alarmUseCase.getFormattedEarliestUpcomingAlarm(
+        val formattedTime = alarmDateTimeFormatter.getFormattedEarliestUpcomingAlarmDeliveryTime(
             alarms = alarms,
             formats = deliveryTimeFormats,
         )

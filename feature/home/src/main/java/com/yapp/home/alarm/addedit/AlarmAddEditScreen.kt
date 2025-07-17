@@ -1,4 +1,4 @@
-package com.yapp.alarm.addedit
+package com.yapp.home.alarm.addedit
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -48,11 +48,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.yapp.alarm.component.AlarmCheckItem
-import com.yapp.alarm.component.AlarmDayButton
-import com.yapp.alarm.component.bottomsheet.AlarmSnoozeBottomSheet
-import com.yapp.alarm.component.bottomsheet.AlarmSoundBottomSheet
-import com.yapp.alarm.getLabelStringRes
 import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.AlarmDay
@@ -61,6 +56,11 @@ import com.yapp.domain.model.MissionType
 import com.yapp.home.ADD_ALARM_RESULT_KEY
 import com.yapp.home.DELETE_ALARM_RESULT_KEY
 import com.yapp.home.UPDATE_ALARM_RESULT_KEY
+import com.yapp.home.alarm.component.AlarmCheckItem
+import com.yapp.home.alarm.component.AlarmDayButton
+import com.yapp.home.alarm.component.bottomsheet.AlarmSnoozeBottomSheet
+import com.yapp.home.alarm.component.bottomsheet.AlarmSoundBottomSheet
+import com.yapp.home.alarm.getLabelStringRes
 import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.dialog.OrbitDialog
 import com.yapp.ui.component.lottie.LottieAnimation

@@ -4,10 +4,10 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
-import com.yapp.alarm.addedit.AlarmAddEditRoute
 import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.common.navigation.route.HomeBaseRoute
 import com.yapp.common.navigation.route.HomeDestination
+import com.yapp.home.alarm.addedit.AlarmAddEditRoute
 
 const val ADD_ALARM_RESULT_KEY = "addAlarmResult"
 const val UPDATE_ALARM_RESULT_KEY = "updateAlarmResult"

@@ -1,4 +1,4 @@
-package com.yapp.alarm.addedit
+package com.yapp.home.alarm.addedit
 
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp

@@ -1,4 +1,4 @@
-package com.yapp.alarm.component
+package com.yapp.home.alarm.component
 
 import android.os.Handler
 import android.os.Looper

@@ -1,4 +1,4 @@
-package com.yapp.alarm.component
+package com.yapp.home.alarm.component
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +13,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yapp.designsystem.theme.OrbitTheme
+import core.designsystem.R
 
 @Composable
 internal fun AlarmCheckItem(
@@ -30,7 +31,7 @@ internal fun AlarmCheckItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painter = painterResource(id = core.designsystem.R.drawable.ic_check),
+            painter = painterResource(id = R.drawable.ic_check),
             contentDescription = "Check",
             tint = if (isPressed) OrbitTheme.colors.main else OrbitTheme.colors.gray_400,
         )
