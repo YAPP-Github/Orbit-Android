@@ -1,5 +1,6 @@
 package com.yapp.home.util
 
+import android.util.Log
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.toAlarmDays
 import com.yapp.domain.model.toDayOfWeek
@@ -123,8 +124,10 @@ class AlarmDateTimeFormatter @Inject constructor(
                 }
             }
         } catch (e: DateTimeParseException) {
+            Log.e("AlarmDateTimeFormatter", "Invalid date format: $deliveryDateTimeString", e)
             formats.noAlarm
         } catch (e: Exception) {
+            Log.e("AlarmDateTimeFormatter", "Error formatting delivery date time: $deliveryDateTimeString", e)
             formats.noAlarm
         }
     }
@@ -140,6 +143,7 @@ class AlarmDateTimeFormatter @Inject constructor(
                 try {
                     calculateNextOccurrence(alarm.hour, alarm.minute, alarm.repeatDays, now)
                 } catch (e: Exception) {
+                    Log.e("AlarmDateTimeFormatter", "Error calculating next occurrence for alarm: $alarm", e)
                     null // 예외 발생 시 null로 처리
                 }
             }
