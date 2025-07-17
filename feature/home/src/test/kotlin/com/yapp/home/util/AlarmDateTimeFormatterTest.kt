@@ -21,7 +21,10 @@ class AlarmDateTimeFormatterTest {
 
     @Before
     fun `테스트_준비`() {
-        formatter = AlarmDateTimeFormatter(clock = fixedClock)
+        formatter = AlarmDateTimeFormatter(
+            clock = fixedClock,
+            displayLocale = testLocale,
+        )
     }
 
     private fun getLocalizedFormatter(pattern: String): DateTimeFormatter {

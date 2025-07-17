@@ -10,10 +10,12 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.util.Locale
 import javax.inject.Inject
 
 class AlarmDateTimeFormatter @Inject constructor(
     private val clock: Clock,
+    private val displayLocale: Locale,
 ) {
 
     companion object {
@@ -94,8 +96,12 @@ class AlarmDateTimeFormatter @Inject constructor(
                 return formats.noAlarm
             }
 
-            val inputFormatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)
-            val alarmOccurrenceDateTime = LocalDateTime.parse(deliveryDateTimeString, inputFormatter) // 변수명 inputDateTime -> alarmOccurrenceDateTime
+            val inputFormatter =
+                DateTimeFormatter.ofPattern(DATE_TIME_FORMAT).withLocale(displayLocale)
+            val alarmOccurrenceDateTime = LocalDateTime.parse(
+                deliveryDateTimeString,
+                inputFormatter,
+            ) // 변수명 inputDateTime -> alarmOccurrenceDateTime
             val today = now.toLocalDate()
             val tomorrow = today.plusDays(1)
             val formattedTimeOrDateTime: String
@@ -103,23 +109,35 @@ class AlarmDateTimeFormatter @Inject constructor(
             when {
                 // 1. 년도가 현재 년도와 다르면 'otherYear' 포맷 적용
                 alarmOccurrenceDateTime.year != now.year -> {
-                    formattedTimeOrDateTime = alarmOccurrenceDateTime.format(DateTimeFormatter.ofPattern(formats.otherYearDatePattern))
+                    formattedTimeOrDateTime = alarmOccurrenceDateTime.format(
+                        DateTimeFormatter.ofPattern(formats.otherYearDatePattern)
+                            .withLocale(displayLocale),
+                    )
                     return String.format(formats.otherYear, formattedTimeOrDateTime)
                 }
                 // 2. (년도가 같고) 날짜가 오늘이면 'today' 포맷 적용
                 alarmOccurrenceDateTime.toLocalDate() == today -> {
-                    formattedTimeOrDateTime = alarmOccurrenceDateTime.format(DateTimeFormatter.ofPattern(formats.todayTimePattern))
+                    formattedTimeOrDateTime = alarmOccurrenceDateTime.format(
+                        DateTimeFormatter.ofPattern(formats.todayTimePattern)
+                            .withLocale(displayLocale),
+                    )
                     return String.format(formats.today, formattedTimeOrDateTime)
                 }
                 // 3. (년도가 같고) 날짜가 내일이면 'tomorrow' 포맷 적용
                 alarmOccurrenceDateTime.toLocalDate() == tomorrow -> {
                     // 내일은 특별히 시간만 표시 (요구사항에 따라 변경 가능)
-                    formattedTimeOrDateTime = alarmOccurrenceDateTime.format(DateTimeFormatter.ofPattern(formats.todayTimePattern))
+                    formattedTimeOrDateTime = alarmOccurrenceDateTime.format(
+                        DateTimeFormatter.ofPattern(formats.todayTimePattern)
+                            .withLocale(displayLocale),
+                    )
                     return String.format(formats.tomorrow, formattedTimeOrDateTime)
                 }
                 // 4. 그 외의 경우 (년도가 같고, 오늘이나 내일이 아닌 다른 날) 'thisYear' 포맷 적용
                 else -> {
-                    formattedTimeOrDateTime = alarmOccurrenceDateTime.format(DateTimeFormatter.ofPattern(formats.thisYearDatePattern))
+                    formattedTimeOrDateTime = alarmOccurrenceDateTime.format(
+                        DateTimeFormatter.ofPattern(formats.thisYearDatePattern)
+                            .withLocale(displayLocale),
+                    )
                     return String.format(formats.thisYear, formattedTimeOrDateTime)
                 }
             }
@@ -127,7 +145,11 @@ class AlarmDateTimeFormatter @Inject constructor(
             Log.e("AlarmDateTimeFormatter", "Invalid date format: $deliveryDateTimeString", e)
             formats.noAlarm
         } catch (e: Exception) {
-            Log.e("AlarmDateTimeFormatter", "Error formatting delivery date time: $deliveryDateTimeString", e)
+            Log.e(
+                "AlarmDateTimeFormatter",
+                "Error formatting delivery date time: $deliveryDateTimeString",
+                e,
+            )
             formats.noAlarm
         }
     }
@@ -143,14 +165,18 @@ class AlarmDateTimeFormatter @Inject constructor(
                 try {
                     calculateNextOccurrence(alarm.hour, alarm.minute, alarm.repeatDays, now)
                 } catch (e: Exception) {
-                    Log.e("AlarmDateTimeFormatter", "Error calculating next occurrence for alarm: $alarm", e)
+                    Log.e(
+                        "AlarmDateTimeFormatter",
+                        "Error calculating next occurrence for alarm: $alarm",
+                        e,
+                    )
                     null // 예외 발생 시 null로 처리
                 }
             }
             .minOrNull()
 
         val deliveryDateTimeString = earliestAlarmDateTime?.format(
-            DateTimeFormatter.ofPattern(DATE_TIME_FORMAT),
+            DateTimeFormatter.ofPattern(DATE_TIME_FORMAT).withLocale(displayLocale),
         ) ?: NO_ALARM_STRING
 
         return formatDeliveryDateTimeString(deliveryDateTimeString, formats, now)
@@ -177,8 +203,19 @@ class AlarmDateTimeFormatter @Inject constructor(
         val remainingMinutes = duration.toMinutes() % 60
 
         return when {
-            days > 0 -> String.format(formats.daysHoursMinutesFormat, days, remainingHours, remainingMinutes)
-            remainingHours > 0 -> String.format(formats.hoursMinutesFormat, remainingHours, remainingMinutes)
+            days > 0 -> String.format(
+                formats.daysHoursMinutesFormat,
+                days,
+                remainingHours,
+                remainingMinutes,
+            )
+
+            remainingHours > 0 -> String.format(
+                formats.hoursMinutesFormat,
+                remainingHours,
+                remainingMinutes,
+            )
+
             else -> String.format(formats.minutesFormat, remainingMinutes)
         }
     }
