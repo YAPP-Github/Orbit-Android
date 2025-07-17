@@ -166,12 +166,8 @@ class AlarmDateTimeFormatter @Inject constructor(
         }
 
         val duration = Duration.between(baseTime, futureTime)
-
-        if (duration.toNanos() <= 0) {
-            return formats.soonFormat
-        }
-
         val totalMinutes = duration.toMinutes()
+
         if (totalMinutes < 1) {
             return formats.soonFormat
         }
