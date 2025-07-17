@@ -1,4 +1,4 @@
-package com.yapp.domain.di
+package com.yapp.common.di
 
 import dagger.Module
 import dagger.Provides
@@ -10,6 +10,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object ClockModule {
+
     @Provides
     @Singleton
     fun provideClock(): Clock = Clock.systemDefaultZone()
