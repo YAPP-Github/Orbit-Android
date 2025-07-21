@@ -1,0 +1,24 @@
+coverage:
+    status:
+        project:
+            default:
+                target: 60%
+                threshold: 2%
+
+comment:
+    layout: "reach, diff, flags, files"
+    behavior: default
+    require_changes: true
+
+parsers:
+    gcov:
+        branch_detection:
+            conditional: true
+            loop: true
+            method: true
+            macro: true
+
+ignore:
+    - "**/di/**"
+    - "**/BuildConfig.*"
+    - "**/generated/**"

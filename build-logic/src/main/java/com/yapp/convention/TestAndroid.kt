@@ -22,7 +22,6 @@ internal fun Project.configureComposeUiTest() {
 @Suppress("UnstableApiUsage")
 internal fun Project.configureJUnitAndroid() {
     androidExtension.apply {
-        testOptions { unitTests.all { it.useJUnitPlatform() } }
         defaultConfig { testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
 
         val libs = extensions.libs

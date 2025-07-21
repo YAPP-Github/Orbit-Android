@@ -64,11 +64,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.yapp.alarm.component.AlarmListItem
-import com.yapp.alarm.component.AlarmListItemMenu
 import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.Alarm
+import com.yapp.home.alarm.component.AlarmListItem
+import com.yapp.home.alarm.component.AlarmListItemMenu
 import com.yapp.home.component.bottomsheet.AlarmListBottomSheet
 import com.yapp.ui.component.dialog.OrbitDialog
 import com.yapp.ui.component.lottie.LottieAnimation
@@ -905,7 +905,6 @@ private fun AlarmWithMenu(
             swipeable = false,
             selectable = false,
             selected = selectedAlarmIds.contains(activeItemMenu.id),
-            isAm = activeItemMenu.isAm,
             hour = activeItemMenu.hour,
             minute = activeItemMenu.minute,
             isActive = activeItemMenu.isAlarmActive,

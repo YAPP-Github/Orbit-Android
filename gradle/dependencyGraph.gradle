@@ -7,7 +7,7 @@ tasks.register('projectDependencyGraph') {
 
         dot << 'digraph {\n'
         dot << "  graph [label=\"${rootProject.name}\\n \",labelloc=t,fontsize=30,ranksep=1.4];\n"
-        dot << '  node [style=filled, fillcolor="#bbbbbb"];\n'
+        dot << '  node [style=filled, fillcolor="#bbbbbb"];\n'  // 기본 노드 색상
         dot << '  rankdir=TB;\n'
 
         def rootProjects = []
@@ -27,27 +27,41 @@ tasks.register('projectDependencyGraph') {
         def androidDynamicFeatureProjects = []
         def javaProjects = []
 
+        // --- 모듈 유형을 저장할 리스트 추가 ---
+        def featureModules = []
+        def coreModules = []
+        def dataModules = []
+        def domainModules = [] // domain 모듈 리스트 추가
+
         queue = [rootProject]
         while (!queue.isEmpty()) {
             def project = queue.remove(0)
             queue.addAll(project.childProjects.values())
 
-            if (project.plugins.hasPlugin('org.jetbrains.kotlin.multiplatform')) {
+            // --- 모듈 경로/이름을 기반으로 모듈 유형 식별 ---
+            // 프로젝트의 모듈 명명 규칙에 맞게 조건을 수정하세요.
+            // 우선순위를 고려하여 배치 (더 구체적인 조건이 위로)
+            if (project.path.startsWith(':feature')) {
+                featureModules.add(project)
+            } else if (project.path.contains(':domain')) { // domain 모듈 식별 조건 (예: ':user:domain', ':product:domain')
+                domainModules.add(project)
+            } else if (project.path.contains(':core')) {
+                coreModules.add(project)
+            } else if (project.path.startsWith(':data')) {
+                dataModules.add(project)
+            }
+            // --- 기존 플러그인 기반 식별 로직 유지 ---
+            else if (project.plugins.hasPlugin('org.jetbrains.kotlin.multiplatform')) {
                 multiplatformProjects.add(project)
-            }
-            if (project.plugins.hasPlugin('kotlin2js')) {
+            } else if (project.plugins.hasPlugin('kotlin2js')) {
                 jsProjects.add(project)
-            }
-            if (project.plugins.hasPlugin('com.android.application')) {
+            } else if (project.plugins.hasPlugin('com.android.application')) {
                 androidProjects.add(project)
-            }
-            if (project.plugins.hasPlugin('com.android.library')) {
+            } else if (project.plugins.hasPlugin('com.android.library')) {
                 androidLibraryProjects.add(project)
-            }
-            if (project.plugins.hasPlugin('com.android.dynamic-feature')) {
+            } else if (project.plugins.hasPlugin('com.android.dynamic-feature')) {
                 androidDynamicFeatureProjects.add(project)
-            }
-            if (project.plugins.hasPlugin('java-library') || project.plugins.hasPlugin('java')) {
+            } else if (project.plugins.hasPlugin('java-library') || project.plugins.hasPlugin('java')) {
                 javaProjects.add(project)
             }
 
@@ -81,7 +95,18 @@ tasks.register('projectDependencyGraph') {
                 traits.add('shape=box')
             }
 
-            if (multiplatformProjects.contains(project)) {
+            // --- 특정 모듈 유형 색상 우선 지정 ---
+            if (featureModules.contains(project)) {
+                traits.add('fillcolor="#FFC0CB"') // 핑크 (Feature)
+            } else if (domainModules.contains(project)) {
+                traits.add('fillcolor="#DAF7A6"') // 예: 라이트 그린/옐로우 (Domain) - 색상 변경 가능
+            } else if (coreModules.contains(project)) {
+                traits.add('fillcolor="#ADD8E6"') // 라이트 블루 (Core)
+            } else if (dataModules.contains(project)) {
+                traits.add('fillcolor="#90EE90"') // 라이트 그린 (Data)
+            }
+            // --- 기존 플러그인 기반 색상 지정 로직 ---
+            else if (multiplatformProjects.contains(project)) {
                 traits.add('fillcolor="#ffd2b3"')
             } else if (jsProjects.contains(project)) {
                 traits.add('fillcolor="#ffffba"')
@@ -94,7 +119,7 @@ tasks.register('projectDependencyGraph') {
             } else if (javaProjects.contains(project)) {
                 traits.add('fillcolor="#ffb3ba"')
             } else {
-                traits.add('fillcolor="#eeeeee"')
+                traits.add('fillcolor="#eeeeee"') // 그 외 기본 색상
             }
 
             dot << "  \"${project.path}\" [${traits.join(", ")}];\n"

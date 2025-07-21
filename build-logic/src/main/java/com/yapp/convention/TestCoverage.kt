@@ -8,6 +8,7 @@ import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.withType
 import org.gradle.testing.jacoco.plugins.JacocoPluginExtension
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
+import org.gradle.testing.jacoco.tasks.JacocoReport
 
 internal fun Project.configureTestCoverage() {
     pluginManager.apply("jacoco")
@@ -51,5 +52,7 @@ internal fun Project.configureTestCoverage() {
                 .get().asFile
             execFile.exists()
         }
+
+        (this as? JacocoReport)?.reports?.xml?.required?.set(true)
     }
 }

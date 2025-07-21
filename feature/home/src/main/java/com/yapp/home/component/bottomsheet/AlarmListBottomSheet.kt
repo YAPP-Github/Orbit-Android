@@ -48,10 +48,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.yapp.alarm.component.AlarmListItem
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.Alarm
 import com.yapp.home.HomeContract
+import com.yapp.home.alarm.component.AlarmListItem
 import com.yapp.home.component.AlarmListDropDownMenu
 import com.yapp.home.component.AlarmSortDropDownMenu
 import com.yapp.ui.component.checkbox.OrbitCheckBox
@@ -253,7 +253,6 @@ internal fun AlarmBottomSheetContent(
                     onClick = onClickAlarm,
                     onLongPress = onLongPressAlarm,
                     onToggleSelect = onToggleSelect,
-                    isAm = alarm.isAm,
                     hour = alarm.hour,
                     minute = alarm.minute,
                     isActive = alarm.isAlarmActive,

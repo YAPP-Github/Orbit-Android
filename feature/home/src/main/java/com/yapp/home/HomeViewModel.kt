@@ -4,12 +4,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.yapp.common.util.ResourceProvider
 import com.yapp.domain.model.Alarm
-import com.yapp.domain.model.toAlarmDays
-import com.yapp.domain.model.toDayOfWeek
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.repository.UserInfoRepository
-import com.yapp.domain.scheduler.AlarmScheduler
 import com.yapp.domain.usecase.AlarmUseCase
+import com.yapp.home.util.AlarmDateTimeFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import feature.home.R
 import kotlinx.coroutines.flow.combine
@@ -23,8 +21,6 @@ import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.syntax.simple.repeatOnSubscription
 import org.orbitmvi.orbit.viewmodel.container
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
@@ -32,7 +28,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val alarmUseCase: AlarmUseCase,
     private val resourceProvider: ResourceProvider,
-    private val alarmScheduler: AlarmScheduler,
+    private val alarmDateTimeFormatter: AlarmDateTimeFormatter,
     private val fortuneRepository: FortuneRepository,
     private val userInfoRepository: UserInfoRepository,
 ) : ViewModel(), ContainerHost<HomeContract.State, HomeContract.SideEffect> {
@@ -187,9 +183,9 @@ class HomeViewModel @Inject constructor(
             }
 
             if (updatedAlarm.isAlarmActive) {
-                alarmScheduler.scheduleAlarm(updatedAlarm)
+                alarmUseCase.scheduleAlarm(updatedAlarm)
             } else {
-                alarmScheduler.unScheduleAlarm(updatedAlarm)
+                alarmUseCase.unScheduleAlarm(updatedAlarm)
             }
         }.onFailure { error ->
             Log.e("HomeViewModel", "Failed to update alarm state", error)
@@ -249,9 +245,9 @@ class HomeViewModel @Inject constructor(
             }
 
             if (updatedAlarm.isAlarmActive) {
-                alarmScheduler.scheduleAlarm(updatedAlarm)
+                alarmUseCase.scheduleAlarm(updatedAlarm)
             } else {
-                alarmScheduler.unScheduleAlarm(updatedAlarm)
+                alarmUseCase.unScheduleAlarm(updatedAlarm)
             }
         }.onFailure { error ->
             Log.e("HomeViewModel", "Failed to rollback alarm state", error)
@@ -270,7 +266,7 @@ class HomeViewModel @Inject constructor(
 
         alarmsToDelete.forEach { alarm ->
             alarmUseCase.deleteAlarm(alarm.id)
-            alarmScheduler.unScheduleAlarm(alarm)
+            alarmUseCase.unScheduleAlarm(alarm)
         }
 
         if (state.activeItemMenu != null) {
@@ -293,7 +289,7 @@ class HomeViewModel @Inject constructor(
     private fun restoreDeletedAlarms(alarmsWithIndex: List<Alarm>) = intent {
         alarmsWithIndex.forEach { alarm ->
             alarmUseCase.insertAlarm(alarm)
-            alarmScheduler.scheduleAlarm(alarm)
+            alarmUseCase.scheduleAlarm(alarm)
         }
     }
 
@@ -304,14 +300,14 @@ class HomeViewModel @Inject constructor(
     private fun loadAllAlarms() = intent {
         reduce { state.copy(initialLoading = true) }
 
-        alarmUseCase.getAllAlarms().collect {
+        alarmUseCase.getAllAlarms().collect { alarms ->
             reduce {
                 state.copy(
-                    alarms = it,
+                    alarms = alarms,
                     initialLoading = false,
                 )
             }
-            updateDeliveryTime(it)
+            updateDeliveryTime(alarms)
         }
     }
 
@@ -320,84 +316,24 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun updateDeliveryTime(alarms: List<Alarm>) = intent {
-        val earliestAlarm = alarms
-            .filter { it.isAlarmActive }
-            .minByOrNull { alarm ->
-                getNextAlarmDateWithTime(alarm.isAm, alarm.hour, alarm.minute, alarm.repeatDays)
-            }
+        val deliveryTimeFormats = AlarmDateTimeFormatter.DeliveryTimeFormats(
+            noAlarm = resourceProvider.getString(R.string.home_fortune_no_alarm),
+            today = resourceProvider.getString(R.string.home_fortune_delivery_today, "%s"),
+            tomorrow = resourceProvider.getString(R.string.home_fortune_delivery_tomorrow, "%s"),
+            thisYear = resourceProvider.getString(R.string.home_fortune_delivery_this_year, "%s"),
+            otherYear = resourceProvider.getString(R.string.home_fortune_delivery_other_year, "%s"),
+        )
 
-        val deliveryTime = earliestAlarm?.let { alarm ->
-            val alarmDateTime = getNextAlarmDateWithTime(alarm.isAm, alarm.hour, alarm.minute, alarm.repeatDays)
-            alarmDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"))
-        } ?: "NONE"
-
-        reduce { state.copy(deliveryTime = formatDeliveryTime(deliveryTime)) }
-    }
-
-    private fun getNextAlarmDateWithTime(isAm: Boolean, hour: Int, minute: Int, repeatDays: Int): LocalDateTime {
-        val now = LocalDateTime.now()
-
-        val alarmHour = when {
-            isAm && hour == 12 -> 0
-            !isAm && hour != 12 -> hour + 12
-            else -> hour
-        }
-        val alarmTime = LocalTime.of(alarmHour, minute)
-        val todayAlarm = LocalDateTime.of(now.toLocalDate(), alarmTime)
-
-        // 반복 요일이 설정되지 않은 경우 → 단일 알람
-        if (repeatDays == 0) {
-            return if (todayAlarm.isAfter(now)) todayAlarm else todayAlarm.plusDays(1)
-        }
-
-        // 비트마스크 기반 반복 요일 추출
-        val selectedDays = repeatDays.toAlarmDays().map { it.toDayOfWeek() }.sortedBy { it.value }
-        val currentDayOfWeek = now.dayOfWeek
-
-        // 가장 빠른 다음 알람 날짜 계산
-        val nextDayOffset = selectedDays
-            .map { (it.value + 7 - currentDayOfWeek.value) % 7 }
-            .filter { it > 0 || todayAlarm.isAfter(now) }
-            .minOrNull() ?: (selectedDays.first().value + 7 - currentDayOfWeek.value)
-
-        return todayAlarm.plusDays(nextDayOffset.toLong())
-    }
-
-    private fun formatDeliveryTime(deliveryTime: String): String {
-        return try {
-            if (deliveryTime == "NONE") return resourceProvider.getString(R.string.home_fortune_no_alarm)
-
-            val inputDateTime = LocalDateTime.parse(deliveryTime, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"))
-            val now = LocalDateTime.now()
-            val today = now.toLocalDate()
-            val tomorrow = today.plusDays(1)
-
-            return when {
-                inputDateTime.toLocalDate() == today ->
-                    resourceProvider.getString(R.string.home_fortune_delivery_today, inputDateTime.format(DateTimeFormatter.ofPattern("a h:mm")))
-                inputDateTime.toLocalDate() == tomorrow ->
-                    resourceProvider.getString(R.string.home_fortune_delivery_tomorrow, inputDateTime.format(DateTimeFormatter.ofPattern("a h:mm")))
-                inputDateTime.year == now.year ->
-                    resourceProvider.getString(
-                        R.string.home_fortune_delivery_this_year,
-                        inputDateTime.format(DateTimeFormatter.ofPattern("M월 d일 a h:mm")),
-                    )
-                else ->
-                    resourceProvider.getString(
-                        R.string.home_fortune_delivery_other_year,
-                        inputDateTime.format(DateTimeFormatter.ofPattern("yy년 M월 d일 a h:mm")),
-                    )
-            }
-        } catch (e: Exception) {
-            resourceProvider.getString(R.string.home_fortune_no_alarm)
-        }
+        val formattedTime = alarmDateTimeFormatter.getFormattedEarliestUpcomingAlarmDeliveryTime(
+            alarms = alarms,
+            formats = deliveryTimeFormats,
+        )
+        reduce { state.copy(deliveryTime = formattedTime) }
     }
 
     private fun loadDailyFortune() = intent {
         val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
         val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-
-        Log.d("HomeViewModel", "fortuneDate: $fortuneDate, todayDate: $todayDate")
 
         if (fortuneDate != todayDate) {
             processAction(HomeContract.Action.ShowNoDailyFortuneDialog)

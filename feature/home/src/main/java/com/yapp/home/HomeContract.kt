@@ -3,7 +3,6 @@ package com.yapp.home
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yapp.domain.model.Alarm
-import com.yapp.ui.base.SideEffect
 import com.yapp.ui.base.UiState
 
 sealed class HomeContract {

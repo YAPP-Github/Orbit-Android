@@ -1,4 +1,4 @@
-package com.yapp.alarm
+package com.yapp.home.alarm
 
 import com.yapp.domain.model.AlarmDay
 import feature.home.R

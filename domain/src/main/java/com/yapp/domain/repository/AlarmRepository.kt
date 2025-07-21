@@ -15,9 +15,7 @@ interface AlarmRepository {
     fun updateAlarmVolume(volume: Int)
     fun releaseSoundPlayer()
     fun getAllAlarms(): Flow<List<Alarm>>
-    fun getPagedAlarms(limit: Int, offset: Int): Flow<List<Alarm>>
-    fun getAlarmsByTime(hour: Int, minute: Int, isAm: Boolean): Flow<List<Alarm>>
-    fun getAlarmCount(): Flow<Int>
+    fun getAlarmsByTime(hour: Int, minute: Int): Flow<List<Alarm>>
     suspend fun insertAlarm(alarm: Alarm): Result<Alarm>
     suspend fun updateAlarm(alarm: Alarm): Result<Alarm>
     suspend fun updateAlarmActive(id: Long, active: Boolean): Result<Alarm>

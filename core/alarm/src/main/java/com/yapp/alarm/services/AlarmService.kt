@@ -103,7 +103,7 @@ class AlarmService : Service() {
         // 반복 요일 알람 시, 다음 주 동일 요일 알람 예약
         if (!isOneTimeAlarm) {
             intent.getStringExtra(AlarmConstants.EXTRA_ALARM_DAY)?.let {
-                androidAlarmScheduler.scheduleWeeklyAlarm(alarm, AlarmDay.valueOf(it))
+                androidAlarmScheduler.rescheduleUpcomingWeeklyAlarm(alarm, AlarmDay.valueOf(it))
             }
         }
 

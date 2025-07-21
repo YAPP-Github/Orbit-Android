@@ -1,4 +1,4 @@
-package com.yapp.alarm.component
+package com.yapp.home.alarm.component
 
 import android.os.Handler
 import android.os.Looper
@@ -76,7 +76,6 @@ internal fun AlarmListItem(
     onLongPress: (Long, Float, Float) -> Unit,
     onToggleSelect: (Long) -> Unit,
     onSwipe: (Long) -> Unit,
-    isAm: Boolean,
     hour: Int,
     minute: Int,
     isActive: Boolean,
@@ -197,7 +196,6 @@ internal fun AlarmListItem(
                     repeatDays = repeatDays,
                     isActive = isActive,
                     isHolidayAlarmOff = isHolidayAlarmOff,
-                    isAm = isAm,
                     hour = hour,
                     minute = minute,
                 )
@@ -220,7 +218,6 @@ private fun AlarmListItemContent(
     repeatDays: Int,
     isActive: Boolean,
     isHolidayAlarmOff: Boolean,
-    isAm: Boolean,
     hour: Int,
     minute: Int,
 ) {
@@ -228,6 +225,13 @@ private fun AlarmListItemContent(
         OrbitTheme.colors.gray_300 to OrbitTheme.colors.gray_200
     } else {
         OrbitTheme.colors.gray_500 to OrbitTheme.colors.gray_500
+    }
+
+    val isAm = hour < 12
+    val displayHour = when {
+        hour == 0 -> 12
+        hour > 12 -> hour - 12
+        else -> hour
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -260,7 +264,7 @@ private fun AlarmListItemContent(
             Spacer(modifier = Modifier.width(6.dp))
 
             Text(
-                text = "$hour",
+                text = "$displayHour",
                 style = OrbitTheme.typography.title2Medium,
                 color = if (isActive) OrbitTheme.colors.white else OrbitTheme.colors.gray_500,
             )
@@ -408,7 +412,6 @@ private fun AlarmListItemPreview() {
                 selectable = true,
                 swipeable = false,
                 selected = selected,
-                isAm = true,
                 hour = 6,
                 minute = 0,
                 isActive = isActive,
@@ -436,7 +439,6 @@ private fun AlarmListItemPreview() {
                 selectable = false,
                 selected = false,
                 swipeable = true,
-                isAm = true,
                 hour = 6,
                 minute = 0,
                 isActive = isActive,
@@ -467,7 +469,6 @@ private fun AlarmListItemMenuPreview() {
                 selectable = false,
                 swipeable = false,
                 selected = false,
-                isAm = true,
                 hour = 6,
                 minute = 0,
                 isActive = true,

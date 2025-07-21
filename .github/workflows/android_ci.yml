@@ -85,21 +85,11 @@ jobs:
       - name: Run unit tests and generate coverage
         run: ./gradlew generateTestCoverageReport
 
-      # Upload Coverage Report
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+      # Upload Coverage to Codecov
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
         with:
-            name: coverage-report
-            path: data/build/reports/coverage/test/debug/
-
-      # Comment PR with coverage result
-      - name: Comment coverage report in PR
-        if: github.event_name == 'pull_request'
-        env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-            COMMENT="🚀 테스트 완료 및 커버리지 리포트가 생성되었습니다.\n\n➡️ [클릭하여 커버리지 리포트 다운로드](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            curl -s -H "Authorization: token $GITHUB_TOKEN" \
-              -X POST \
-              -d "{\"body\": \"$COMMENT\"}" \
-              "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
+            token: ${{ secrets.CODECOV_TOKEN }}
+            files: data/build/reports/jacoco/testDebugUnitTestCoverage/testDebugUnitTestCoverage.xml
+            name: codecov-report
+            fail_ci_if_error: true

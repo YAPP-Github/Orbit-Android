@@ -22,7 +22,6 @@ ktlint = "11.5.1"
 kotlin = "2.0.0"
 kotlinx-serialization-json = "1.7.0"
 kotlinx-coroutines = "1.9.0-RC"
-kotlinx-datetime = "0.4.0"
 kotlinx-collections = "0.3.7"
 
 ## AndroidX
@@ -88,7 +87,6 @@ ksp-gradle-plugin = { group = "com.google.devtools.ksp", name = "com.google.devt
 
 ## Kotlin Libraries
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
-kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }

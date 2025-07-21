@@ -1,7 +1,6 @@
 package com.yapp.alarm.interaction.action
 
 import com.yapp.domain.model.Alarm
-import com.yapp.ui.base.SideEffect
 import com.yapp.ui.base.UiState
 
 class AlarmActionContract {
