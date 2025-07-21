@@ -101,44 +101,42 @@ class AlarmDateTimeFormatter @Inject constructor(
             val alarmOccurrenceDateTime = LocalDateTime.parse(
                 deliveryDateTimeString,
                 inputFormatter,
-            ) // 변수명 inputDateTime -> alarmOccurrenceDateTime
+            )
             val today = now.toLocalDate()
             val tomorrow = today.plusDays(1)
-            val formattedTimeOrDateTime: String
 
             when {
                 // 1. 년도가 현재 년도와 다르면 'otherYear' 포맷 적용
                 alarmOccurrenceDateTime.year != now.year -> {
-                    formattedTimeOrDateTime = alarmOccurrenceDateTime.format(
+                    val formattedDateTime = alarmOccurrenceDateTime.format(
                         DateTimeFormatter.ofPattern(formats.otherYearDatePattern)
                             .withLocale(displayLocale),
                     )
-                    return String.format(formats.otherYear, formattedTimeOrDateTime)
+                    String.format(formats.otherYear, formattedDateTime)
                 }
                 // 2. (년도가 같고) 날짜가 오늘이면 'today' 포맷 적용
                 alarmOccurrenceDateTime.toLocalDate() == today -> {
-                    formattedTimeOrDateTime = alarmOccurrenceDateTime.format(
+                    val formattedTime = alarmOccurrenceDateTime.format(
                         DateTimeFormatter.ofPattern(formats.todayTimePattern)
                             .withLocale(displayLocale),
                     )
-                    return String.format(formats.today, formattedTimeOrDateTime)
+                    String.format(formats.today, formattedTime)
                 }
                 // 3. (년도가 같고) 날짜가 내일이면 'tomorrow' 포맷 적용
                 alarmOccurrenceDateTime.toLocalDate() == tomorrow -> {
-                    // 내일은 특별히 시간만 표시 (요구사항에 따라 변경 가능)
-                    formattedTimeOrDateTime = alarmOccurrenceDateTime.format(
+                    val formattedTime = alarmOccurrenceDateTime.format( // 내일도 시간 포맷 사용
                         DateTimeFormatter.ofPattern(formats.todayTimePattern)
                             .withLocale(displayLocale),
                     )
-                    return String.format(formats.tomorrow, formattedTimeOrDateTime)
+                    String.format(formats.tomorrow, formattedTime)
                 }
                 // 4. 그 외의 경우 (년도가 같고, 오늘이나 내일이 아닌 다른 날) 'thisYear' 포맷 적용
                 else -> {
-                    formattedTimeOrDateTime = alarmOccurrenceDateTime.format(
+                    val formattedDateTime = alarmOccurrenceDateTime.format(
                         DateTimeFormatter.ofPattern(formats.thisYearDatePattern)
                             .withLocale(displayLocale),
                     )
-                    return String.format(formats.thisYear, formattedTimeOrDateTime)
+                    String.format(formats.thisYear, formattedDateTime)
                 }
             }
         } catch (e: DateTimeParseException) {
