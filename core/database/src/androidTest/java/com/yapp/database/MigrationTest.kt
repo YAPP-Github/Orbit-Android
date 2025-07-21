@@ -83,6 +83,8 @@ class MigrationTest {
             assertEquals(1, it.getInt(it.getColumnIndexOrThrow("missionType")))
             assertEquals(10, it.getInt(it.getColumnIndexOrThrow("missionCount")))
         }
+
+        db.close()
     }
 
     @Test
@@ -125,5 +127,7 @@ class MigrationTest {
                 idx++
             }
         }
+
+        db.close()
     }
 }
