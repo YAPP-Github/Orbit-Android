@@ -1,5 +1,6 @@
 package com.yapp.home.alarm.component.bottomsheet
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,7 +36,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.MissionType
+import com.yapp.home.alarm.component.SelectorItems
 import com.yapp.ui.component.OrbitBottomSheet
+import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.extensions.customClickable
 import kotlinx.coroutines.launch
 
@@ -89,6 +93,17 @@ internal fun AlarmMissionSelectBottomSheet(
             }
 
             AlarmMissionSelectBottomSheetType.MISSION_DETAIL -> {
+                MissionDetailContent(
+                    onBack = {
+                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
+                    },
+                    onClose = {
+                        scope.launch {
+                            sheetState.hide()
+                        }.invokeOnCompletion { onDismiss() }
+                    },
+                    missionType = missionType,
+                )
             }
         }
     }
@@ -102,17 +117,14 @@ private fun MissionAddContent(
         modifier = Modifier
             .fillMaxWidth()
             .height(600.dp)
-            .padding(
-                horizontal = 24.dp,
-                vertical = 12.dp,
-            ),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(26.dp))
 
         Text(
             modifier = Modifier.align(Alignment.Start),
-            text = "미션 선택",
+            text = "미션",
             style = OrbitTheme.typography.heading2SemiBold,
             color = OrbitTheme.colors.white,
         )
@@ -193,10 +205,10 @@ private fun MissionSelectContent(
             .height(600.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         MissionSelectTopAppBar(
-            title = "미션 선택",
+            title = "미션",
             onBack = onBack,
             onClose = onClose,
         )
@@ -261,6 +273,146 @@ private fun MissionTypeItem(
     }
 }
 
+@Composable
+private fun MissionDetailContent(
+    missionType: MissionType,
+    onBack: () -> Unit,
+    onClose: () -> Unit,
+) {
+    if (missionType == MissionType.NONE) return
+
+    val (title, lottieRes) = when (missionType) {
+        MissionType.SHAKE ->
+            Pair("흔들기", core.designsystem.R.raw.mission_shake)
+        MissionType.TAP ->
+            Pair("터치하기", core.designsystem.R.raw.mission_tap)
+        else -> return
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(600.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Spacer(modifier = Modifier.height(14.dp))
+
+        MissionSelectTopAppBar(
+            title = title,
+            onBack = onBack,
+            onClose = onClose,
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 20.dp,
+                    vertical = 24.dp,
+                ),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .background(
+                        color = OrbitTheme.colors.gray_700,
+                        shape = RoundedCornerShape(16.dp),
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                LottieAnimation(
+                    resId = lottieRes,
+                    scaleXAdjustment = 0.85f,
+                    scaleYAdjustment = 0.85f,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            Text(
+                text = "횟수",
+                style = OrbitTheme.typography.headline2SemiBold,
+                color = OrbitTheme.colors.gray_50,
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "쉬움",
+                    style = OrbitTheme.typography.label2SemiBold,
+                    color = OrbitTheme.colors.gray_300,
+                )
+
+                Text(
+                    text = "어려움",
+                    style = OrbitTheme.typography.label2SemiBold,
+                    color = OrbitTheme.colors.gray_300,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            SelectorItems(
+                items = listOf("5회", "10회", "15회", "20회", "30회"),
+                selectedIndex = 0,
+                enabled = true,
+                onItemSelected = { },
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Button(
+                    onClick = { },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = OrbitTheme.colors.gray_600,
+                        contentColor = OrbitTheme.colors.white,
+                    ),
+                    contentPadding = PaddingValues(
+                        horizontal = 28.dp,
+                        vertical = 14.dp,
+                    ),
+                ) {
+                    Text(
+                        text = "미리보기",
+                        style = OrbitTheme.typography.body1SemiBold,
+                        color = OrbitTheme.colors.white,
+                    )
+                }
+
+                Button(
+                    onClick = { },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = OrbitTheme.colors.main,
+                        contentColor = OrbitTheme.colors.gray_900,
+                    ),
+                    contentPadding = PaddingValues(
+                        horizontal = 28.dp,
+                        vertical = 14.dp,
+                    ),
+                ) {
+                    Text(
+                        text = "미션 저장",
+                        style = OrbitTheme.typography.body1SemiBold,
+                        color = OrbitTheme.colors.gray_900,
+                    )
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MissionSelectTopAppBar(
@@ -318,7 +470,7 @@ private fun MissionSelectTopAppBar(
 private fun AlarmMissionSelectBottomSheetPreview() {
     OrbitTheme {
         AlarmMissionSelectBottomSheet(
-            missionType = MissionType.NONE,
+            missionType = MissionType.SHAKE,
             isSheetOpen = true,
         ) { }
     }
