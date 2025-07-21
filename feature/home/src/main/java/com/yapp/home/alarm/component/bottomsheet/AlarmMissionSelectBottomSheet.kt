@@ -1,12 +1,16 @@
 package com.yapp.home.alarm.component.bottomsheet
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
@@ -23,6 +27,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.MissionType
 import com.yapp.ui.component.OrbitBottomSheet
+import com.yapp.ui.extensions.customClickable
 import kotlinx.coroutines.launch
 
 enum class AlarmMissionSelectBottomSheetType {
@@ -67,6 +73,19 @@ internal fun AlarmMissionSelectBottomSheet(
             }
 
             AlarmMissionSelectBottomSheetType.MISSION_SELECT -> {
+                MissionSelectContent(
+                    onBack = {
+                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_ADD
+                    },
+                    onClose = {
+                        scope.launch {
+                            sheetState.hide()
+                        }.invokeOnCompletion { onDismiss() }
+                    },
+                    onSelect = { selectedMissionType ->
+                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_DETAIL
+                    },
+                )
             }
 
             AlarmMissionSelectBottomSheetType.MISSION_DETAIL -> {
@@ -89,7 +108,7 @@ private fun MissionAddContent(
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Text(
             modifier = Modifier.align(Alignment.Start),
@@ -159,6 +178,138 @@ private fun AddMissionButton(
             text = "미션추가",
             style = OrbitTheme.typography.body1SemiBold,
         )
+    }
+}
+
+@Composable
+private fun MissionSelectContent(
+    onBack: () -> Unit,
+    onClose: () -> Unit,
+    onSelect: (MissionType) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(600.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Spacer(modifier = Modifier.height(10.dp))
+
+        MissionSelectTopAppBar(
+            title = "미션 선택",
+            onBack = onBack,
+            onClose = onClose,
+        )
+
+        Column {
+            MissionTypeItem(
+                missionType = MissionType.SHAKE,
+                onClick = {
+                    onSelect(MissionType.SHAKE)
+                },
+            )
+            MissionTypeItem(
+                missionType = MissionType.TAP,
+                onClick = {
+                    onSelect(MissionType.TAP)
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun MissionTypeItem(
+    missionType: MissionType,
+    onClick: () -> Unit,
+) {
+    if (missionType == MissionType.NONE) return
+
+    val (iconRes, title) = when (missionType) {
+        MissionType.SHAKE ->
+            Pair(core.designsystem.R.drawable.ic_mission_shake, "흔들기")
+        MissionType.TAP ->
+            Pair(core.designsystem.R.drawable.ic_mission_tap, "터치하기")
+        else -> return
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                onClick = onClick,
+            )
+            .padding(
+                horizontal = 20.dp,
+                vertical = 16.dp,
+            ),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painter = painterResource(id = iconRes),
+            contentDescription = title,
+            modifier = Modifier.size(28.dp),
+            tint = Color.Unspecified,
+        )
+
+        Text(
+            text = title,
+            style = OrbitTheme.typography.headline2SemiBold,
+            color = OrbitTheme.colors.white,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MissionSelectTopAppBar(
+    title: String,
+    onBack: () -> Unit,
+    onClose: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .height(48.dp),
+    ) {
+        Icon(
+            painter = painterResource(id = core.designsystem.R.drawable.ic_back),
+            contentDescription = "Back",
+            tint = OrbitTheme.colors.white,
+            modifier = Modifier
+                .customClickable(
+                    rippleEnabled = false,
+                    fadeOnPress = true,
+                    pressedAlpha = 0.5f,
+                    onClick = onBack,
+                )
+                .align(Alignment.CenterStart),
+        )
+
+        Text(
+            text = title,
+            modifier = Modifier.align(Alignment.Center),
+            style = OrbitTheme.typography.body1SemiBold,
+            color = OrbitTheme.colors.white,
+        )
+
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .clickable { onClose() }
+                .align(Alignment.CenterEnd),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(id = core.designsystem.R.drawable.ic_close),
+                contentDescription = "Close",
+                modifier = Modifier.size(24.dp),
+                tint = OrbitTheme.colors.white,
+            )
+        }
     }
 }
 
