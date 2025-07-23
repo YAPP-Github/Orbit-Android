@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="exit">나가기</string>
+    <string name="cancel">취소</string>
+    <string name="confirm">확인</string>
+    <string name="error">오류</string>
+
+    <string name="mission_preview_exit">미리보기 종료</string>
+    <string name="mission_exit_dialog_title">나가면 운세를 받을 수 없어요</string>
+    <string name="mission_exit_dialog_message">미션을 수행하지 않고 나가시겠어요?</string>
+    <string name="mission_success">미션 성공!</string>
+    <string name="mission_instruction_shake">%1$d회를 흔들어 부적을 뒤집어줘</string>
+    <string name="mission_instruction_tap">%1$d회를 눌러 편지를 열어줘</string>
+</resources>

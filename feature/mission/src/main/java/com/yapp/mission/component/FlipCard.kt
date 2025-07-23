@@ -25,7 +25,6 @@ import com.yapp.mission.MissionContract
 @Composable
 fun FlipCard(
     state: MissionContract.State,
-    eventDispatcher: (MissionContract.Action) -> Unit,
 ) {
     val rotationZ = remember { Animatable(0f) }
     val rotationY = remember { Animatable(state.rotationY) }
@@ -109,7 +108,6 @@ fun FlipCardPreview() {
     ) {
         FlipCard(
             state = state.copy(rotationY = rotationY, rotationZ = rotationZ),
-            eventDispatcher = {},
         )
     }
 }
