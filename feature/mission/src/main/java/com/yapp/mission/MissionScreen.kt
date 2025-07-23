@@ -39,6 +39,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -56,6 +57,7 @@ import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.extensions.customClickable
 import com.yapp.ui.utils.heightForScreenPercentage
 import com.yapp.ui.utils.paddingForScreenPercentage
+import feature.mission.R
 
 @Composable
 fun MissionRoute(
@@ -167,7 +169,7 @@ fun MissionScreen(
                     .padding(bottom = insets.calculateBottomPadding() + 28.dp),
             ) {
                 Text(
-                    text = "미리보기 종료",
+                    text = stringResource(id = R.string.mission_preview_exit),
                     style = OrbitTheme.typography.body1SemiBold,
                 )
             }
@@ -197,7 +199,7 @@ fun MissionContent(
                 if (state.currentCount == 0) {
                     MissionShakeInitialImage()
                 } else {
-                    FlipCard(state = state, eventDispatcher = eventDispatcher)
+                    FlipCard(state)
                 }
             }
 
@@ -242,7 +244,7 @@ fun MissionTopAppBar(
                     modifier = Modifier.size(24.dp),
                 )
                 Text(
-                    text = "나가기",
+                    text = stringResource(id = R.string.exit),
                     color = OrbitTheme.colors.white,
                     style = OrbitTheme.typography.body1SemiBold,
                     modifier = Modifier
@@ -270,9 +272,13 @@ fun MissionProgressBarSection(state: MissionContract.State) {
 
 @Composable
 fun MissionLabel(state: MissionContract.State) {
-    val instruction =
-        if (state.missionType == MissionType.SHAKE) "${state.missionCount}회를 흔들어 부적을 뒤집어줘" else "${state.missionCount}회를 눌러 편지를 열어줘"
-    val count = state.currentCount
+    val instruction = stringResource(
+        id = when (state.missionType) {
+            MissionType.SHAKE -> R.string.mission_instruction_shake
+            else -> R.string.mission_instruction_tap
+        },
+        state.missionCount,
+    )
 
     Text(
         text = instruction,
@@ -281,7 +287,7 @@ fun MissionLabel(state: MissionContract.State) {
     )
     Spacer(modifier = Modifier.heightForScreenPercentage(0.005f))
     Text(
-        text = count.toString(),
+        text = state.currentCount.toString(),
         color = OrbitTheme.colors.white,
         style = OrbitTheme.typography.displaySemiBold,
     )
@@ -341,10 +347,10 @@ fun ExitDialog(
     analytics: AnalyticsHelper,
 ) {
     OrbitDialog(
-        title = "나가면 운세를 받을 수 없어요",
-        message = "미션을 수행하지 않고 나가시겠어요?",
-        confirmText = "나가기",
-        cancelText = "취소",
+        title = stringResource(id = R.string.mission_exit_dialog_title),
+        message = stringResource(id = R.string.mission_exit_dialog_message),
+        confirmText = stringResource(id = R.string.exit),
+        cancelText = stringResource(id = R.string.cancel),
         onConfirm = {
             analytics.logEvent(
                 AnalyticsEvent(
@@ -387,7 +393,7 @@ fun MissionSuccessOverlay() {
                 play = true,
             )
             Text(
-                text = "미션 성공!",
+                text = stringResource(id = R.string.mission_success),
                 color = OrbitTheme.colors.white,
                 style = OrbitTheme.typography.title1Bold,
                 modifier = Modifier
@@ -401,9 +407,9 @@ fun MissionSuccessOverlay() {
 @Composable
 fun ErrorDialog(message: String, onConfirm: () -> Unit) {
     OrbitDialog(
-        title = "오류",
+        title = stringResource(id = R.string.error),
         message = message,
-        confirmText = "확인",
+        confirmText = stringResource(id = R.string.confirm),
         onConfirm = onConfirm,
     )
 }
