@@ -85,6 +85,7 @@ sealed class AlarmAddEditContract {
         data object ToggleHolidaySkipOption : Action()
         data object ToggleSnoozeOption : Action()
         data class SaveMission(val type: MissionType, val count: Int) : Action()
+        data class NavigateToMissionPreview(val missionType: MissionType, val missionCount: Int) : Action()
         data class SetSnoozeInterval(val index: Int) : Action()
         data class SetSnoozeRepeatCount(val index: Int) : Action()
         data object ToggleVibrationOption : Action()
@@ -102,6 +103,11 @@ sealed class AlarmAddEditContract {
 
     sealed class SideEffect : com.yapp.ui.base.SideEffect {
         data object NavigateBack : SideEffect()
+
+        data class NavigateToMissionPreview(
+            val missionType: MissionType,
+            val missionCount: Int,
+        ) : SideEffect()
 
         data class SaveAlarm(val id: Long) : SideEffect()
 
