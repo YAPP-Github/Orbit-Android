@@ -11,6 +11,7 @@ import com.yapp.common.navigation.route.FortuneBaseRoute
 import com.yapp.common.navigation.route.FortuneDestination
 import com.yapp.common.navigation.route.HomeBaseRoute
 import com.yapp.common.navigation.route.HomeDestination
+import com.yapp.common.navigation.route.MissionRoute
 import com.yapp.common.navigation.route.OnboardingBaseRoute
 import com.yapp.common.navigation.route.OnboardingDestination
 import com.yapp.common.navigation.route.SettingBaseRoute
@@ -55,6 +56,21 @@ class OrbitNavigator(
 
     fun navigateToAlarmSnoozeTimer(alarm: Alarm, navOptions: NavOptions? = null) {
         navController.navigate(AlarmInteractionDestination.AlarmSnoozeTimer(alarm), navOptions)
+    }
+
+    fun navigateToMissionPreview(
+        missionType: Int,
+        missionCount: Int,
+        navOptions: NavOptions? = null,
+    ) {
+        navController.navigate(
+            MissionRoute(
+                missionType = "$missionType",
+                missionCount = "$missionCount",
+                missionMode = "PREVIEW",
+            ),
+            navOptions,
+        )
     }
 
     fun navigateToFortune(navOptions: NavOptions? = null) {

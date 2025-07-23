@@ -68,7 +68,7 @@ internal fun AlarmMissionBottomSheet(
     isSheetOpen: Boolean,
     onDismiss: () -> Unit,
     onSaveMission: (MissionType, Int) -> Unit,
-    onPreviewMission: (MissionType) -> Unit,
+    onPreviewMission: (MissionType, Int) -> Unit,
 ) {
     var currentStep by remember { mutableStateOf(AlarmMissionSelectBottomSheetType.MISSION_SETTING) }
 
@@ -147,7 +147,7 @@ internal fun AlarmMissionBottomSheet(
                         onDismiss()
                     },
                     onPreview = {
-                        onPreviewMission(selectedMissionType)
+                        onPreviewMission(selectedMissionType, selectedMissionCount)
                     },
                 )
             }
@@ -475,7 +475,7 @@ private fun MissionDetailContent(
     onBack: () -> Unit,
     onClose: () -> Unit,
     onSave: () -> Unit,
-    onPreview: (MissionType) -> Unit,
+    onPreview: () -> Unit,
 ) {
     val (title, lottieRes) = when (missionType) {
         MissionType.SHAKE ->
@@ -569,9 +569,7 @@ private fun MissionDetailContent(
             ) {
                 OrbitButton(
                     label = stringResource(id = feature.home.R.string.mission_detail_content_btn_preview),
-                    onClick = {
-                        onPreview(missionType)
-                    },
+                    onClick = onPreview,
                     useFillMaxWidth = false,
                     enabled = true,
                     containerColor = OrbitTheme.colors.gray_600,
@@ -657,7 +655,7 @@ private fun AlarmMissionSelectBottomSheetPreview() {
             isSheetOpen = true,
             onDismiss = {},
             onSaveMission = { _, _ -> },
-            onPreviewMission = {},
+            onPreviewMission = { _, _ -> },
         )
     }
 }
