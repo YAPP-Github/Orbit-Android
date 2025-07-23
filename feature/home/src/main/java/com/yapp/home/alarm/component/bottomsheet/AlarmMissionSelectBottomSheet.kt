@@ -40,6 +40,7 @@ import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.MissionType
 import com.yapp.home.alarm.component.SelectorItems
 import com.yapp.ui.component.OrbitBottomSheet
+import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.extensions.customClickable
 import core.designsystem.R
@@ -49,6 +50,14 @@ enum class AlarmMissionSelectBottomSheetType {
     MISSION_SETTING,
     MISSION_SELECT,
     MISSION_DETAIL,
+}
+
+private val countOptions = listOf(5, 10, 15, 20, 30)
+
+private fun MissionType.displayData(): Pair<Int, Int> = when (this) {
+    MissionType.SHAKE -> Pair(R.drawable.ic_mission_shake, feature.home.R.string.alarm_add_edit_selected_mission_shake)
+    MissionType.TAP -> Pair(R.drawable.ic_mission_tap, feature.home.R.string.alarm_add_edit_selected_mission_tap)
+    else -> throw IllegalStateException("Invalid mission type")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -196,9 +205,7 @@ private fun MissionAddContent(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                AddMissionButton {
-                    onNext()
-                }
+                AddMissionButton { onNext() }
             }
         }
     }
@@ -280,45 +287,23 @@ private fun MissionSettingContent(
                 .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Button(
+            OrbitButton(
+                label = stringResource(id = feature.home.R.string.mission_setting_content_btn_change),
                 onClick = onChange,
+                enabled = true,
+                containerColor = OrbitTheme.colors.gray_600,
+                contentColor = OrbitTheme.colors.white,
+                pressedContainerColor = OrbitTheme.colors.gray_500,
+                pressedContentColor = OrbitTheme.colors.white.copy(alpha = 0.7f),
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = OrbitTheme.colors.gray_600,
-                    contentColor = OrbitTheme.colors.white,
-                ),
-                contentPadding = PaddingValues(
-                    horizontal = 28.dp,
-                    vertical = 14.dp,
-                ),
-            ) {
-                Text(
-                    text = stringResource(id = feature.home.R.string.mission_setting_content_btn_change),
-                    style = OrbitTheme.typography.body1SemiBold,
-                    color = OrbitTheme.colors.white,
-                )
-            }
+            )
 
-            Button(
+            OrbitButton(
+                label = stringResource(id = feature.home.R.string.mission_setting_content_btn_done),
                 onClick = onDone,
+                enabled = true,
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = OrbitTheme.colors.main,
-                    contentColor = OrbitTheme.colors.gray_900,
-                ),
-                contentPadding = PaddingValues(
-                    horizontal = 28.dp,
-                    vertical = 14.dp,
-                ),
-            ) {
-                Text(
-                    text = stringResource(id = feature.home.R.string.mission_setting_content_btn_done),
-                    style = OrbitTheme.typography.body1SemiBold,
-                    color = OrbitTheme.colors.gray_900,
-                )
-            }
+            )
         }
     }
 }
@@ -330,13 +315,8 @@ private fun SelectedMissionTypeItem(
     onDetail: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val (iconRes, title) = when (missionType) {
-        MissionType.SHAKE ->
-            Pair(R.drawable.ic_mission_shake, stringResource(id = feature.home.R.string.alarm_add_edit_selected_mission_shake))
-        MissionType.TAP ->
-            Pair(R.drawable.ic_mission_tap, stringResource(id = feature.home.R.string.alarm_add_edit_selected_mission_tap))
-        else -> return
-    }
+    val (iconRes, titleRes) = missionType.displayData()
+    val title = stringResource(id = titleRes)
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -459,13 +439,8 @@ private fun MissionTypeItem(
     missionType: MissionType,
     onClick: () -> Unit,
 ) {
-    val (iconRes, title) = when (missionType) {
-        MissionType.SHAKE ->
-            Pair(R.drawable.ic_mission_shake, stringResource(id = feature.home.R.string.alarm_add_edit_selected_mission_shake))
-        MissionType.TAP ->
-            Pair(R.drawable.ic_mission_tap, stringResource(id = feature.home.R.string.alarm_add_edit_selected_mission_tap))
-        else -> return
-    }
+    val (iconRes, titleRes) = missionType.displayData()
+    val title = stringResource(id = titleRes)
 
     Row(
         modifier = Modifier
@@ -512,7 +487,6 @@ private fun MissionDetailContent(
             Pair(stringResource(id = feature.home.R.string.alarm_add_edit_selected_mission_tap), R.raw.mission_tap)
         else -> return
     }
-    val countOptions = listOf(5, 10, 15, 20, 30)
     val selectedMissionCountIndex = countOptions.indexOf(selectedMissionCount).coerceAtLeast(0)
 
     Column(
@@ -596,46 +570,25 @@ private fun MissionDetailContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Button(
+                OrbitButton(
+                    label = stringResource(id = feature.home.R.string.mission_detail_content_btn_preview),
                     onClick = {
                         onPreview(missionType)
                     },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = OrbitTheme.colors.gray_600,
-                        contentColor = OrbitTheme.colors.white,
-                    ),
-                    contentPadding = PaddingValues(
-                        horizontal = 28.dp,
-                        vertical = 14.dp,
-                    ),
-                ) {
-                    Text(
-                        text = stringResource(id = feature.home.R.string.mission_detail_content_btn_preview),
-                        style = OrbitTheme.typography.body1SemiBold,
-                        color = OrbitTheme.colors.white,
-                    )
-                }
-
-                Button(
-                    onClick = onSave,
+                    enabled = true,
+                    containerColor = OrbitTheme.colors.gray_600,
+                    contentColor = OrbitTheme.colors.white,
+                    pressedContainerColor = OrbitTheme.colors.gray_500,
+                    pressedContentColor = OrbitTheme.colors.white.copy(alpha = 0.7f),
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = OrbitTheme.colors.main,
-                        contentColor = OrbitTheme.colors.gray_900,
-                    ),
-                    contentPadding = PaddingValues(
-                        horizontal = 28.dp,
-                        vertical = 14.dp,
-                    ),
-                ) {
-                    Text(
-                        text = stringResource(id = feature.home.R.string.mission_detail_content_btn_save),
-                        style = OrbitTheme.typography.body1SemiBold,
-                        color = OrbitTheme.colors.gray_900,
-                    )
-                }
+                )
+
+                OrbitButton(
+                    label = stringResource(id = feature.home.R.string.mission_detail_content_btn_save),
+                    onClick = onSave,
+                    enabled = true,
+                    modifier = Modifier.weight(2.25f),
+                )
             }
         }
     }
