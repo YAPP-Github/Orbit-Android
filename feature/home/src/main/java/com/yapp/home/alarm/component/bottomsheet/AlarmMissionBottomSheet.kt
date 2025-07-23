@@ -568,19 +568,19 @@ private fun MissionDetailContent(
                     onClick = {
                         onPreview(missionType)
                     },
+                    useFillMaxWidth = false,
                     enabled = true,
                     containerColor = OrbitTheme.colors.gray_600,
                     contentColor = OrbitTheme.colors.white,
                     pressedContainerColor = OrbitTheme.colors.gray_500,
                     pressedContentColor = OrbitTheme.colors.white.copy(alpha = 0.7f),
-                    modifier = Modifier.weight(1f),
                 )
 
                 OrbitButton(
                     label = stringResource(id = feature.home.R.string.mission_detail_content_btn_save),
                     onClick = onSave,
                     enabled = true,
-                    modifier = Modifier.weight(2.25f),
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
