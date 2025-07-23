@@ -50,7 +50,7 @@ fun FlipCard(
     }
 
     LaunchedEffect(state.currentCount) {
-        if (state.currentCount in 1..9) {
+        if (state.currentCount in 1..state.missionCount - 1) {
             rotationZ.animateTo(
                 targetValue = -20f,
                 animationSpec = tween(durationMillis = 66, easing = LinearEasing),
