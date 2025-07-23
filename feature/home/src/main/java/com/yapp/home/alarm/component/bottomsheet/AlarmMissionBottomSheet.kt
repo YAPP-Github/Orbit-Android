@@ -318,6 +318,7 @@ private fun SelectedMissionTypeItem(
         Row(
             modifier = Modifier
                 .weight(1f)
+                .clip(RoundedCornerShape(12.dp))
                 .clickable(
                     onClick = onDetail,
                 )
@@ -346,6 +347,7 @@ private fun SelectedMissionTypeItem(
 
         Box(
             modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
                 .clickable(
                     onClick = onDelete,
                 )
@@ -410,7 +412,9 @@ private fun MissionSelectContent(
             onClose = onClose,
         )
 
-        Column {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp),
+        ) {
             MissionTypeItem(
                 missionType = MissionType.SHAKE,
                 onClick = {
@@ -442,7 +446,7 @@ private fun MissionTypeItem(
                 onClick = onClick,
             )
             .padding(
-                horizontal = 20.dp,
+                horizontal = 12.dp,
                 vertical = 16.dp,
             ),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
