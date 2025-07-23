@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.yapp.designsystem.theme.OrbitTheme
@@ -167,7 +168,7 @@ private fun MissionAddContent(
 
         Text(
             modifier = Modifier.align(Alignment.Start),
-            text = "미션",
+            text = stringResource(id = feature.home.R.string.mission_bottom_sheet_title),
             style = OrbitTheme.typography.heading2SemiBold,
             color = OrbitTheme.colors.white,
         )
@@ -180,7 +181,7 @@ private fun MissionAddContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "등록된 미션이 없어요",
+                    text = stringResource(id = feature.home.R.string.mission_add_content_empty_title),
                     style = OrbitTheme.typography.body1Bold,
                     color = OrbitTheme.colors.white,
                 )
@@ -188,7 +189,7 @@ private fun MissionAddContent(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "새 미션을 추가해보세요",
+                    text = stringResource(id = feature.home.R.string.mission_add_content_empty_description),
                     style = OrbitTheme.typography.label2Regular,
                     color = OrbitTheme.colors.white.copy(alpha = 0.8f),
                 )
@@ -230,7 +231,7 @@ private fun AddMissionButton(
         Spacer(modifier = Modifier.width(4.dp))
 
         Text(
-            text = "미션추가",
+            text = stringResource(id = feature.home.R.string.mission_add_content_btn_add),
             style = OrbitTheme.typography.body1SemiBold,
         )
     }
@@ -257,7 +258,7 @@ private fun MissionSettingContent(
             modifier = Modifier
                 .padding(start = 12.dp)
                 .align(Alignment.Start),
-            text = "미션",
+            text = stringResource(id = feature.home.R.string.mission_bottom_sheet_title),
             style = OrbitTheme.typography.heading2SemiBold,
             color = OrbitTheme.colors.white,
         )
@@ -293,7 +294,7 @@ private fun MissionSettingContent(
                 ),
             ) {
                 Text(
-                    text = "미션 변경",
+                    text = stringResource(id = feature.home.R.string.mission_setting_content_btn_change),
                     style = OrbitTheme.typography.body1SemiBold,
                     color = OrbitTheme.colors.white,
                 )
@@ -313,7 +314,7 @@ private fun MissionSettingContent(
                 ),
             ) {
                 Text(
-                    text = "완료",
+                    text = stringResource(id = feature.home.R.string.mission_setting_content_btn_done),
                     style = OrbitTheme.typography.body1SemiBold,
                     color = OrbitTheme.colors.gray_900,
                 )
@@ -329,13 +330,11 @@ private fun SelectedMissionTypeItem(
     onDetail: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    if (missionType == MissionType.NONE) return
-
     val (iconRes, title) = when (missionType) {
         MissionType.SHAKE ->
-            Pair(R.drawable.ic_mission_shake, "흔들기")
+            Pair(R.drawable.ic_mission_shake, stringResource(id = feature.home.R.string.alarm_add_edit_selected_mission_shake))
         MissionType.TAP ->
-            Pair(R.drawable.ic_mission_tap, "터치하기")
+            Pair(R.drawable.ic_mission_tap, stringResource(id = feature.home.R.string.alarm_add_edit_selected_mission_tap))
         else -> return
     }
 
@@ -404,7 +403,7 @@ private fun MissionCountChip(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "${count}회",
+            text = stringResource(id = feature.home.R.string.mission_count_chip_format, count),
             style = OrbitTheme.typography.label2Regular,
             color = OrbitTheme.colors.main.copy(alpha = 0.9f),
         )
@@ -412,8 +411,7 @@ private fun MissionCountChip(
         Icon(
             painter = painterResource(id = R.drawable.ic_arrow_right),
             contentDescription = "Close",
-            modifier = Modifier
-                .size(12.dp),
+            modifier = Modifier.size(12.dp),
             tint = OrbitTheme.colors.main.copy(alpha = 0.9f),
         )
     }
@@ -434,7 +432,7 @@ private fun MissionSelectContent(
         Spacer(modifier = Modifier.height(14.dp))
 
         MissionSelectTopAppBar(
-            title = "미션",
+            title = stringResource(id = feature.home.R.string.mission_bottom_sheet_title),
             onBack = onBack,
             onClose = onClose,
         )
@@ -461,13 +459,11 @@ private fun MissionTypeItem(
     missionType: MissionType,
     onClick: () -> Unit,
 ) {
-    if (missionType == MissionType.NONE) return
-
     val (iconRes, title) = when (missionType) {
         MissionType.SHAKE ->
-            Pair(R.drawable.ic_mission_shake, "흔들기")
+            Pair(R.drawable.ic_mission_shake, stringResource(id = feature.home.R.string.alarm_add_edit_selected_mission_shake))
         MissionType.TAP ->
-            Pair(R.drawable.ic_mission_tap, "터치하기")
+            Pair(R.drawable.ic_mission_tap, stringResource(id = feature.home.R.string.alarm_add_edit_selected_mission_tap))
         else -> return
     }
 
@@ -511,13 +507,13 @@ private fun MissionDetailContent(
 ) {
     val (title, lottieRes) = when (missionType) {
         MissionType.SHAKE ->
-            Pair("흔들기", R.raw.mission_shake)
+            Pair(stringResource(id = feature.home.R.string.alarm_add_edit_selected_mission_shake), R.raw.mission_shake)
         MissionType.TAP ->
-            Pair("터치하기", R.raw.mission_tap)
+            Pair(stringResource(id = feature.home.R.string.alarm_add_edit_selected_mission_tap), R.raw.mission_tap)
         else -> return
     }
     val countOptions = listOf(5, 10, 15, 20, 30)
-    val selectedMissionCountIndex = countOptions.indexOf(selectedMissionCount)
+    val selectedMissionCountIndex = countOptions.indexOf(selectedMissionCount).coerceAtLeast(0)
 
     Column(
         modifier = Modifier
@@ -561,7 +557,7 @@ private fun MissionDetailContent(
             Spacer(modifier = Modifier.height(28.dp))
 
             Text(
-                text = "횟수",
+                text = stringResource(id = feature.home.R.string.mission_detail_content_count_title),
                 style = OrbitTheme.typography.headline2SemiBold,
                 color = OrbitTheme.colors.gray_50,
             )
@@ -573,13 +569,13 @@ private fun MissionDetailContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = "쉬움",
+                    text = stringResource(id = feature.home.R.string.mission_detail_content_count_level_easy),
                     style = OrbitTheme.typography.label2SemiBold,
                     color = OrbitTheme.colors.gray_300,
                 )
 
                 Text(
-                    text = "어려움",
+                    text = stringResource(id = feature.home.R.string.mission_detail_content_count_level_hard),
                     style = OrbitTheme.typography.label2SemiBold,
                     color = OrbitTheme.colors.gray_300,
                 )
@@ -588,7 +584,7 @@ private fun MissionDetailContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             SelectorItems(
-                items = countOptions.map { "${it}회" },
+                items = countOptions.map { stringResource(id = feature.home.R.string.mission_count_chip_format, it) },
                 selectedIndex = selectedMissionCountIndex,
                 enabled = true,
                 onItemSelected = { index -> onCountChange(countOptions[index]) },
@@ -615,7 +611,7 @@ private fun MissionDetailContent(
                     ),
                 ) {
                     Text(
-                        text = "미리보기",
+                        text = stringResource(id = feature.home.R.string.mission_detail_content_btn_preview),
                         style = OrbitTheme.typography.body1SemiBold,
                         color = OrbitTheme.colors.white,
                     )
@@ -635,7 +631,7 @@ private fun MissionDetailContent(
                     ),
                 ) {
                     Text(
-                        text = "미션 저장",
+                        text = stringResource(id = feature.home.R.string.mission_detail_content_btn_save),
                         style = OrbitTheme.typography.body1SemiBold,
                         color = OrbitTheme.colors.gray_900,
                     )
