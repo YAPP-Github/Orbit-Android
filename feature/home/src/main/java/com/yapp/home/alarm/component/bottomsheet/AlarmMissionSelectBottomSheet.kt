@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -56,11 +57,15 @@ internal fun AlarmMissionSelectBottomSheet(
     missionCount: Int,
     isSheetOpen: Boolean,
     onDismiss: () -> Unit,
+    onSaveMission: (MissionType, Int) -> Unit,
+    onPreviewMission: (MissionType) -> Unit,
 ) {
     var currentStep by remember { mutableStateOf(AlarmMissionSelectBottomSheetType.MISSION_SETTING) }
 
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var selectedMissionType by remember { mutableStateOf(missionType) }
+    var selectedMissionCount by remember { mutableIntStateOf(missionCount) }
 
     OrbitBottomSheet(
         isSheetOpen = isSheetOpen,
@@ -73,7 +78,7 @@ internal fun AlarmMissionSelectBottomSheet(
     ) {
         when (currentStep) {
             AlarmMissionSelectBottomSheetType.MISSION_SETTING -> {
-                if (missionType == MissionType.NONE) {
+                if (selectedMissionType == MissionType.NONE) {
                     MissionAddContent {
                         currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
                     }
@@ -84,7 +89,18 @@ internal fun AlarmMissionSelectBottomSheet(
                         onDetail = {
                             currentStep = AlarmMissionSelectBottomSheetType.MISSION_DETAIL
                         },
-                        onDelete = { },
+                        onDelete = {
+                            selectedMissionType = MissionType.NONE
+                        },
+                        onChange = {
+                            currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
+                        },
+                        onDone = {
+                            onSaveMission(selectedMissionType, selectedMissionCount)
+                            scope.launch {
+                                sheetState.hide()
+                            }.invokeOnCompletion { onDismiss() }
+                        },
                     )
                 }
             }
@@ -99,7 +115,8 @@ internal fun AlarmMissionSelectBottomSheet(
                             sheetState.hide()
                         }.invokeOnCompletion { onDismiss() }
                     },
-                    onSelect = { selectedMissionType ->
+                    onSelect = { mission ->
+                        selectedMissionType = mission
                         currentStep = AlarmMissionSelectBottomSheetType.MISSION_DETAIL
                     },
                 )
@@ -107,6 +124,11 @@ internal fun AlarmMissionSelectBottomSheet(
 
             AlarmMissionSelectBottomSheetType.MISSION_DETAIL -> {
                 MissionDetailContent(
+                    missionType = selectedMissionType,
+                    selectedMissionCount = selectedMissionCount,
+                    onCountChange = { count ->
+                        selectedMissionCount = count
+                    },
                     onBack = {
                         currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
                     },
@@ -115,7 +137,15 @@ internal fun AlarmMissionSelectBottomSheet(
                             sheetState.hide()
                         }.invokeOnCompletion { onDismiss() }
                     },
-                    missionType = missionType,
+                    onSave = {
+                        onSaveMission(selectedMissionType, selectedMissionCount)
+                        scope.launch {
+                            sheetState.hide()
+                        }.invokeOnCompletion { onDismiss() }
+                    },
+                    onPreview = {
+                        onPreviewMission(selectedMissionType)
+                    },
                 )
             }
         }
@@ -212,6 +242,8 @@ private fun MissionSettingContent(
     missionCount: Int,
     onDetail: () -> Unit,
     onDelete: () -> Unit,
+    onChange: () -> Unit,
+    onDone: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -248,7 +280,7 @@ private fun MissionSettingContent(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Button(
-                onClick = { },
+                onClick = onChange,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -268,7 +300,7 @@ private fun MissionSettingContent(
             }
 
             Button(
-                onClick = { },
+                onClick = onDone,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -470,11 +502,13 @@ private fun MissionTypeItem(
 @Composable
 private fun MissionDetailContent(
     missionType: MissionType,
+    selectedMissionCount: Int,
+    onCountChange: (Int) -> Unit,
     onBack: () -> Unit,
     onClose: () -> Unit,
+    onSave: () -> Unit,
+    onPreview: (MissionType) -> Unit,
 ) {
-    if (missionType == MissionType.NONE) return
-
     val (title, lottieRes) = when (missionType) {
         MissionType.SHAKE ->
             Pair("흔들기", R.raw.mission_shake)
@@ -482,6 +516,8 @@ private fun MissionDetailContent(
             Pair("터치하기", R.raw.mission_tap)
         else -> return
     }
+    val countOptions = listOf(5, 10, 15, 20, 30)
+    val selectedMissionCountIndex = countOptions.indexOf(selectedMissionCount)
 
     Column(
         modifier = Modifier
@@ -552,10 +588,10 @@ private fun MissionDetailContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             SelectorItems(
-                items = listOf("5회", "10회", "15회", "20회", "30회"),
-                selectedIndex = 0,
+                items = countOptions.map { "${it}회" },
+                selectedIndex = selectedMissionCountIndex,
                 enabled = true,
-                onItemSelected = { },
+                onItemSelected = { index -> onCountChange(countOptions[index]) },
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -565,7 +601,9 @@ private fun MissionDetailContent(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Button(
-                    onClick = { },
+                    onClick = {
+                        onPreview(missionType)
+                    },
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = OrbitTheme.colors.gray_600,
@@ -584,7 +622,7 @@ private fun MissionDetailContent(
                 }
 
                 Button(
-                    onClick = { },
+                    onClick = onSave,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -667,6 +705,9 @@ private fun AlarmMissionSelectBottomSheetPreview() {
             missionType = MissionType.SHAKE,
             missionCount = 15,
             isSheetOpen = true,
-        ) { }
+            onDismiss = {},
+            onSaveMission = { _, _ -> },
+            onPreviewMission = {},
+        )
     }
 }
