@@ -58,6 +58,7 @@ import com.yapp.home.DELETE_ALARM_RESULT_KEY
 import com.yapp.home.UPDATE_ALARM_RESULT_KEY
 import com.yapp.home.alarm.component.AlarmCheckItem
 import com.yapp.home.alarm.component.AlarmDayButton
+import com.yapp.home.alarm.component.bottomsheet.AlarmMissionBottomSheet
 import com.yapp.home.alarm.component.bottomsheet.AlarmSnoozeBottomSheet
 import com.yapp.home.alarm.component.bottomsheet.AlarmSoundBottomSheet
 import com.yapp.home.alarm.getLabelStringRes
@@ -167,7 +168,9 @@ fun AlarmAddEditContent(
         eventDispatcher(AlarmAddEditContract.Action.CheckUnsavedChangesBeforeExit)
     }
 
+    val missionState = state.missionState
     val snoozeState = state.snoozeState
+    val missionBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val snoozeBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val soundBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -217,6 +220,30 @@ fun AlarmAddEditContent(
                 ),
         )
     }
+
+    AlarmMissionBottomSheet(
+        sheetState = missionBottomSheetState,
+        missionType = missionState.missionType,
+        missionCount = missionState.missionCount,
+        isSheetOpen = state.bottomSheetState == AlarmAddEditContract.BottomSheetType.MissionSetting,
+        onDismiss = {
+            scope.launch {
+                missionBottomSheetState.hide()
+            }.invokeOnCompletion {
+                eventDispatcher(AlarmAddEditContract.Action.ToggleBottomSheet(AlarmAddEditContract.BottomSheetType.MissionSetting))
+            }
+        },
+        onSaveMission = { missionType, missionCount ->
+            eventDispatcher(
+                AlarmAddEditContract.Action.SaveMission(
+                    type = missionType,
+                    count = missionCount,
+                ),
+            )
+        },
+        onPreviewMission = {
+        },
+    )
 
     AlarmSnoozeBottomSheet(
         snoozeEnabled = snoozeState.isSnoozeEnabled,
@@ -419,11 +446,33 @@ private fun AlarmAddEditSettingsSection(
         AlarmAddEditSettingItem(
             label = stringResource(id = R.string.alarm_add_edit_mission),
             description = when (state.missionState.missionType) {
-                MissionType.TAP -> stringResource(id = R.string.alarm_add_edit_selected_mission_tap)
-                MissionType.SHAKE -> stringResource(id = R.string.alarm_add_edit_selected_mission_shake)
+                MissionType.TAP -> {
+                    val missionType = stringResource(id = R.string.alarm_add_edit_selected_mission_tap)
+                    val missionCount = state.missionState.missionCount
+                    stringResource(
+                        id = R.string.alarm_add_edit_selected_mission_with_count,
+                        missionType,
+                        missionCount,
+                    )
+                }
+                MissionType.SHAKE -> {
+                    val missionType = stringResource(id = R.string.alarm_add_edit_selected_mission_shake)
+                    val missionCount = state.missionState.missionCount
+                    stringResource(
+                        id = R.string.alarm_add_edit_selected_mission_with_count,
+                        missionType,
+                        missionCount,
+                    )
+                }
                 else -> stringResource(id = R.string.alarm_add_edit_selected_mission_none)
             },
-            onClick = { },
+            onClick = {
+                processAction(
+                    AlarmAddEditContract.Action.ToggleBottomSheet(
+                        AlarmAddEditContract.BottomSheetType.MissionSetting,
+                    ),
+                )
+            },
         )
         Spacer(
             modifier = Modifier

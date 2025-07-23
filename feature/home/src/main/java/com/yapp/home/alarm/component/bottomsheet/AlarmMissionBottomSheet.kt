@@ -19,6 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -26,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,7 +44,6 @@ import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.extensions.customClickable
 import core.designsystem.R
-import kotlinx.coroutines.launch
 
 enum class AlarmMissionSelectBottomSheetType {
     MISSION_SETTING,
@@ -62,7 +61,8 @@ private fun MissionType.displayData(): Pair<Int, Int> = when (this) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun AlarmMissionSelectBottomSheet(
+internal fun AlarmMissionBottomSheet(
+    sheetState: SheetState,
     missionType: MissionType,
     missionCount: Int,
     isSheetOpen: Boolean,
@@ -72,8 +72,6 @@ internal fun AlarmMissionSelectBottomSheet(
 ) {
     var currentStep by remember { mutableStateOf(AlarmMissionSelectBottomSheetType.MISSION_SETTING) }
 
-    val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var selectedMissionType by remember { mutableStateOf(missionType) }
     var selectedMissionCount by remember { mutableIntStateOf(missionCount) }
 
@@ -81,9 +79,8 @@ internal fun AlarmMissionSelectBottomSheet(
         isSheetOpen = isSheetOpen,
         sheetState = sheetState,
         onDismissRequest = {
-            scope.launch {
-                sheetState.hide()
-            }.invokeOnCompletion { onDismiss() }
+            currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
+            onDismiss()
         },
     ) {
         when (currentStep) {
@@ -101,15 +98,14 @@ internal fun AlarmMissionSelectBottomSheet(
                         },
                         onDelete = {
                             selectedMissionType = MissionType.NONE
+                            onSaveMission(selectedMissionType, selectedMissionCount)
                         },
                         onChange = {
                             currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
                         },
                         onDone = {
                             onSaveMission(selectedMissionType, selectedMissionCount)
-                            scope.launch {
-                                sheetState.hide()
-                            }.invokeOnCompletion { onDismiss() }
+                            onDismiss()
                         },
                     )
                 }
@@ -121,9 +117,8 @@ internal fun AlarmMissionSelectBottomSheet(
                         currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
                     },
                     onClose = {
-                        scope.launch {
-                            sheetState.hide()
-                        }.invokeOnCompletion { onDismiss() }
+                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
+                        onDismiss()
                     },
                     onSelect = { mission ->
                         selectedMissionType = mission
@@ -143,15 +138,13 @@ internal fun AlarmMissionSelectBottomSheet(
                         currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
                     },
                     onClose = {
-                        scope.launch {
-                            sheetState.hide()
-                        }.invokeOnCompletion { onDismiss() }
+                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
+                        onDismiss()
                     },
                     onSave = {
+                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
                         onSaveMission(selectedMissionType, selectedMissionCount)
-                        scope.launch {
-                            sheetState.hide()
-                        }.invokeOnCompletion { onDismiss() }
+                        onDismiss()
                     },
                     onPreview = {
                         onPreviewMission(selectedMissionType)
@@ -646,11 +639,15 @@ private fun MissionSelectTopAppBar(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun AlarmMissionSelectBottomSheetPreview() {
     OrbitTheme {
-        AlarmMissionSelectBottomSheet(
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+        AlarmMissionBottomSheet(
+            sheetState = sheetState,
             missionType = MissionType.SHAKE,
             missionCount = 15,
             isSheetOpen = true,

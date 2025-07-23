@@ -10,6 +10,7 @@ import com.yapp.common.util.ResourceProvider
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
 import com.yapp.domain.model.AlarmSound
+import com.yapp.domain.model.MissionType
 import com.yapp.domain.model.copyFrom
 import com.yapp.domain.model.toAlarmDayNames
 import com.yapp.domain.model.toAlarmDays
@@ -107,6 +108,7 @@ class AlarmAddEditViewModel @Inject constructor(
                         isDisableHolidayEnabled = repeatDays.isNotEmpty(),
                         isDisableHolidayChecked = alarm.isHolidayAlarmOff,
                     ),
+                    missionState = setUpMissionState(alarm, state),
                     snoozeState = setupSnoozeState(alarm, state),
                     soundState = state.soundState.copy(
                         isVibrationEnabled = alarm.isVibrationEnabled,
@@ -128,6 +130,16 @@ class AlarmAddEditViewModel @Inject constructor(
             selectedDays = repeatDays,
             isWeekdaysChecked = repeatDays.containsAll(setOf(AlarmDay.MON, AlarmDay.TUE, AlarmDay.WED, AlarmDay.THU, AlarmDay.FRI)),
             isWeekendsChecked = repeatDays.containsAll(setOf(AlarmDay.SAT, AlarmDay.SUN)),
+        )
+    }
+
+    private fun setUpMissionState(
+        alarm: Alarm,
+        currentState: AlarmAddEditContract.State,
+    ): AlarmAddEditContract.AlarmMissionState {
+        return currentState.missionState.copy(
+            missionType = alarm.missionType,
+            missionCount = alarm.missionCount,
         )
     }
 
@@ -168,6 +180,7 @@ class AlarmAddEditViewModel @Inject constructor(
             is AlarmAddEditContract.Action.ToggleWeekendsSelection -> toggleWeekendsSelection()
             is AlarmAddEditContract.Action.ToggleSpecificDaySelection -> toggleSpecificDaySelection(action.day)
             is AlarmAddEditContract.Action.ToggleHolidaySkipOption -> toggleHolidaySkipOption()
+            is AlarmAddEditContract.Action.SaveMission -> saveMission(action.type, action.count)
             is AlarmAddEditContract.Action.ToggleSnoozeOption -> toggleSnoozeOption()
             is AlarmAddEditContract.Action.SetSnoozeInterval -> setSnoozeInterval(action.index)
             is AlarmAddEditContract.Action.SetSnoozeRepeatCount -> setSnoozeRepeatCount(action.index)
@@ -421,6 +434,16 @@ class AlarmAddEditViewModel @Inject constructor(
                     },
                 ),
             )
+        }
+    }
+
+    private fun saveMission(type: MissionType, count: Int) = intent {
+        val newMissionState = state.missionState.copy(
+            missionType = type,
+            missionCount = count,
+        )
+        reduce {
+            state.copy(missionState = newMissionState)
         }
     }
 
