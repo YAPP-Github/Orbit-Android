@@ -40,10 +40,11 @@ import com.yapp.home.alarm.component.SelectorItems
 import com.yapp.ui.component.OrbitBottomSheet
 import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.extensions.customClickable
+import core.designsystem.R
 import kotlinx.coroutines.launch
 
 enum class AlarmMissionSelectBottomSheetType {
-    MISSION_ADD,
+    MISSION_SETTING,
     MISSION_SELECT,
     MISSION_DETAIL,
 }
@@ -52,10 +53,11 @@ enum class AlarmMissionSelectBottomSheetType {
 @Composable
 internal fun AlarmMissionSelectBottomSheet(
     missionType: MissionType,
+    missionCount: Int,
     isSheetOpen: Boolean,
     onDismiss: () -> Unit,
 ) {
-    var currentStep by remember { mutableStateOf(AlarmMissionSelectBottomSheetType.MISSION_ADD) }
+    var currentStep by remember { mutableStateOf(AlarmMissionSelectBottomSheetType.MISSION_SETTING) }
 
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -70,16 +72,27 @@ internal fun AlarmMissionSelectBottomSheet(
         },
     ) {
         when (currentStep) {
-            AlarmMissionSelectBottomSheetType.MISSION_ADD -> {
-                MissionAddContent {
-                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
+            AlarmMissionSelectBottomSheetType.MISSION_SETTING -> {
+                if (missionType == MissionType.NONE) {
+                    MissionAddContent {
+                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
+                    }
+                } else {
+                    MissionSettingContent(
+                        missionType = missionType,
+                        missionCount = missionCount,
+                        onDetail = {
+                            currentStep = AlarmMissionSelectBottomSheetType.MISSION_DETAIL
+                        },
+                        onDelete = { },
+                    )
                 }
             }
 
             AlarmMissionSelectBottomSheetType.MISSION_SELECT -> {
                 MissionSelectContent(
                     onBack = {
-                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_ADD
+                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
                     },
                     onClose = {
                         scope.launch {
@@ -179,7 +192,7 @@ private fun AddMissionButton(
         ),
     ) {
         Icon(
-            painter = painterResource(core.designsystem.R.drawable.ic_plus),
+            painter = painterResource(R.drawable.ic_plus),
             tint = Color.Unspecified,
             contentDescription = "Add Mission",
         )
@@ -189,6 +202,187 @@ private fun AddMissionButton(
         Text(
             text = "미션추가",
             style = OrbitTheme.typography.body1SemiBold,
+        )
+    }
+}
+
+@Composable
+private fun MissionSettingContent(
+    missionType: MissionType,
+    missionCount: Int,
+    onDetail: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Spacer(modifier = Modifier.height(26.dp))
+
+        Text(
+            modifier = Modifier
+                .padding(start = 12.dp)
+                .align(Alignment.Start),
+            text = "미션",
+            style = OrbitTheme.typography.heading2SemiBold,
+            color = OrbitTheme.colors.white,
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        SelectedMissionTypeItem(
+            missionType = missionType,
+            missionCount = missionCount,
+            onDetail = onDetail,
+            onDelete = onDelete,
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Button(
+                onClick = { },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = OrbitTheme.colors.gray_600,
+                    contentColor = OrbitTheme.colors.white,
+                ),
+                contentPadding = PaddingValues(
+                    horizontal = 28.dp,
+                    vertical = 14.dp,
+                ),
+            ) {
+                Text(
+                    text = "미션 변경",
+                    style = OrbitTheme.typography.body1SemiBold,
+                    color = OrbitTheme.colors.white,
+                )
+            }
+
+            Button(
+                onClick = { },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = OrbitTheme.colors.main,
+                    contentColor = OrbitTheme.colors.gray_900,
+                ),
+                contentPadding = PaddingValues(
+                    horizontal = 28.dp,
+                    vertical = 14.dp,
+                ),
+            ) {
+                Text(
+                    text = "완료",
+                    style = OrbitTheme.typography.body1SemiBold,
+                    color = OrbitTheme.colors.gray_900,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SelectedMissionTypeItem(
+    missionType: MissionType,
+    missionCount: Int,
+    onDetail: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    if (missionType == MissionType.NONE) return
+
+    val (iconRes, title) = when (missionType) {
+        MissionType.SHAKE ->
+            Pair(R.drawable.ic_mission_shake, "흔들기")
+        MissionType.TAP ->
+            Pair(R.drawable.ic_mission_tap, "터치하기")
+        else -> return
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .clickable(
+                    onClick = onDetail,
+                )
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = title,
+                modifier = Modifier.size(28.dp),
+                tint = Color.Unspecified,
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Text(
+                text = title,
+                style = OrbitTheme.typography.headline2SemiBold,
+                color = OrbitTheme.colors.white,
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            MissionCountChip(count = missionCount)
+        }
+
+        Box(
+            modifier = Modifier
+                .clickable(
+                    onClick = onDelete,
+                )
+                .padding(12.dp),
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_delete),
+                contentDescription = "Delete",
+                modifier = Modifier.size(20.dp),
+                tint = OrbitTheme.colors.gray_400,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MissionCountChip(
+    count: Int,
+) {
+    Row(
+        modifier = Modifier
+            .background(
+                color = OrbitTheme.colors.main.copy(alpha = 0.1f),
+                shape = CircleShape,
+            )
+            .padding(start = 5.dp, end = 3.dp, top = 2.dp, bottom = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "${count}회",
+            style = OrbitTheme.typography.label2Regular,
+            color = OrbitTheme.colors.main.copy(alpha = 0.9f),
+        )
+
+        Icon(
+            painter = painterResource(id = R.drawable.ic_arrow_right),
+            contentDescription = "Close",
+            modifier = Modifier
+                .size(12.dp),
+            tint = OrbitTheme.colors.main.copy(alpha = 0.9f),
         )
     }
 }
@@ -239,9 +433,9 @@ private fun MissionTypeItem(
 
     val (iconRes, title) = when (missionType) {
         MissionType.SHAKE ->
-            Pair(core.designsystem.R.drawable.ic_mission_shake, "흔들기")
+            Pair(R.drawable.ic_mission_shake, "흔들기")
         MissionType.TAP ->
-            Pair(core.designsystem.R.drawable.ic_mission_tap, "터치하기")
+            Pair(R.drawable.ic_mission_tap, "터치하기")
         else -> return
     }
 
@@ -283,9 +477,9 @@ private fun MissionDetailContent(
 
     val (title, lottieRes) = when (missionType) {
         MissionType.SHAKE ->
-            Pair("흔들기", core.designsystem.R.raw.mission_shake)
+            Pair("흔들기", R.raw.mission_shake)
         MissionType.TAP ->
-            Pair("터치하기", core.designsystem.R.raw.mission_tap)
+            Pair("터치하기", R.raw.mission_tap)
         else -> return
     }
 
@@ -427,7 +621,7 @@ private fun MissionSelectTopAppBar(
             .height(48.dp),
     ) {
         Icon(
-            painter = painterResource(id = core.designsystem.R.drawable.ic_back),
+            painter = painterResource(id = R.drawable.ic_back),
             contentDescription = "Back",
             tint = OrbitTheme.colors.white,
             modifier = Modifier
@@ -456,7 +650,7 @@ private fun MissionSelectTopAppBar(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(id = core.designsystem.R.drawable.ic_close),
+                painter = painterResource(id = R.drawable.ic_close),
                 contentDescription = "Close",
                 modifier = Modifier.size(24.dp),
                 tint = OrbitTheme.colors.white,
@@ -471,6 +665,7 @@ private fun AlarmMissionSelectBottomSheetPreview() {
     OrbitTheme {
         AlarmMissionSelectBottomSheet(
             missionType = MissionType.SHAKE,
+            missionCount = 15,
             isSheetOpen = true,
         ) { }
     }
