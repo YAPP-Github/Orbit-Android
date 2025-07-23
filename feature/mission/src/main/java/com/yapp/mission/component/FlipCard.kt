@@ -49,8 +49,8 @@ fun FlipCard(
         }
     }
 
-    LaunchedEffect(state.shakeCount) {
-        if (state.shakeCount in 1..9) {
+    LaunchedEffect(state.currentCount) {
+        if (state.currentCount in 1..9) {
             rotationZ.animateTo(
                 targetValue = -20f,
                 animationSpec = tween(durationMillis = 66, easing = LinearEasing),

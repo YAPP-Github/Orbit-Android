@@ -7,9 +7,9 @@ sealed class MissionContract {
     data class State(
         val missionType: MissionType = MissionType.TAP,
         val isMissionTypeLoading: Boolean = true,
+        val missionCount: Int = 10,
+        val currentCount: Int = 0,
         val isMissionCompleted: Boolean = false,
-        val shakeCount: Int = 0,
-        val clickCount: Int = 0,
         val playWhenClick: Boolean = false,
         val showFinalAnimation: Boolean = false,
         val isFlipped: Boolean = false,

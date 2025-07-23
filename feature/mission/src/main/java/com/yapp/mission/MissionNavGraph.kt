@@ -15,7 +15,7 @@ fun NavGraphBuilder.missionScreen(
     composable<MissionRoute>(
         deepLinks = listOf(
             navDeepLink {
-                uriPattern = "orbitapp://mission?notificationId={notificationId}"
+                uriPattern = "orbitapp://mission?notificationId={notificationId}&missionType={missionType}&missionCount={missionCount}"
             },
         ),
     ) {
