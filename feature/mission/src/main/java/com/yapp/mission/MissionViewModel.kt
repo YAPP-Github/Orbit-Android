@@ -24,6 +24,22 @@ import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
 import javax.inject.Inject
 
+enum class MissionMode {
+    REAL,
+    PREVIEW,
+    ;
+
+    companion object {
+        fun fromRaw(raw: String?): MissionMode {
+            return try {
+                valueOf(raw ?: "REAL")
+            } catch (_: IllegalArgumentException) {
+                REAL
+            }
+        }
+    }
+}
+
 @HiltViewModel
 class MissionViewModel @Inject constructor(
     private val analyticsHelper: AnalyticsHelper,
@@ -43,11 +59,13 @@ class MissionViewModel @Inject constructor(
         loadMissionInfo(
             missionTypeRaw = savedStateHandle.get<String>("missionType"),
             missionCountRaw = savedStateHandle.get<String>("missionCount"),
+            missionModeRaw = savedStateHandle.get<String>("missionMode"),
         )
     }
 
     fun processAction(action: MissionContract.Action) {
         when (action) {
+            is MissionContract.Action.NavigateBack -> navigateBack()
             is MissionContract.Action.ShakeCard -> handleMissionProgress(MissionType.SHAKE)
             is MissionContract.Action.ClickCard -> handleMissionProgress(MissionType.TAP)
             is MissionContract.Action.ShowExitDialog -> showExitDialog()
@@ -59,17 +77,24 @@ class MissionViewModel @Inject constructor(
     private fun loadMissionInfo(
         missionTypeRaw: String?,
         missionCountRaw: String?,
+        missionModeRaw: String?,
     ) = intent {
         val missionType = missionTypeRaw?.toIntOrNull() ?: MissionType.TAP.value
         val missionCount = missionCountRaw?.toIntOrNull() ?: 10
+        val missionMode = MissionMode.fromRaw(missionModeRaw)
 
         reduce {
             state.copy(
+                missionMode = missionMode,
                 missionType = MissionType.fromInt(missionType),
                 missionCount = missionCount,
                 isMissionTypeLoading = false,
             )
         }
+    }
+
+    private fun navigateBack() = intent {
+        postSideEffect(MissionContract.SideEffect.NavigateBack)
     }
 
     private fun showExitDialog() = intent {
@@ -137,10 +162,14 @@ class MissionViewModel @Inject constructor(
         postFortune(isRetry = true)
     }
 
-    private fun completeMission(type: String) {
+    private fun completeMission(type: String) = intent {
         performHapticSuccess()
         logMissionSuccess(type)
-        postFortune()
+        if (state.missionMode == MissionMode.REAL) {
+            postFortune()
+        } else {
+            postSideEffect(MissionContract.SideEffect.NavigateBack)
+        }
     }
 
     private fun performHapticSuccess() {
