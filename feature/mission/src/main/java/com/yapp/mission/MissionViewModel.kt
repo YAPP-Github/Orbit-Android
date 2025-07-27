@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
+import com.yapp.domain.MissionMode
 import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.repository.UserInfoRepository
@@ -31,7 +32,7 @@ class MissionViewModel @Inject constructor(
     private val fortuneRepository: FortuneRepository,
     private val userInfoRepository: UserInfoRepository,
     private val app: Application,
-    private val savedStateHandle: SavedStateHandle,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel(), ContainerHost<MissionContract.State, MissionContract.SideEffect> {
 
     override val container: Container<MissionContract.State, MissionContract.SideEffect> = container(
@@ -40,33 +41,45 @@ class MissionViewModel @Inject constructor(
         savedStateHandle.get<String>("notificationId")?.toLong()?.let {
             sendAlarmDismissIntent(it)
         }
-        loadMissionInfo()
+        loadMissionInfo(
+            missionTypeRaw = savedStateHandle.get<String>("missionType"),
+            missionCountRaw = savedStateHandle.get<String>("missionCount"),
+            missionModeRaw = savedStateHandle.get<String>("missionMode"),
+        )
     }
 
     fun processAction(action: MissionContract.Action) {
         when (action) {
-            is MissionContract.Action.ShakeCard -> handleShake()
-            is MissionContract.Action.ClickCard -> handleClick()
+            is MissionContract.Action.NavigateBack -> navigateBack()
+            is MissionContract.Action.ShakeCard -> handleMissionProgress(MissionType.SHAKE)
+            is MissionContract.Action.ClickCard -> handleMissionProgress(MissionType.TAP)
             is MissionContract.Action.ShowExitDialog -> showExitDialog()
             is MissionContract.Action.HideExitDialog -> hideExitDialog()
             is MissionContract.Action.RetryPostFortune -> retryPostFortune()
         }
     }
 
-    private fun loadMissionInfo() = intent {
-        val missionTypeString = savedStateHandle.get<String>("missionType")
-        val missionCountString = savedStateHandle.get<String>("missionCount")
-
-        val missionType = missionTypeString?.toIntOrNull() ?: MissionType.TAP.value
-        val missionCount = missionCountString?.toIntOrNull() ?: 10
+    private fun loadMissionInfo(
+        missionTypeRaw: String?,
+        missionCountRaw: String?,
+        missionModeRaw: String?,
+    ) = intent {
+        val missionType = missionTypeRaw?.toIntOrNull() ?: MissionType.TAP.value
+        val missionCount = missionCountRaw?.toIntOrNull() ?: 10
+        val missionMode = MissionMode.fromRaw(missionModeRaw)
 
         reduce {
             state.copy(
+                missionMode = missionMode,
                 missionType = MissionType.fromInt(missionType),
                 missionCount = missionCount,
                 isMissionTypeLoading = false,
             )
         }
+    }
+
+    private fun navigateBack() = intent {
+        postSideEffect(MissionContract.SideEffect.NavigateBack)
     }
 
     private fun showExitDialog() = intent {
@@ -77,37 +90,14 @@ class MissionViewModel @Inject constructor(
         reduce { state.copy(showExitDialog = false) }
     }
 
-    private fun handleShake() = intent {
-        if (state.missionType != MissionType.SHAKE) return@intent
+    private fun handleMissionProgress(missionType: MissionType) = intent {
+        val isLast = state.currentCount >= state.missionCount - 1
+        val nextCount = state.currentCount + 1
 
-        val currentCount = state.currentCount
-        if (currentCount < state.missionCount - 1) {
-            performHapticSuccess()
-            reduce { state.copy(currentCount = currentCount + 1) }
-        } else if (!state.isFlipped) {
-            completeMission(type = "shake")
-            reduce {
-                state.copy(
-                    isMissionCompleted = true,
-                    currentCount = state.missionCount,
-                    isFlipped = true,
-                )
-            }
-            delay(500)
-        }
-    }
+        performHapticSuccess()
 
-    private fun handleClick() = intent {
-        if (state.missionType != MissionType.TAP) return@intent
-
-        val currentCount = state.currentCount
-        if (currentCount < state.missionCount - 1) {
-            performHapticSuccess()
-            reduce { state.copy(currentCount = currentCount + 1, playWhenClick = true) }
-            delay(500)
-            reduce { state.copy(playWhenClick = false) }
-        } else {
-            completeMission("click")
+        if (isLast) {
+            completeMission(type = missionType.name.lowercase())
             reduce {
                 state.copy(
                     isMissionCompleted = true,
@@ -116,6 +106,19 @@ class MissionViewModel @Inject constructor(
                 )
             }
             delay(500)
+        } else {
+            val transientState = if (missionType == MissionType.TAP) {
+                state.copy(currentCount = nextCount, playWhenClick = true)
+            } else {
+                state.copy(currentCount = nextCount)
+            }
+
+            reduce { transientState }
+
+            if (missionType == MissionType.TAP) {
+                delay(500)
+                reduce { state.copy(playWhenClick = false) }
+            }
         }
     }
 
@@ -144,10 +147,14 @@ class MissionViewModel @Inject constructor(
         postFortune(isRetry = true)
     }
 
-    private fun completeMission(type: String) {
+    private fun completeMission(type: String) = intent {
         performHapticSuccess()
         logMissionSuccess(type)
-        postFortune()
+        if (state.missionMode == MissionMode.REAL) {
+            postFortune()
+        } else {
+            postSideEffect(MissionContract.SideEffect.NavigateBack)
+        }
     }
 
     private fun performHapticSuccess() {

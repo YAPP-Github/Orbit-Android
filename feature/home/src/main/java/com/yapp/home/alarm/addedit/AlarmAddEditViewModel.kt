@@ -181,6 +181,7 @@ class AlarmAddEditViewModel @Inject constructor(
             is AlarmAddEditContract.Action.ToggleSpecificDaySelection -> toggleSpecificDaySelection(action.day)
             is AlarmAddEditContract.Action.ToggleHolidaySkipOption -> toggleHolidaySkipOption()
             is AlarmAddEditContract.Action.SaveMission -> saveMission(action.type, action.count)
+            is AlarmAddEditContract.Action.NavigateToMissionPreview -> navigateToMissionPreview(action.missionType, action.missionCount)
             is AlarmAddEditContract.Action.ToggleSnoozeOption -> toggleSnoozeOption()
             is AlarmAddEditContract.Action.SetSnoozeInterval -> setSnoozeInterval(action.index)
             is AlarmAddEditContract.Action.SetSnoozeRepeatCount -> setSnoozeRepeatCount(action.index)
@@ -209,6 +210,21 @@ class AlarmAddEditViewModel @Inject constructor(
 
     private fun navigateBack() = intent {
         postSideEffect(AlarmAddEditContract.SideEffect.NavigateBack)
+    }
+
+    private fun navigateToMissionPreview(
+        missionType: MissionType,
+        missionCount: Int,
+    ) = intent {
+        val newTimeState = state.timeState.copy(
+            initialTime = state.timeState.currentTime,
+        )
+        reduce {
+            state.copy(
+                timeState = newTimeState,
+            )
+        }
+        postSideEffect(AlarmAddEditContract.SideEffect.NavigateToMissionPreview(missionType, missionCount))
     }
 
     private fun saveAlarm() = intent {

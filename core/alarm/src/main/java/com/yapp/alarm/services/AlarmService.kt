@@ -20,7 +20,6 @@ import androidx.core.net.toUri
 import com.yapp.alarm.AlarmConstants
 import com.yapp.alarm.AndroidAlarmScheduler
 import com.yapp.alarm.pendingIntent.interaction.createAlarmAlertPendingIntent
-import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissPendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmSnoozePendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createNavigateToMissionPendingIntent
 import com.yapp.domain.model.Alarm
@@ -135,7 +134,7 @@ class AlarmService : Service() {
         val alarmAlertPendingIntent =
             createAlarmAlertPendingIntent(applicationContext, alarm)
 
-        val alarmDismissPendingIntent = if (shouldNavigateToMission) {
+        /*val alarmDismissPendingIntent = if (shouldNavigateToMission) {
             createNavigateToMissionPendingIntent(
                 applicationContext = applicationContext,
                 notificationId = alarm.id,
@@ -147,7 +146,14 @@ class AlarmService : Service() {
                 applicationContext = applicationContext,
                 pendingIntentId = alarm.id,
             )
-        }
+        }*/
+
+        val alarmDismissPendingIntent = createNavigateToMissionPendingIntent(
+            applicationContext = applicationContext,
+            notificationId = alarm.id,
+            missionType = alarm.missionType.value,
+            missionCount = alarm.missionCount,
+        )
 
         val snoozePendingIntent = if (alarm.isSnoozeEnabled && alarm.snoozeCount != 0) {
             createAlarmSnoozePendingIntent(applicationContext, alarm)

@@ -25,7 +25,10 @@ fun NavGraphBuilder.missionScreen(
             handleSideEffect(it, navigator)
         }
 
-        MissionRoute(viewModel)
+        MissionRoute(
+            navigator = navigator,
+            viewModel = viewModel,
+        )
     }
 }
 
@@ -37,7 +40,7 @@ private fun handleSideEffect(
         MissionContract.SideEffect.NavigateToFortune -> {
             navigator.navigateToFortune(
                 navOptions = navOptions {
-                    popUpTo(MissionRoute) {
+                    popUpTo(MissionRoute.route) {
                         inclusive = true
                     }
                 },
@@ -47,7 +50,7 @@ private fun handleSideEffect(
         MissionContract.SideEffect.NavigateToHome -> {
             navigator.navigateToHome(
                 navOptions = navOptions {
-                    popUpTo(MissionRoute) {
+                    popUpTo(MissionRoute.route) {
                         inclusive = true
                     }
                 },

@@ -104,6 +104,12 @@ private suspend fun handleSideEffect(
         is AlarmAddEditContract.SideEffect.NavigateBack -> {
             navigator.navigateBack()
         }
+        is AlarmAddEditContract.SideEffect.NavigateToMissionPreview -> {
+            navigator.navigateToMissionPreview(
+                missionType = sideEffect.missionType.value,
+                missionCount = sideEffect.missionCount,
+            )
+        }
         is AlarmAddEditContract.SideEffect.SaveAlarm -> {
             navigator.navController.previousBackStackEntry
                 ?.savedStateHandle
@@ -241,7 +247,13 @@ fun AlarmAddEditContent(
                 ),
             )
         },
-        onPreviewMission = {
+        onPreviewMission = { missionType, missionCount ->
+            eventDispatcher(
+                AlarmAddEditContract.Action.NavigateToMissionPreview(
+                    missionType = missionType,
+                    missionCount = missionCount,
+                ),
+            )
         },
     )
 
