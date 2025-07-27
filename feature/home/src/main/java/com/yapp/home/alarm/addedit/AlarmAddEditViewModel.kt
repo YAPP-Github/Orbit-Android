@@ -216,6 +216,14 @@ class AlarmAddEditViewModel @Inject constructor(
         missionType: MissionType,
         missionCount: Int,
     ) = intent {
+        val newTimeState = state.timeState.copy(
+            initialTime = state.timeState.currentTime,
+        )
+        reduce {
+            state.copy(
+                timeState = newTimeState,
+            )
+        }
         postSideEffect(AlarmAddEditContract.SideEffect.NavigateToMissionPreview(missionType, missionCount))
     }
 
