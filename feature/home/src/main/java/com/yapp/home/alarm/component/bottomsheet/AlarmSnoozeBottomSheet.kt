@@ -44,19 +44,15 @@ internal fun AlarmSnoozeBottomSheet(
     onSnoozeToggle: () -> Unit,
     onCountSelected: (Int) -> Unit,
     onComplete: () -> Unit,
-    isSheetOpen: Boolean,
     onDismiss: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     OrbitBottomSheet(
-        isSheetOpen = isSheetOpen,
         sheetState = sheetState,
         onDismissRequest = {
-            scope.launch {
-                sheetState.hide()
-            }.invokeOnCompletion { onDismiss() }
+            onDismiss()
         },
     ) {
         BottomSheetContent(
@@ -230,7 +226,6 @@ private fun AlarmSnoozeBottomSheetPreview() {
             onIntervalSelected = { index -> snoozeIntervalIndex = index },
             onCountSelected = { index -> snoozeCountIndex = index },
             onComplete = { isSheetOpen = false },
-            isSheetOpen = isSheetOpen,
             onDismiss = { isSheetOpen = false },
         )
     }

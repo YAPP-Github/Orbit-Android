@@ -27,7 +27,6 @@ import feature.onboarding.R
 @Composable
 fun UserInfoBottomSheet(
     sheetState: SheetState = rememberModalBottomSheetState(),
-    isSheetOpen: Boolean,
     onDismissRequest: () -> Unit,
     onConfirmRequest: () -> Unit,
     name: String,
@@ -35,70 +34,67 @@ fun UserInfoBottomSheet(
     birthDate: String,
     birthTime: String,
 ) {
-    if (isSheetOpen) {
-        OrbitBottomSheet(
-            isSheetOpen = isSheetOpen,
-            sheetState = sheetState,
-            onDismissRequest = onDismissRequest,
+    OrbitBottomSheet(
+        sheetState = sheetState,
+        onDismissRequest = onDismissRequest,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .paddingForScreenPercentage(allPercentage = 0.03f),
         ) {
-            Column(
+            Text(
+                text = stringResource(R.string.onboarding_step6_bs_title),
+                modifier = Modifier
+                    .paddingForScreenPercentage(
+                        topPercentage = 0.005f,
+                        bottomPercentage = 0.027f,
+                    ),
+                style = OrbitTheme.typography.heading2SemiBold,
+                color = OrbitTheme.colors.white,
+            )
+            UserInfoRow(label = stringResource(R.string.onboarding_step6_bs_name), value = name)
+            UserInfoRow(
+                label = stringResource(R.string.onboarding_step6_bs_gender),
+                value = gender,
+            )
+            UserInfoRow(
+                label = stringResource(R.string.onboarding_step6_bs_birth),
+                value = birthDate,
+            )
+            UserInfoRow(
+                label = stringResource(R.string.onboarding_step6_bs_time),
+                value = birthTime,
+            )
+
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .paddingForScreenPercentage(allPercentage = 0.03f),
+                    .paddingForScreenPercentage(topPercentage = 0.032f),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = stringResource(R.string.onboarding_step6_bs_title),
-                    modifier = Modifier
-                        .paddingForScreenPercentage(
-                            topPercentage = 0.005f,
-                            bottomPercentage = 0.027f,
-                        ),
-                    style = OrbitTheme.typography.heading2SemiBold,
-                    color = OrbitTheme.colors.white,
+                OrbitButton(
+                    label = stringResource(R.string.onboarding_step6_bs_btn_dismiss),
+                    modifier = Modifier.weight(1f),
+                    onClick = onDismissRequest,
+                    enabled = true,
+                    containerColor = OrbitTheme.colors.gray_600,
+                    contentColor = OrbitTheme.colors.white,
+                    pressedContainerColor = OrbitTheme.colors.gray_500,
+                    pressedContentColor = OrbitTheme.colors.white.copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(12.dp),
                 )
-                UserInfoRow(label = stringResource(R.string.onboarding_step6_bs_name), value = name)
-                UserInfoRow(
-                    label = stringResource(R.string.onboarding_step6_bs_gender),
-                    value = gender,
-                )
-                UserInfoRow(
-                    label = stringResource(R.string.onboarding_step6_bs_birth),
-                    value = birthDate,
-                )
-                UserInfoRow(
-                    label = stringResource(R.string.onboarding_step6_bs_time),
-                    value = birthTime,
-                )
+                Spacer(modifier = Modifier.widthForScreenPercentage(0.032f))
+                OrbitButton(
+                    label = stringResource(R.string.onboarding_step6_bs_btn_confirm),
+                    modifier = Modifier.weight(1f),
+                    onClick = onConfirmRequest,
+                    enabled = true,
+                    pressedContainerColor = OrbitTheme.colors.main.copy(alpha = 0.8f),
+                    pressedContentColor = OrbitTheme.colors.gray_600,
+                    shape = RoundedCornerShape(12.dp),
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .paddingForScreenPercentage(topPercentage = 0.032f),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    OrbitButton(
-                        label = stringResource(R.string.onboarding_step6_bs_btn_dismiss),
-                        modifier = Modifier.weight(1f),
-                        onClick = onDismissRequest,
-                        enabled = true,
-                        containerColor = OrbitTheme.colors.gray_600,
-                        contentColor = OrbitTheme.colors.white,
-                        pressedContainerColor = OrbitTheme.colors.gray_500,
-                        pressedContentColor = OrbitTheme.colors.white.copy(alpha = 0.7f),
-                        shape = RoundedCornerShape(12.dp),
-                    )
-                    Spacer(modifier = Modifier.widthForScreenPercentage(0.032f))
-                    OrbitButton(
-                        label = stringResource(R.string.onboarding_step6_bs_btn_confirm),
-                        modifier = Modifier.weight(1f),
-                        onClick = onConfirmRequest,
-                        enabled = true,
-                        pressedContainerColor = OrbitTheme.colors.main.copy(alpha = 0.8f),
-                        pressedContentColor = OrbitTheme.colors.gray_600,
-                        shape = RoundedCornerShape(12.dp),
-
-                    )
-                }
+                )
             }
         }
     }
@@ -134,7 +130,6 @@ fun UserInfoRow(
 @Preview
 fun UserInfoBottomSheetPreview() {
     UserInfoBottomSheet(
-        isSheetOpen = true,
         onDismissRequest = { },
         onConfirmRequest = { },
         name = "홍길동",

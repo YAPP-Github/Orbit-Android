@@ -38,8 +38,7 @@ fun OrbitBottomSheet(
     sheetState: SheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
     ),
-    isSheetOpen: Boolean,
-    onDismissRequest: () -> Unit = {},
+    onDismissRequest: () -> Unit = { },
     shape: Shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
     containerColor: Color = OrbitTheme.colors.gray_800,
     strokeColor: Color = OrbitTheme.colors.gray_700,
@@ -47,27 +46,26 @@ fun OrbitBottomSheet(
     content: @Composable () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    if (isSheetOpen) {
-        ModalBottomSheet(
-            modifier = modifier,
-            sheetState = sheetState,
-            shape = shape,
-            onDismissRequest = {
-                scope.launch {
-                    sheetState.hide()
-                    onDismissRequest()
-                }
-            },
-            containerColor = containerColor,
-            dragHandle = null,
-        ) {
-            Box {
-                content()
-                BottomSheetTopRoundedStroke(
-                    strokeColor = strokeColor,
-                    strokeThickness = strokeThickness,
-                )
+
+    ModalBottomSheet(
+        modifier = modifier,
+        sheetState = sheetState,
+        shape = shape,
+        onDismissRequest = {
+            scope.launch {
+                sheetState.hide()
+                onDismissRequest()
             }
+        },
+        containerColor = containerColor,
+        dragHandle = null,
+    ) {
+        Box {
+            content()
+            BottomSheetTopRoundedStroke(
+                strokeColor = strokeColor,
+                strokeThickness = strokeThickness,
+            )
         }
     }
 }
@@ -159,9 +157,7 @@ fun OrbitBottomSheetPreview() {
         }
 
         OrbitBottomSheet(
-            isSheetOpen = isSheetOpen,
             sheetState = sheetState,
-            onDismissRequest = { isSheetOpen = !isSheetOpen },
             content = {
                 Box(
                     modifier = Modifier

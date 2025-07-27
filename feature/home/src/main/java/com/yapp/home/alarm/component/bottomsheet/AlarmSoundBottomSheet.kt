@@ -55,7 +55,6 @@ internal fun AlarmSoundBottomSheet(
     onVolumeChanged: (Int) -> Unit,
     onSoundSelected: (Int) -> Unit,
     onComplete: () -> Unit,
-    isSheetOpen: Boolean,
     onDismiss: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -63,12 +62,9 @@ internal fun AlarmSoundBottomSheet(
 
     OrbitBottomSheet(
         modifier = Modifier.statusBarsPadding(),
-        isSheetOpen = isSheetOpen,
         sheetState = sheetState,
         onDismissRequest = {
-            scope.launch {
-                sheetState.hide()
-            }.invokeOnCompletion { onDismiss() }
+            onDismiss()
         },
     ) {
         BottomSheetContent(
@@ -308,19 +304,20 @@ private fun AlarmSoundBottomSheetPreview() {
     var isSheetOpen by remember { mutableStateOf(true) }
 
     OrbitTheme {
-        AlarmSoundBottomSheet(
-            vibrationEnabled = isVibrationEnabled,
-            soundEnabled = isSoundEnabled,
-            soundVolume = soundVolume,
-            soundIndex = soundIndex,
-            sounds = sounds,
-            onVibrationToggle = { isVibrationEnabled = !isVibrationEnabled },
-            onSoundToggle = { isSoundEnabled = !isSoundEnabled },
-            onVolumeChanged = { soundVolume = it },
-            onSoundSelected = { soundIndex = it },
-            onComplete = { isSheetOpen = false },
-            isSheetOpen = isSheetOpen,
-            onDismiss = { isSheetOpen = false },
-        )
+        if (isSheetOpen) {
+            AlarmSoundBottomSheet(
+                vibrationEnabled = isVibrationEnabled,
+                soundEnabled = isSoundEnabled,
+                soundVolume = soundVolume,
+                soundIndex = soundIndex,
+                sounds = sounds,
+                onVibrationToggle = { isVibrationEnabled = !isVibrationEnabled },
+                onSoundToggle = { isSoundEnabled = !isSoundEnabled },
+                onVolumeChanged = { soundVolume = it },
+                onSoundSelected = { soundIndex = it },
+                onComplete = { isSheetOpen = false },
+                onDismiss = { isSheetOpen = false },
+            )
+        }
     }
 }

@@ -150,15 +150,16 @@ fun OnboardingGenderScreen(
         )
     }
 
-    UserInfoBottomSheet(
-        isSheetOpen = state.isBottomSheetOpen,
-        onDismissRequest = onDismissRequest,
-        onConfirmRequest = onConfirmRequest,
-        name = state.userName,
-        gender = state.selectedGender ?: "무지개",
-        birthDate = state.birthDateFormatted,
-        birthTime = state.birthTimeFormatted,
-    )
+    if (state.isBottomSheetOpen) {
+        UserInfoBottomSheet(
+            onDismissRequest = onDismissRequest,
+            onConfirmRequest = onConfirmRequest,
+            name = state.userName,
+            gender = state.selectedGender ?: "무지개",
+            birthDate = state.birthDateFormatted,
+            birthTime = state.birthTimeFormatted,
+        )
+    }
 }
 
 @Composable

@@ -65,7 +65,6 @@ internal fun AlarmMissionBottomSheet(
     sheetState: SheetState,
     missionType: MissionType,
     missionCount: Int,
-    isSheetOpen: Boolean,
     onDismiss: () -> Unit,
     onSaveMission: (MissionType, Int) -> Unit,
     onPreviewMission: (MissionType, Int) -> Unit,
@@ -76,7 +75,6 @@ internal fun AlarmMissionBottomSheet(
     var selectedMissionCount by remember { mutableIntStateOf(missionCount) }
 
     OrbitBottomSheet(
-        isSheetOpen = isSheetOpen,
         sheetState = sheetState,
         onDismissRequest = {
             currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
@@ -652,7 +650,6 @@ private fun AlarmMissionSelectBottomSheetPreview() {
             sheetState = sheetState,
             missionType = MissionType.SHAKE,
             missionCount = 15,
-            isSheetOpen = true,
             onDismiss = {},
             onSaveMission = { _, _ -> },
             onPreviewMission = { _, _ -> },
