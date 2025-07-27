@@ -1,7 +1,6 @@
 package com.yapp.home.alarm.component.bottomsheet
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,9 +25,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.yapp.designsystem.theme.OrbitTheme
+import com.yapp.home.alarm.component.SelectorItems
 import com.yapp.ui.component.OrbitBottomSheet
 import com.yapp.ui.component.button.OrbitButton
-import com.yapp.ui.component.radiobutton.OrbitRadioButton
 import com.yapp.ui.component.switch.OrbitSwitch
 import feature.home.R
 import kotlinx.coroutines.launch
@@ -182,62 +181,6 @@ private fun SelectorSection(
         )
     }
 }
-
-@Composable
-private fun SelectorItems(
-    items: List<String>,
-    selectedIndex: Int,
-    enabled: Boolean,
-    onItemSelected: (Int) -> Unit,
-) {
-    Box {
-        Column {
-            Spacer(modifier = Modifier.height(7.dp))
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .padding(horizontal = 6.dp)
-                    .background(
-                        if (enabled) {
-                            OrbitTheme.colors.gray_600
-                        } else {
-                            OrbitTheme.colors.gray_700
-                        },
-                    ),
-            )
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 6.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            items.forEachIndexed { index, item ->
-                Column(horizontalAlignment = getAlignment(index, items.size)) {
-                    OrbitRadioButton(
-                        selected = index == selectedIndex,
-                        enabled = enabled,
-                        onClick = { if (enabled) onItemSelected(index) },
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = item,
-                        style = OrbitTheme.typography.body1Medium,
-                        color = OrbitTheme.colors.gray_50,
-                    )
-                }
-            }
-        }
-    }
-}
-
-private fun getAlignment(index: Int, size: Int): Alignment.Horizontal =
-    when (index) {
-        0 -> Alignment.Start
-        size - 1 -> Alignment.End
-        else -> Alignment.CenterHorizontally
-    }
 
 @Composable
 private fun AlarmSnoozeMessage(interval: String, count: String) {

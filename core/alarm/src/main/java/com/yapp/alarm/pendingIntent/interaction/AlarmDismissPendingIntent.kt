@@ -35,8 +35,15 @@ fun createAlarmDismissIntent(
 fun createNavigateToMissionPendingIntent(
     applicationContext: Context,
     notificationId: Long,
+    missionType: Int,
+    missionCount: Int,
 ): PendingIntent {
-    val navigateToMissionIntent = createNavigateToMissionIntent(applicationContext, notificationId)
+    val navigateToMissionIntent = createNavigateToMissionIntent(
+        context = applicationContext,
+        notificationId = notificationId,
+        missionType = missionType,
+        missionCount = missionCount,
+    )
     return PendingIntent.getActivity(
         applicationContext,
         notificationId.toInt(),
@@ -48,8 +55,11 @@ fun createNavigateToMissionPendingIntent(
 fun createNavigateToMissionIntent(
     context: Context,
     notificationId: Long,
+    missionType: Int,
+    missionCount: Int,
 ): Intent {
-    return Intent(Intent.ACTION_VIEW, "orbitapp://mission?notificationId=$notificationId".toUri()).apply {
+    val uriString = "orbitapp://mission?notificationId=$notificationId&missionType=$missionType&missionCount=$missionCount"
+    return Intent(Intent.ACTION_VIEW, uriString.toUri()).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         setPackage(context.packageName)
     }

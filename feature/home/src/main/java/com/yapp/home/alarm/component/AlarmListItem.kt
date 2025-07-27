@@ -296,7 +296,6 @@ private fun Int.toRepeatDaysString(isAm: Boolean, hour: Int, minute: Int): Strin
         days.size == 7 -> "매일"
         days.isNotEmpty() -> "매주 " + days.joinToString(", ") { it.toKoreanString() }
         else -> getNextAlarmDateWithTime(
-            isAm = isAm,
             hour = hour,
             minute = minute,
         )
@@ -315,16 +314,10 @@ private fun AlarmDay.toKoreanString(): String {
     }
 }
 
-private fun getNextAlarmDateWithTime(isAm: Boolean, hour: Int, minute: Int): String {
+private fun getNextAlarmDateWithTime(hour: Int, minute: Int): String {
     val now = LocalDateTime.now()
 
-    val alarmHour = if (isAm) {
-        if (hour == 12) 0 else hour
-    } else {
-        if (hour == 12) 12 else hour + 12
-    }
-
-    val alarmTime = LocalTime.of(alarmHour, minute)
+    val alarmTime = LocalTime.of(hour, minute)
     val todayAlarm = LocalDateTime.of(now.toLocalDate(), alarmTime)
 
     // 오늘 시간 이미 지났으면 내일로 설정

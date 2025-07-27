@@ -139,6 +139,8 @@ class AlarmService : Service() {
             createNavigateToMissionPendingIntent(
                 applicationContext = applicationContext,
                 notificationId = alarm.id,
+                missionType = alarm.missionType.value,
+                missionCount = alarm.missionCount,
             )
         } else {
             createAlarmDismissPendingIntent(

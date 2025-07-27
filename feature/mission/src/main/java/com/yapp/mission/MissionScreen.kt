@@ -150,7 +150,7 @@ fun MissionContent(
 
         when (state.missionType) {
             MissionType.SHAKE -> {
-                if (state.shakeCount == 0) {
+                if (state.currentCount == 0) {
                     MissionShakeInitialImage()
                 } else {
                     FlipCard(state = state, eventDispatcher = eventDispatcher)
@@ -213,12 +213,8 @@ fun MissionTopAppBar(onExit: () -> Unit) {
 fun MissionProgressBarSection(state: MissionContract.State) {
     Spacer(modifier = Modifier.heightForScreenPercentage(0.0246f))
     MissionProgressBar(
-        currentProgress = when (state.missionType) {
-            MissionType.SHAKE -> state.shakeCount
-            MissionType.TAP -> state.clickCount
-            else -> 0
-        },
-        totalProgress = 10,
+        currentProgress = state.currentCount,
+        totalProgress = state.missionCount,
         modifier = Modifier
             .fillMaxWidth()
             .height(5.dp)
@@ -233,8 +229,8 @@ fun MissionProgressBarSection(state: MissionContract.State) {
 @Composable
 fun MissionLabel(state: MissionContract.State) {
     val instruction =
-        if (state.missionType == MissionType.SHAKE) "10회를 흔들어 부적을 뒤집어줘" else "10회를 눌러 편지를 열어줘"
-    val count = if (state.missionType == MissionType.SHAKE) state.shakeCount else state.clickCount
+        if (state.missionType == MissionType.SHAKE) "${state.missionCount}회를 흔들어 부적을 뒤집어줘" else "${state.missionCount}회를 눌러 편지를 열어줘"
+    val count = state.currentCount
 
     Text(
         text = instruction,
@@ -271,7 +267,7 @@ fun MissionClickCard(
     state: MissionContract.State,
     eventDispatcher: (MissionContract.Action) -> Unit,
 ) {
-    if (state.clickCount == 0) {
+    if (state.currentCount == 0) {
         Image(
             painter = painterResource(id = core.designsystem.R.drawable.ic_mission_main_letter),
             contentDescription = null,
@@ -408,9 +404,8 @@ private fun MissionRoutePreview() {
         stateProvider = {
             MissionContract.State(
                 isMissionTypeLoading = false,
-                missionType = MissionType.SHAKE,
-                shakeCount = 0,
-                clickCount = 0,
+                missionType = MissionType.TAP,
+                currentCount = 0,
                 showFinalAnimation = false,
                 playWhenClick = false,
                 showExitDialog = false,

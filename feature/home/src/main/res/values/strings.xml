@@ -33,9 +33,28 @@
     <string name="alarm_add_edit_disable_holiday">공휴일 알람 끄기</string>
 
     <string name="alarm_add_edit_mission">미션</string>
+    <string name="alarm_add_edit_selected_mission_with_count">%1$s, %2$d회</string>
     <string name="alarm_add_edit_selected_mission_shake">흔들기</string>
     <string name="alarm_add_edit_selected_mission_tap">터치하기</string>
     <string name="alarm_add_edit_selected_mission_none">없음</string>
+
+    <!-- AlarmMissionSelectBottomSheet 관련 문자열 -->
+    <string name="mission_bottom_sheet_title">미션</string>
+
+    <string name="mission_add_content_empty_title">등록된 미션이 없어요</string>
+    <string name="mission_add_content_empty_description">새 미션을 추가해보세요</string>
+    <string name="mission_add_content_btn_add">미션추가</string>
+
+    <string name="mission_setting_content_btn_change">미션 변경</string>
+    <string name="mission_setting_content_btn_done">완료</string>
+
+    <string name="mission_count_chip_format">%d회</string>
+
+    <string name="mission_detail_content_count_title">횟수</string>
+    <string name="mission_detail_content_count_level_easy">쉬움</string>
+    <string name="mission_detail_content_count_level_hard">어려움</string>
+    <string name="mission_detail_content_btn_preview">미리보기</string>
+    <string name="mission_detail_content_btn_save">미션 저장</string>
 
     <string name="alarm_add_edit_alarm_selected_option">%s, %s</string>
     <string name="alarm_add_edit_alarm_selected_option_none">안 함</string>

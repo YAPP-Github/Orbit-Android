@@ -46,6 +46,7 @@ sealed class AlarmAddEditContract {
 
     data class AlarmMissionState(
         val missionType: MissionType = MissionType.TAP,
+        val missionCount: Int = 10,
     )
 
     data class AlarmSnoozeState(
@@ -83,6 +84,7 @@ sealed class AlarmAddEditContract {
         data class ToggleSpecificDaySelection(val day: AlarmDay) : Action()
         data object ToggleHolidaySkipOption : Action()
         data object ToggleSnoozeOption : Action()
+        data class SaveMission(val type: MissionType, val count: Int) : Action()
         data class SetSnoozeInterval(val index: Int) : Action()
         data class SetSnoozeRepeatCount(val index: Int) : Action()
         data object ToggleVibrationOption : Action()
@@ -93,6 +95,7 @@ sealed class AlarmAddEditContract {
     }
 
     sealed class BottomSheetType {
+        data object MissionSetting : BottomSheetType()
         data object SnoozeSetting : BottomSheetType()
         data object SoundSetting : BottomSheetType()
     }
@@ -125,6 +128,8 @@ internal fun AlarmAddEditContract.State.toAlarm(id: Long = 0): Alarm {
         minute = timeState.currentTime.minute,
         repeatDays = daySelectionState.selectedDays.toRepeatDays(),
         isHolidayAlarmOff = holidayState.isDisableHolidayChecked,
+        missionType = missionState.missionType,
+        missionCount = missionState.missionCount,
         isSnoozeEnabled = snoozeState.isSnoozeEnabled,
         snoozeInterval = snoozeState.snoozeIntervals.getOrNull(snoozeState.snoozeIntervalIndex)
             ?.filter { it.isDigit() }
