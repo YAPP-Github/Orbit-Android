@@ -266,35 +266,18 @@ fun AlarmAddEditContent(
         AlarmAddEditContract.BottomSheetType.SnoozeSetting -> {
             AlarmSnoozeBottomSheet(
                 snoozeEnabled = snoozeState.isSnoozeEnabled,
-                snoozeIntervalIndex = snoozeState.snoozeIntervalIndex,
-                snoozeCountIndex = snoozeState.snoozeCountIndex,
-                snoozeIntervals = snoozeState.snoozeIntervals,
-                snoozeCounts = snoozeState.snoozeCounts,
+                snoozeInterval = snoozeState.snoozeInterval,
+                snoozeCount = snoozeState.snoozeCount,
                 onSnoozeToggle = { eventDispatcher(AlarmAddEditContract.Action.ToggleSnoozeOption) },
-                onIntervalSelected = { index ->
+                onIntervalSelected = { interval ->
                     eventDispatcher(
-                        AlarmAddEditContract.Action.SetSnoozeInterval(
-                            index,
-                        ),
+                        AlarmAddEditContract.Action.SetSnoozeInterval(interval),
                     )
                 },
-                onCountSelected = { index ->
+                onCountSelected = { count ->
                     eventDispatcher(
-                        AlarmAddEditContract.Action.SetSnoozeRepeatCount(
-                            index,
-                        ),
+                        AlarmAddEditContract.Action.SetSnoozeRepeatCount(count),
                     )
-                },
-                onComplete = {
-                    scope.launch {
-                        snoozeBottomSheetState.hide()
-                    }.invokeOnCompletion {
-                        eventDispatcher(
-                            AlarmAddEditContract.Action.ToggleBottomSheet(
-                                AlarmAddEditContract.BottomSheetType.SnoozeSetting,
-                            ),
-                        )
-                    }
                 },
                 onDismiss = {
                     scope.launch {
@@ -523,10 +506,22 @@ private fun AlarmAddEditSettingsSection(
         AlarmAddEditSettingItem(
             label = stringResource(id = R.string.alarm_add_edit_alarm_snooze),
             description = if (state.snoozeState.isSnoozeEnabled) {
+                val interval = stringResource(
+                    id = R.string.alarm_add_edit_interval_minute,
+                    state.snoozeState.snoozeInterval,
+                )
+                val count = if (state.snoozeState.snoozeCount == -1) {
+                    stringResource(id = R.string.alarm_add_edit_repeat_count_infinite)
+                } else {
+                    stringResource(
+                        id = R.string.alarm_add_edit_repeat_count_times,
+                        state.snoozeState.snoozeCount,
+                    )
+                }
                 stringResource(
                     id = R.string.alarm_add_edit_alarm_selected_option,
-                    state.snoozeState.snoozeIntervals[state.snoozeState.snoozeIntervalIndex],
-                    state.snoozeState.snoozeCounts[state.snoozeState.snoozeCountIndex],
+                    interval,
+                    count,
                 )
             } else {
                 stringResource(id = R.string.alarm_add_edit_alarm_selected_option_none)

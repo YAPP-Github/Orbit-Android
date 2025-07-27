@@ -149,15 +149,9 @@ class AlarmAddEditViewModel @Inject constructor(
     ): AlarmAddEditContract.AlarmSnoozeState {
         return currentState.snoozeState.copy(
             isSnoozeEnabled = alarm.isSnoozeEnabled,
-            snoozeIntervalIndex = findSnoozeIndex(alarm.snoozeInterval, currentState.snoozeState.snoozeIntervals),
-            snoozeCountIndex = findSnoozeIndex(alarm.snoozeCount, currentState.snoozeState.snoozeCounts),
+            snoozeInterval = alarm.snoozeInterval,
+            snoozeCount = alarm.snoozeCount,
         )
-    }
-
-    private fun findSnoozeIndex(value: Int, list: List<String>): Int {
-        return list.indexOfFirst {
-            it == "무한" && value == -1 || it.filter { char -> char.isDigit() }.toIntOrNull() == value
-        }.takeIf { it >= 0 } ?: 0
     }
 
     override fun onCleared() {
@@ -183,8 +177,8 @@ class AlarmAddEditViewModel @Inject constructor(
             is AlarmAddEditContract.Action.SaveMission -> saveMission(action.type, action.count)
             is AlarmAddEditContract.Action.NavigateToMissionPreview -> navigateToMissionPreview(action.missionType, action.missionCount)
             is AlarmAddEditContract.Action.ToggleSnoozeOption -> toggleSnoozeOption()
-            is AlarmAddEditContract.Action.SetSnoozeInterval -> setSnoozeInterval(action.index)
-            is AlarmAddEditContract.Action.SetSnoozeRepeatCount -> setSnoozeRepeatCount(action.index)
+            is AlarmAddEditContract.Action.SetSnoozeInterval -> setSnoozeInterval(action.interval)
+            is AlarmAddEditContract.Action.SetSnoozeRepeatCount -> setSnoozeRepeatCount(action.count)
             is AlarmAddEditContract.Action.ToggleVibrationOption -> toggleVibrationOption()
             is AlarmAddEditContract.Action.ToggleSoundOption -> toggleSoundOption()
             is AlarmAddEditContract.Action.AdjustSoundVolume -> adjustSoundVolume(action.volume)
@@ -472,15 +466,15 @@ class AlarmAddEditViewModel @Inject constructor(
         }
     }
 
-    private fun setSnoozeInterval(index: Int) = intent {
-        val newSnoozeState = state.snoozeState.copy(snoozeIntervalIndex = index)
+    private fun setSnoozeInterval(interval: Int) = intent {
+        val newSnoozeState = state.snoozeState.copy(snoozeInterval = interval)
         reduce {
             state.copy(snoozeState = newSnoozeState)
         }
     }
 
-    private fun setSnoozeRepeatCount(index: Int) = intent {
-        val newSnoozeState = state.snoozeState.copy(snoozeCountIndex = index)
+    private fun setSnoozeRepeatCount(count: Int) = intent {
+        val newSnoozeState = state.snoozeState.copy(snoozeCount = count)
         reduce {
             state.copy(snoozeState = newSnoozeState)
         }

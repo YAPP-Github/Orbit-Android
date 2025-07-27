@@ -51,10 +51,8 @@ sealed class AlarmAddEditContract {
 
     data class AlarmSnoozeState(
         val isSnoozeEnabled: Boolean = true,
-        val snoozeIntervalIndex: Int = 2,
-        val snoozeCountIndex: Int = 2,
-        val snoozeIntervals: List<String> = listOf("1분", "3분", "5분", "10분", "15분"),
-        val snoozeCounts: List<String> = listOf("1회", "3회", "5회", "10회", "무한"),
+        val snoozeInterval: Int = 5,
+        val snoozeCount: Int = 5,
     )
 
     data class AlarmSoundState(
@@ -86,8 +84,8 @@ sealed class AlarmAddEditContract {
         data object ToggleSnoozeOption : Action()
         data class SaveMission(val type: MissionType, val count: Int) : Action()
         data class NavigateToMissionPreview(val missionType: MissionType, val missionCount: Int) : Action()
-        data class SetSnoozeInterval(val index: Int) : Action()
-        data class SetSnoozeRepeatCount(val index: Int) : Action()
+        data class SetSnoozeInterval(val interval: Int) : Action()
+        data class SetSnoozeRepeatCount(val count: Int) : Action()
         data object ToggleVibrationOption : Action()
         data object ToggleSoundOption : Action()
         data class AdjustSoundVolume(val volume: Int) : Action()
@@ -137,13 +135,8 @@ internal fun AlarmAddEditContract.State.toAlarm(id: Long = 0): Alarm {
         missionType = missionState.missionType,
         missionCount = missionState.missionCount,
         isSnoozeEnabled = snoozeState.isSnoozeEnabled,
-        snoozeInterval = snoozeState.snoozeIntervals.getOrNull(snoozeState.snoozeIntervalIndex)
-            ?.filter { it.isDigit() }
-            ?.toIntOrNull()
-            ?: 5,
-        snoozeCount = snoozeState.snoozeCounts.getOrNull(snoozeState.snoozeCountIndex)
-            ?.let { if (it == "무한") -1 else it.filter { char -> char.isDigit() }.toIntOrNull() ?: 1 }
-            ?: 1,
+        snoozeInterval = snoozeState.snoozeInterval,
+        snoozeCount = snoozeState.snoozeCount,
         isVibrationEnabled = soundState.isVibrationEnabled,
         isSoundEnabled = soundState.isSoundEnabled,
         soundUri = soundState.sounds.getOrNull(soundState.soundIndex)?.uri.toString(),
