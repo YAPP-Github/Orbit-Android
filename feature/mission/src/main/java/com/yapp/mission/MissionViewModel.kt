@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
+import com.yapp.domain.MissionMode
 import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.repository.UserInfoRepository
@@ -24,22 +25,6 @@ import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
 import javax.inject.Inject
 
-enum class MissionMode {
-    REAL,
-    PREVIEW,
-    ;
-
-    companion object {
-        fun fromRaw(raw: String?): MissionMode {
-            return try {
-                valueOf(raw ?: "REAL")
-            } catch (_: IllegalArgumentException) {
-                REAL
-            }
-        }
-    }
-}
-
 @HiltViewModel
 class MissionViewModel @Inject constructor(
     private val analyticsHelper: AnalyticsHelper,
@@ -47,7 +32,7 @@ class MissionViewModel @Inject constructor(
     private val fortuneRepository: FortuneRepository,
     private val userInfoRepository: UserInfoRepository,
     private val app: Application,
-    val savedStateHandle: SavedStateHandle,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel(), ContainerHost<MissionContract.State, MissionContract.SideEffect> {
 
     override val container: Container<MissionContract.State, MissionContract.SideEffect> = container(
