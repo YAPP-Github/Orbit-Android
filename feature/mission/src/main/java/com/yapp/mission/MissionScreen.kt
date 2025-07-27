@@ -49,6 +49,7 @@ import com.yapp.analytics.AnalyticsHelper
 import com.yapp.analytics.LocalAnalyticsHelper
 import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.designsystem.theme.OrbitTheme
+import com.yapp.domain.MissionMode
 import com.yapp.domain.model.MissionType
 import com.yapp.mission.component.FlipCard
 import com.yapp.mission.component.MissionProgressBar

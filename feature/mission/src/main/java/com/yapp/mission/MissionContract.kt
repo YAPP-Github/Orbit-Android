@@ -1,5 +1,6 @@
 package com.yapp.mission
 
+import com.yapp.domain.MissionMode
 import com.yapp.domain.model.MissionType
 
 sealed class MissionContract {
