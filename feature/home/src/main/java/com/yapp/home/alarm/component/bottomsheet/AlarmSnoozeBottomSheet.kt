@@ -1,5 +1,6 @@
 package com.yapp.home.alarm.component.bottomsheet
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,99 +37,101 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun AlarmSnoozeBottomSheet(
     snoozeEnabled: Boolean,
-    snoozeIntervalIndex: Int,
-    snoozeIntervals: List<String>,
+    snoozeInterval: Int,
+    snoozeCount: Int,
     onIntervalSelected: (Int) -> Unit,
-    snoozeCountIndex: Int,
-    snoozeCounts: List<String>,
-    onSnoozeToggle: () -> Unit,
     onCountSelected: (Int) -> Unit,
-    onComplete: () -> Unit,
+    onSnoozeToggle: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    OrbitBottomSheet(
-        sheetState = sheetState,
-        onDismissRequest = {
-            onDismiss()
-        },
-    ) {
-        BottomSheetContent(
-            isSnoozeEnabled = snoozeEnabled,
-            snoozeIntervalIndex = snoozeIntervalIndex,
-            snoozeIntervals = snoozeIntervals,
-            onIntervalSelected = onIntervalSelected,
-            snoozeCountIndex = snoozeCountIndex,
-            snoozeCounts = snoozeCounts,
-            onSnoozeToggle = onSnoozeToggle,
-            onCountSelected = onCountSelected,
-            onComplete = {
-                scope.launch {
-                    sheetState.hide()
-                }.invokeOnCompletion { onComplete() }
+    val snoozeIntervalOptions = listOf(1, 3, 5, 10, 15)
+    val snoozeCountOptions = listOf(1, 3, 5, 10, -1)
+
+    val snoozeIntervals = snoozeIntervalOptions.map {
+        stringResource(id = R.string.alarm_add_edit_interval_minute, it)
+    }
+    val snoozeCounts = listOf(
+        stringResource(id = R.string.alarm_add_edit_repeat_count_times, 1),
+        stringResource(id = R.string.alarm_add_edit_repeat_count_times, 3),
+        stringResource(id = R.string.alarm_add_edit_repeat_count_times, 5),
+        stringResource(id = R.string.alarm_add_edit_repeat_count_times, 10),
+        stringResource(id = R.string.alarm_add_edit_repeat_count_infinite),
+    )
+
+    var selectedSnoozeEnabled by remember { mutableStateOf(snoozeEnabled) }
+    var selectedSnoozeIntervalIndex by remember { mutableIntStateOf(snoozeIntervalOptions.indexOf(snoozeInterval)) }
+    var selectedSnoozeCountIndex by remember {
+        mutableIntStateOf(
+            if (snoozeCount == -1) {
+                snoozeCountOptions.lastIndex
+            } else {
+                snoozeCountOptions.indexOf(snoozeCount)
             },
         )
     }
-}
 
-@Composable
-private fun BottomSheetContent(
-    isSnoozeEnabled: Boolean,
-    snoozeIntervalIndex: Int,
-    snoozeIntervals: List<String>,
-    onIntervalSelected: (Int) -> Unit,
-    snoozeCountIndex: Int,
-    snoozeCounts: List<String>,
-    onSnoozeToggle: () -> Unit,
-    onCountSelected: (Int) -> Unit,
-    onComplete: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = 24.dp,
-                vertical = 12.dp,
-            ),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    OrbitBottomSheet(
+        sheetState = sheetState,
+        onDismissRequest = onDismiss,
     ) {
-        Spacer(modifier = Modifier.height(6.dp))
-        VibrationSection(isSnoozeEnabled, onSnoozeToggle)
-        Spacer(modifier = Modifier.height(20.dp))
-        SelectorSection(
-            title = stringResource(id = R.string.alarm_add_edit_interval),
-            selectedIndex = snoozeIntervalIndex,
-            items = snoozeIntervals,
-            enabled = isSnoozeEnabled,
-            onItemSelected = onIntervalSelected,
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        SelectorSection(
-            title = stringResource(id = R.string.alarm_add_edit_repeat_count),
-            selectedIndex = snoozeCountIndex,
-            items = snoozeCounts,
-            enabled = isSnoozeEnabled,
-            onItemSelected = onCountSelected,
-        )
-        Spacer(modifier = Modifier.height(20.dp))
-        if (isSnoozeEnabled) {
-            AlarmSnoozeMessage(
-                interval = snoozeIntervals[snoozeIntervalIndex],
-                count = snoozeCounts[snoozeCountIndex],
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(modifier = Modifier.height(6.dp))
+            VibrationSection(selectedSnoozeEnabled) {
+                selectedSnoozeEnabled = !selectedSnoozeEnabled
+                onSnoozeToggle(selectedSnoozeEnabled)
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            SelectorSection(
+                title = stringResource(id = R.string.alarm_add_edit_interval),
+                selectedIndex = selectedSnoozeIntervalIndex,
+                items = snoozeIntervals,
+                enabled = selectedSnoozeEnabled,
+                onItemSelected = {
+                    selectedSnoozeIntervalIndex = it
+                    onIntervalSelected(snoozeIntervalOptions[it])
+                },
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+            SelectorSection(
+                title = stringResource(id = R.string.alarm_add_edit_repeat_count),
+                selectedIndex = selectedSnoozeCountIndex,
+                items = snoozeCounts,
+                enabled = selectedSnoozeEnabled,
+                onItemSelected = {
+                    selectedSnoozeCountIndex = it
+                    onCountSelected(snoozeCountOptions[it])
+                },
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            if (selectedSnoozeEnabled) {
+                AlarmSnoozeMessage(
+                    interval = snoozeIntervals[selectedSnoozeIntervalIndex],
+                    count = snoozeCounts[selectedSnoozeCountIndex],
+                )
+            }
+            Spacer(modifier = Modifier.height(40.dp))
+            OrbitButton(
+                label = stringResource(id = R.string.alarm_add_edit_complete),
+                enabled = true,
+                containerColor = OrbitTheme.colors.gray_600,
+                contentColor = OrbitTheme.colors.white,
+                pressedContainerColor = OrbitTheme.colors.gray_500,
+                pressedContentColor = OrbitTheme.colors.white.copy(alpha = 0.7f),
+                onClick = {
+                    scope.launch { sheetState.hide() }.invokeOnCompletion {
+                        onDismiss()
+                    }
+                },
             )
         }
-        Spacer(modifier = Modifier.height(40.dp))
-        OrbitButton(
-            label = stringResource(id = R.string.alarm_add_edit_complete),
-            enabled = true,
-            containerColor = OrbitTheme.colors.gray_600,
-            contentColor = OrbitTheme.colors.white,
-            pressedContainerColor = OrbitTheme.colors.gray_500,
-            pressedContentColor = OrbitTheme.colors.white.copy(alpha = 0.7f),
-            onClick = onComplete,
-        )
     }
 }
 
@@ -203,30 +206,27 @@ private fun AlarmSnoozeMessage(interval: String, count: String) {
 @Composable
 private fun AlarmSnoozeBottomSheetPreview() {
     var isSnoozeEnabled by remember { mutableStateOf(true) }
-    var snoozeIntervalIndex by remember { mutableIntStateOf(2) }
-    var snoozeCountIndex by remember { mutableIntStateOf(1) }
-    var isSheetOpen by remember { mutableStateOf(true) }
+    var snoozeInterval by remember { mutableIntStateOf(5) }
+    var snoozeCount by remember { mutableIntStateOf(5) }
 
     OrbitTheme {
         AlarmSnoozeBottomSheet(
             snoozeEnabled = isSnoozeEnabled,
-            snoozeIntervalIndex = snoozeIntervalIndex,
-            snoozeCountIndex = snoozeCountIndex,
-            snoozeIntervals = listOf(1, 3, 5, 10, 15).map {
-                stringResource(id = R.string.alarm_add_edit_interval_minute, it)
+            snoozeInterval = snoozeInterval,
+            snoozeCount = snoozeCount,
+            onSnoozeToggle = {
+                isSnoozeEnabled = !isSnoozeEnabled
+                Log.d("AlarmSnoozeBottomSheet", "Snooze Enabled: $isSnoozeEnabled")
             },
-            snoozeCounts = listOf(
-                stringResource(id = R.string.alarm_add_edit_repeat_count_times, 1),
-                stringResource(id = R.string.alarm_add_edit_repeat_count_times, 3),
-                stringResource(id = R.string.alarm_add_edit_repeat_count_times, 5),
-                stringResource(id = R.string.alarm_add_edit_repeat_count_times, 10),
-                stringResource(id = R.string.alarm_add_edit_repeat_count_infinite),
-            ),
-            onSnoozeToggle = { isSnoozeEnabled = !isSnoozeEnabled },
-            onIntervalSelected = { index -> snoozeIntervalIndex = index },
-            onCountSelected = { index -> snoozeCountIndex = index },
-            onComplete = { isSheetOpen = false },
-            onDismiss = { isSheetOpen = false },
+            onIntervalSelected = { interval ->
+                snoozeInterval = interval
+                Log.d("AlarmSnoozeBottomSheet", "Snooze Interval: $snoozeInterval")
+            },
+            onCountSelected = { count ->
+                snoozeCount = count
+                Log.d("AlarmSnoozeBottomSheet", "Snooze Count: $snoozeCount")
+            },
+            onDismiss = { },
         )
     }
 }
