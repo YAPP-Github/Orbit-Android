@@ -227,100 +227,127 @@ fun AlarmAddEditContent(
         )
     }
 
-    AlarmMissionBottomSheet(
-        sheetState = missionBottomSheetState,
-        missionType = missionState.missionType,
-        missionCount = missionState.missionCount,
-        isSheetOpen = state.bottomSheetState == AlarmAddEditContract.BottomSheetType.MissionSetting,
-        onDismiss = {
-            scope.launch {
-                missionBottomSheetState.hide()
-            }.invokeOnCompletion {
-                eventDispatcher(AlarmAddEditContract.Action.ToggleBottomSheet(AlarmAddEditContract.BottomSheetType.MissionSetting))
-            }
-        },
-        onSaveMission = { missionType, missionCount ->
-            eventDispatcher(
-                AlarmAddEditContract.Action.SaveMission(
-                    type = missionType,
-                    count = missionCount,
-                ),
+    when (state.bottomSheetState) {
+        AlarmAddEditContract.BottomSheetType.MissionSetting -> {
+            AlarmMissionBottomSheet(
+                sheetState = missionBottomSheetState,
+                missionType = missionState.missionType,
+                missionCount = missionState.missionCount,
+                onDismiss = {
+                    scope.launch {
+                        missionBottomSheetState.hide()
+                    }.invokeOnCompletion {
+                        eventDispatcher(
+                            AlarmAddEditContract.Action.ToggleBottomSheet(
+                                AlarmAddEditContract.BottomSheetType.MissionSetting,
+                            ),
+                        )
+                    }
+                },
+                onSaveMission = { missionType, missionCount ->
+                    eventDispatcher(
+                        AlarmAddEditContract.Action.SaveMission(
+                            type = missionType,
+                            count = missionCount,
+                        ),
+                    )
+                },
+                onPreviewMission = { missionType, missionCount ->
+                    eventDispatcher(
+                        AlarmAddEditContract.Action.NavigateToMissionPreview(
+                            missionType = missionType,
+                            missionCount = missionCount,
+                        ),
+                    )
+                },
             )
-        },
-        onPreviewMission = { missionType, missionCount ->
-            eventDispatcher(
-                AlarmAddEditContract.Action.NavigateToMissionPreview(
-                    missionType = missionType,
-                    missionCount = missionCount,
-                ),
-            )
-        },
-    )
+        }
 
-    AlarmSnoozeBottomSheet(
-        snoozeEnabled = snoozeState.isSnoozeEnabled,
-        snoozeIntervalIndex = snoozeState.snoozeIntervalIndex,
-        snoozeCountIndex = snoozeState.snoozeCountIndex,
-        snoozeIntervals = snoozeState.snoozeIntervals,
-        snoozeCounts = snoozeState.snoozeCounts,
-        onSnoozeToggle = { eventDispatcher(AlarmAddEditContract.Action.ToggleSnoozeOption) },
-        onIntervalSelected = { index ->
-            eventDispatcher(
-                AlarmAddEditContract.Action.SetSnoozeInterval(
-                    index,
-                ),
+        AlarmAddEditContract.BottomSheetType.SnoozeSetting -> {
+            AlarmSnoozeBottomSheet(
+                snoozeEnabled = snoozeState.isSnoozeEnabled,
+                snoozeIntervalIndex = snoozeState.snoozeIntervalIndex,
+                snoozeCountIndex = snoozeState.snoozeCountIndex,
+                snoozeIntervals = snoozeState.snoozeIntervals,
+                snoozeCounts = snoozeState.snoozeCounts,
+                onSnoozeToggle = { eventDispatcher(AlarmAddEditContract.Action.ToggleSnoozeOption) },
+                onIntervalSelected = { index ->
+                    eventDispatcher(
+                        AlarmAddEditContract.Action.SetSnoozeInterval(
+                            index,
+                        ),
+                    )
+                },
+                onCountSelected = { index ->
+                    eventDispatcher(
+                        AlarmAddEditContract.Action.SetSnoozeRepeatCount(
+                            index,
+                        ),
+                    )
+                },
+                onComplete = {
+                    scope.launch {
+                        snoozeBottomSheetState.hide()
+                    }.invokeOnCompletion {
+                        eventDispatcher(
+                            AlarmAddEditContract.Action.ToggleBottomSheet(
+                                AlarmAddEditContract.BottomSheetType.SnoozeSetting,
+                            ),
+                        )
+                    }
+                },
+                onDismiss = {
+                    scope.launch {
+                        snoozeBottomSheetState.hide()
+                    }.invokeOnCompletion {
+                        eventDispatcher(
+                            AlarmAddEditContract.Action.ToggleBottomSheet(
+                                AlarmAddEditContract.BottomSheetType.SnoozeSetting,
+                            ),
+                        )
+                    }
+                },
             )
-        },
-        onCountSelected = { index ->
-            eventDispatcher(
-                AlarmAddEditContract.Action.SetSnoozeRepeatCount(
-                    index,
-                ),
-            )
-        },
-        onComplete = {
-            scope.launch {
-                snoozeBottomSheetState.hide()
-            }.invokeOnCompletion {
-                eventDispatcher(AlarmAddEditContract.Action.ToggleBottomSheet(AlarmAddEditContract.BottomSheetType.SnoozeSetting))
-            }
-        },
-        isSheetOpen = state.bottomSheetState == AlarmAddEditContract.BottomSheetType.SnoozeSetting,
-        onDismiss = {
-            scope.launch {
-                snoozeBottomSheetState.hide()
-            }.invokeOnCompletion {
-                eventDispatcher(AlarmAddEditContract.Action.ToggleBottomSheet(AlarmAddEditContract.BottomSheetType.SnoozeSetting))
-            }
-        },
-    )
+        }
 
-    AlarmSoundBottomSheet(
-        vibrationEnabled = state.soundState.isVibrationEnabled,
-        soundEnabled = state.soundState.isSoundEnabled,
-        soundVolume = state.soundState.soundVolume,
-        soundIndex = state.soundState.soundIndex,
-        sounds = state.soundState.sounds,
-        onVibrationToggle = { eventDispatcher(AlarmAddEditContract.Action.ToggleVibrationOption) },
-        onSoundToggle = { eventDispatcher(AlarmAddEditContract.Action.ToggleSoundOption) },
-        onVolumeChanged = { eventDispatcher(AlarmAddEditContract.Action.AdjustSoundVolume(it)) },
-        onSoundSelected = { eventDispatcher(AlarmAddEditContract.Action.SelectAlarmSound(it)) },
-        onComplete = {
-            scope.launch {
-                soundBottomSheetState.hide()
-            }.invokeOnCompletion {
-                eventDispatcher(AlarmAddEditContract.Action.ToggleBottomSheet(AlarmAddEditContract.BottomSheetType.SoundSetting))
-            }
-        },
-        isSheetOpen = state.bottomSheetState == AlarmAddEditContract.BottomSheetType.SoundSetting,
-        onDismiss = {
-            scope.launch {
-                soundBottomSheetState.hide()
-            }.invokeOnCompletion {
-                eventDispatcher(AlarmAddEditContract.Action.ToggleBottomSheet(AlarmAddEditContract.BottomSheetType.SoundSetting))
-            }
-        },
-    )
+        AlarmAddEditContract.BottomSheetType.SoundSetting -> {
+            AlarmSoundBottomSheet(
+                vibrationEnabled = state.soundState.isVibrationEnabled,
+                soundEnabled = state.soundState.isSoundEnabled,
+                soundVolume = state.soundState.soundVolume,
+                soundIndex = state.soundState.soundIndex,
+                sounds = state.soundState.sounds,
+                onVibrationToggle = { eventDispatcher(AlarmAddEditContract.Action.ToggleVibrationOption) },
+                onSoundToggle = { eventDispatcher(AlarmAddEditContract.Action.ToggleSoundOption) },
+                onVolumeChanged = { eventDispatcher(AlarmAddEditContract.Action.AdjustSoundVolume(it)) },
+                onSoundSelected = { eventDispatcher(AlarmAddEditContract.Action.SelectAlarmSound(it)) },
+                onComplete = {
+                    scope.launch {
+                        soundBottomSheetState.hide()
+                    }.invokeOnCompletion {
+                        eventDispatcher(
+                            AlarmAddEditContract.Action.ToggleBottomSheet(
+                                AlarmAddEditContract.BottomSheetType.SoundSetting,
+                            ),
+                        )
+                    }
+                },
+                onDismiss = {
+                    scope.launch {
+                        soundBottomSheetState.hide()
+                    }.invokeOnCompletion {
+                        eventDispatcher(
+                            AlarmAddEditContract.Action.ToggleBottomSheet(
+                                AlarmAddEditContract.BottomSheetType.SoundSetting,
+                            ),
+                        )
+                    }
+                },
+            )
+        }
+
+        else -> null
+    }
 
     if (state.isDeleteDialogVisible) {
         OrbitDialog(
