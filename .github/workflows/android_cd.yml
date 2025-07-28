@@ -3,10 +3,10 @@ name: Orbit CD
 on:
     push:
         branches:
-            - main
+            - 'release/**'
     pull_request:
         branches:
-            - main
+            - 'release/**'
 
 jobs:
     cd:
@@ -14,11 +14,11 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            # 1. Code Checkout
+            # 1. Checkout
             - name: Checkout code
               uses: actions/checkout@v4
 
-            # 2. Gradle Cache
+            # 2. Cache Gradle
             - name: Cache Gradle dependencies
               uses: actions/cache@v4
               with:
@@ -29,7 +29,7 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-gradle-
 
-            # 3. JDK 17
+            # 3. Set up JDK 17
             - name: Set up JDK 17
               uses: actions/setup-java@v4
               with:
@@ -37,131 +37,85 @@ jobs:
                   distribution: 'corretto'
                   cache: gradle
 
-            # 4. Grant Execute Permission
+            # 4. Change gradlew permissions
             - name: Change gradlew permissions
               run: chmod +x gradlew
 
-            # 5. Install Firebase CLI
-            - name: Install Firebase CLI
-              run: curl -sL https://firebase.tools | bash
-
-            # 6. Decode google-services.json for debug
-            - name: Decode google-services.json (debug)
-              env:
-                FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET_DEBUG }}
-              run: |
-                mkdir -p app/src/dev
-                echo $FIREBASE_SECRET | base64 --decode > app/src/dev/google-services.json
-
-            # 7. Decode google-services.json for release
+            # 5. Decode google-services.json (release)
             - name: Decode google-services.json (release)
               env:
-                FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET_RELEASE }}
+                  FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET_RELEASE }}
               run: echo $FIREBASE_SECRET | base64 --decode > app/google-services.json
 
-            # 8. Add Local Properties
+            # 6. Add Local Properties
             - name: Add Local Properties
               env:
                   BASE_URL: ${{ secrets.BASE_URL }}
                   AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
-                  ADMOB_APP_ID_DEBUG: ${{ secrets.ADMOB_APP_ID_DEBUG }}
                   ADMOB_APP_ID_RELEASE: ${{ secrets.ADMOB_APP_ID_RELEASE }}
-                  ADMOB_AD_UNIT_ID_DEBUG: ${{ secrets.ADMOB_AD_UNIT_ID_DEBUG }}
                   ADMOB_AD_UNIT_ID_RELEASE: ${{ secrets.ADMOB_AD_UNIT_ID_RELEASE }}
               run: |
-                  echo -e "baseUrl=$BASE_URL" > local.properties
-                  echo -e "amplitudeApiKey=$AMPLITUDE_API_KEY" >> local.properties
-                  echo -e "admobAppIdDebug=$ADMOB_APP_ID_DEBUG" >> local.properties
-                  echo -e "admobAppIdRelease=$ADMOB_APP_ID_RELEASE" >> local.properties
-                  echo -e "admobAdUnitIdDebug=$ADMOB_AD_UNIT_ID_DEBUG" >> local.properties
-                  echo -e "admobAdUnitIdRelease=$ADMOB_AD_UNIT_ID_RELEASE" >> local.properties
+                  echo "baseUrl=$BASE_URL" > local.properties
+                  echo "amplitudeApiKey=$AMPLITUDE_API_KEY" >> local.properties
+                  echo "admobAppIdRelease=$ADMOB_APP_ID_RELEASE" >> local.properties
+                  echo "admobAdUnitIdRelease=$ADMOB_AD_UNIT_ID_RELEASE" >> local.properties
 
-            # 9. Debug Local Properties Check
-            - name: Debug Local Properties
-              run: cat local.properties
-
-            # 10. Ktlint
-            - name: Run Ktlint Check
-              run: ./gradlew ktlintCheck --stacktrace
-
-            # 11. Debug APK Build
-            - name: Build Debug APK
-              run: ./gradlew assembleDebug --stacktrace
-
-            # 12. Release AAB Build
+            # 7. Build Release AAB
             - name: Build Release AAB
               run: ./gradlew bundleRelease --stacktrace
 
-            # 13. Release APK Build
+            # 8. Build Release APK (Optional)
             - name: Build Release APK
               run: ./gradlew assembleRelease --stacktrace
 
-            # 14. AAB Artifact Upload
+            # 9. Upload Release AAB
             - name: Upload Release AAB
               uses: actions/upload-artifact@v4
               with:
                   name: release-aab
                   path: app/build/outputs/bundle/release/app-release.aab
 
-            # 15. APK Artifact Upload
+            # 10. Upload Release APK
             - name: Upload Release APK
               uses: actions/upload-artifact@v4
               with:
                   name: release-apk
                   path: app/build/outputs/apk/release/app-release.apk
 
-            # 16. Set up Firebase Service Account Credentials
-            - name: Set up Firebase Service Account Credentials
+            # 11. Set up Firebase Credentials
+            - name: Set up Firebase Credentials
               env:
                   GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
               run: |
                   echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" | base64 --decode > $HOME/firebase-credentials.json
-                  echo "🔥 Firebase Credentials JSON 생성 완료!"
-                  ls -l $HOME/firebase-credentials.json
-                  export GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-credentials.json
-                  echo "GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS"
+                  echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-credentials.json" >> $GITHUB_ENV
 
-            # 17. Firebase CLI 인증 확인
-            - name: Check Firebase CLI Authentication
-              run: |
-                  export GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-credentials.json
+            # 12. Install Firebase CLI
+            - name: Install Firebase CLI
+              run: curl -sL https://firebase.tools | bash
 
-                  echo "📌 GOOGLE_APPLICATION_CREDENTIALS 설정 값:"
-                  echo $GOOGLE_APPLICATION_CREDENTIALS
-                  ls -l $GOOGLE_APPLICATION_CREDENTIALS
-
-                  echo "📌 현재 Firebase 프로젝트 목록 확인:"
-                  firebase projects:list || (echo "❌ Firebase 인증 실패!"; exit 1)
-
-            # 18. Firebase App Distribution Upload
+            # 13. Upload to Firebase App Distribution
             - name: Upload APK to Firebase App Distribution
               env:
-                  GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-credentials.json
+                  GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
                   FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
               run: |
-                  echo "🔥 FIREBASE_APP_ID 확인: $FIREBASE_APP_ID"
-
-                  # 만약 FIREBASE_APP_ID가 없으면 에러 출력 후 종료
                   if [ -z "$FIREBASE_APP_ID" ]; then
-                    echo "❌ ERROR: FIREBASE_APP_ID가 설정되지 않았습니다. GitHub Secrets에서 확인하세요."
+                    echo "❌ ERROR: FIREBASE_APP_ID is missing!"
                     exit 1
                   fi
 
-                  # GOOGLE_APPLICATION_CREDENTIALS를 다시 설정
-                  export GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-credentials.json
-                  echo "GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS"
-
                   firebase appdistribution:distribute app/build/outputs/apk/release/app-release.apk \
-                  --app "$FIREBASE_APP_ID" \
-                  --release-notes "🚀 새로운 데모 버전이 배포되었습니다!" \
-                  --groups "orbit-tester-group"
+                    --app "$FIREBASE_APP_ID" \
+                    --release-notes "🚀 release 브랜치에서 새 빌드가 업로드되었습니다!" \
+                    --groups "orbit-tester-group"
 
-            # 19. Notify Discord
+            # 14. Notify Discord
             - name: Notify Discord
               env:
                   DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
               run: |
                   curl -H "Content-Type: application/json" \
-                  -X POST \
-                  -d '{"content": "🚀 새로운 데모 버전이 Firebase App Distribution에 업로드되었습니다!\nAPK 다운로드: https://appdistribution.firebase.google.com"}' \
-                  $DISCORD_WEBHOOK_URL
+                    -X POST \
+                    -d '{"content": "🚀 Firebase App Distribution에 새 APK가 업로드되었습니다!\n🔗 다운로드 링크: https://appdistribution.firebase.google.com"}' \
+                    $DISCORD_WEBHOOK_URL
