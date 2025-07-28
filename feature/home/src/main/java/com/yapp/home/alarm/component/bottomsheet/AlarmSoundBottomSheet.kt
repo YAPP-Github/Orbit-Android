@@ -40,11 +40,12 @@ import feature.home.R
 @Composable
 internal fun AlarmSoundBottomSheet(
     soundState: AlarmAddEditContract.AlarmSoundState,
-    onVibrationToggle: () -> Unit,
-    onSoundToggle: () -> Unit,
+    onVibrationToggle: (Boolean) -> Unit,
+    onSoundToggle: (Boolean) -> Unit,
     onVolumeChanged: (Int) -> Unit,
     onSoundSelected: (Int) -> Unit,
-    onComplete: () -> Unit,
+    onDismiss: () -> Unit = {},
+    onComplete: (vibrationEnabled: Boolean, soundEnabled: Boolean, soundVolume: Int, soundIndex: Int) -> Unit,
 ) {
     var selectedVibrationEnabled by remember { mutableStateOf(soundState.isVibrationEnabled) }
     var selectedSoundEnabled by remember { mutableStateOf(soundState.isSoundEnabled) }
@@ -62,7 +63,7 @@ internal fun AlarmSoundBottomSheet(
             isVibrationEnabled = selectedVibrationEnabled,
             onVibrationToggle = {
                 selectedVibrationEnabled = !selectedVibrationEnabled
-                onVibrationToggle()
+                onVibrationToggle(selectedVibrationEnabled)
             },
         )
         Spacer(
@@ -76,7 +77,7 @@ internal fun AlarmSoundBottomSheet(
             soundEnabled = selectedSoundEnabled,
             onSoundToggle = {
                 selectedSoundEnabled = !selectedSoundEnabled
-                onSoundToggle()
+                onSoundToggle(selectedSoundEnabled)
             },
             soundVolume = selectedSoundVolume,
             onVolumeChanged = {
@@ -98,7 +99,15 @@ internal fun AlarmSoundBottomSheet(
             contentColor = OrbitTheme.colors.white,
             pressedContainerColor = OrbitTheme.colors.gray_500,
             pressedContentColor = OrbitTheme.colors.white.copy(alpha = 0.7f),
-            onClick = onComplete,
+            onClick = {
+                onDismiss()
+                onComplete(
+                    selectedVibrationEnabled,
+                    selectedSoundEnabled,
+                    selectedSoundVolume,
+                    selectedSoundIndex,
+                )
+            },
         )
     }
 }
@@ -257,22 +266,17 @@ private fun SoundSelectionItem(
 @Preview
 @Composable
 private fun AlarmSoundBottomSheetPreview() {
-    var isVibrationEnabled by remember { mutableStateOf(true) }
-    var isSoundEnabled by remember { mutableStateOf(true) }
-    var isSheetOpen by remember { mutableStateOf(true) }
-
     OrbitTheme {
-        if (isSheetOpen) {
-            AlarmSoundBottomSheet(
-                soundState = AlarmAddEditContract.AlarmSoundState(
-                    sounds = (1..20).map { AlarmSound("sound $it", Uri.EMPTY) },
-                ),
-                onVibrationToggle = { isVibrationEnabled = !isVibrationEnabled },
-                onSoundToggle = { isSoundEnabled = !isSoundEnabled },
-                onVolumeChanged = { _ -> },
-                onSoundSelected = { _ -> },
-                onComplete = { },
-            )
-        }
+        AlarmSoundBottomSheet(
+            soundState = AlarmAddEditContract.AlarmSoundState(
+                sounds = (1..20).map { AlarmSound("sound $it", Uri.EMPTY) },
+            ),
+            onVibrationToggle = {},
+            onSoundToggle = {},
+            onVolumeChanged = {},
+            onSoundSelected = {},
+            onComplete = { _, _, _, _ ->
+            },
+        )
     }
 }

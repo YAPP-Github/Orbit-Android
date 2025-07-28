@@ -81,16 +81,24 @@ sealed class AlarmAddEditContract {
         data object ToggleWeekendsSelection : Action()
         data class ToggleSpecificDaySelection(val day: AlarmDay) : Action()
         data object ToggleHolidaySkipOption : Action()
-        data object ToggleSnoozeOption : Action()
-        data class SaveMission(val type: MissionType, val count: Int) : Action()
-        data class NavigateToMissionPreview(val missionType: MissionType, val missionCount: Int) : Action()
-        data class SetSnoozeInterval(val interval: Int) : Action()
-        data class SetSnoozeRepeatCount(val count: Int) : Action()
-        data object ToggleVibrationOption : Action()
-        data object ToggleSoundOption : Action()
-        data class AdjustSoundVolume(val volume: Int) : Action()
-        data class SelectAlarmSound(val index: Int) : Action()
+        data class SaveMissionSetting(val type: MissionType, val count: Int) : Action()
+        data class SaveSnoozeSetting(
+            val enabled: Boolean,
+            val interval: Int,
+            val count: Int,
+        ) : Action()
+        data class SaveSoundSetting(
+            val vibrationEnabled: Boolean,
+            val soundEnabled: Boolean,
+            val soundVolume: Int,
+            val soundIndex: Int,
+        ) : Action()
+        data class ToggleVibrationEnabled(val enabled: Boolean) : Action()
+        data class ToggleSoundEnabled(val enabled: Boolean) : Action()
+        data class SetSoundVolume(val volume: Int) : Action()
+        data class SetSoundIndex(val index: Int) : Action()
         data class ShowBottomSheet(val sheetType: BottomSheetType) : Action()
+        data class NavigateToMissionPreview(val missionType: MissionType, val missionCount: Int) : Action()
         data object HideBottomSheet : Action()
     }
 

@@ -1,6 +1,5 @@
 package com.yapp.home.alarm.component.bottomsheet
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,10 +33,8 @@ import feature.home.R
 @Composable
 internal fun AlarmSnoozeBottomSheet(
     snoozeState: AlarmAddEditContract.AlarmSnoozeState,
-    onIntervalSelected: (Int) -> Unit,
-    onCountSelected: (Int) -> Unit,
-    onSnoozeToggle: (Boolean) -> Unit,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit = {},
+    onComplete: (enabled: Boolean, interval: Int, count: Int) -> Unit,
 ) {
     val snoozeIntervalOptions = listOf(1, 3, 5, 10, 15)
     val snoozeCountOptions = listOf(1, 3, 5, 10, -1)
@@ -74,7 +71,6 @@ internal fun AlarmSnoozeBottomSheet(
         Spacer(modifier = Modifier.height(6.dp))
         VibrationSection(selectedSnoozeEnabled) {
             selectedSnoozeEnabled = !selectedSnoozeEnabled
-            onSnoozeToggle(selectedSnoozeEnabled)
         }
         Spacer(modifier = Modifier.height(20.dp))
         SelectorSection(
@@ -84,7 +80,6 @@ internal fun AlarmSnoozeBottomSheet(
             enabled = selectedSnoozeEnabled,
             onItemSelected = {
                 selectedSnoozeIntervalIndex = it
-                onIntervalSelected(snoozeIntervalOptions[it])
             },
         )
         Spacer(modifier = Modifier.height(32.dp))
@@ -95,7 +90,6 @@ internal fun AlarmSnoozeBottomSheet(
             enabled = selectedSnoozeEnabled,
             onItemSelected = {
                 selectedSnoozeCountIndex = it
-                onCountSelected(snoozeCountOptions[it])
             },
         )
         Spacer(modifier = Modifier.height(20.dp))
@@ -113,7 +107,14 @@ internal fun AlarmSnoozeBottomSheet(
             contentColor = OrbitTheme.colors.white,
             pressedContainerColor = OrbitTheme.colors.gray_500,
             pressedContentColor = OrbitTheme.colors.white.copy(alpha = 0.7f),
-            onClick = onDismiss,
+            onClick = {
+                onDismiss()
+                onComplete(
+                    selectedSnoozeEnabled,
+                    snoozeIntervalOptions[selectedSnoozeIntervalIndex],
+                    snoozeCountOptions[selectedSnoozeCountIndex],
+                )
+            },
         )
     }
 }
@@ -199,19 +200,7 @@ private fun AlarmSnoozeBottomSheetPreview() {
                 snoozeInterval = snoozeInterval,
                 snoozeCount = snoozeCount,
             ),
-            onSnoozeToggle = {
-                isSnoozeEnabled = !isSnoozeEnabled
-                Log.d("AlarmSnoozeBottomSheet", "Snooze Enabled: $isSnoozeEnabled")
-            },
-            onIntervalSelected = { interval ->
-                snoozeInterval = interval
-                Log.d("AlarmSnoozeBottomSheet", "Snooze Interval: $snoozeInterval")
-            },
-            onCountSelected = { count ->
-                snoozeCount = count
-                Log.d("AlarmSnoozeBottomSheet", "Snooze Count: $snoozeCount")
-            },
-            onDismiss = { },
+            onComplete = { _, _, _ -> },
         )
     }
 }

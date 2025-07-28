@@ -134,7 +134,7 @@ private suspend fun handleSideEffect(
                             },
                             onSaveMission = { missionType, missionCount ->
                                 processAction(
-                                    AlarmAddEditContract.Action.SaveMission(
+                                    AlarmAddEditContract.Action.SaveMissionSetting(
                                         type = missionType,
                                         count = missionCount,
                                     ),
@@ -154,14 +154,17 @@ private suspend fun handleSideEffect(
                     AlarmAddEditContract.BottomSheetType.SnoozeSetting -> {
                         AlarmSnoozeBottomSheet(
                             snoozeState = state.snoozeState,
-                            onSnoozeToggle = { processAction(AlarmAddEditContract.Action.ToggleSnoozeOption) },
-                            onIntervalSelected = { interval ->
-                                processAction(AlarmAddEditContract.Action.SetSnoozeInterval(interval))
-                            },
-                            onCountSelected = { count ->
-                                processAction(AlarmAddEditContract.Action.SetSnoozeRepeatCount(count))
-                            },
                             onDismiss = {
+                                processAction(AlarmAddEditContract.Action.HideBottomSheet)
+                            },
+                            onComplete = { enabled, interval, count ->
+                                processAction(
+                                    AlarmAddEditContract.Action.SaveSnoozeSetting(
+                                        enabled = enabled,
+                                        interval = interval,
+                                        count = count,
+                                    ),
+                                )
                                 processAction(AlarmAddEditContract.Action.HideBottomSheet)
                             },
                         )
@@ -170,24 +173,30 @@ private suspend fun handleSideEffect(
                     AlarmAddEditContract.BottomSheetType.SoundSetting -> {
                         AlarmSoundBottomSheet(
                             soundState = state.soundState,
-                            onVibrationToggle = { processAction(AlarmAddEditContract.Action.ToggleVibrationOption) },
-                            onSoundToggle = { processAction(AlarmAddEditContract.Action.ToggleSoundOption) },
-                            onVolumeChanged = {
-                                processAction(
-                                    AlarmAddEditContract.Action.AdjustSoundVolume(
-                                        it,
-                                    ),
-                                )
+                            onVibrationToggle = { enabled ->
+                                processAction(AlarmAddEditContract.Action.ToggleVibrationEnabled(enabled))
                             },
-                            onSoundSelected = {
-                                processAction(
-                                    AlarmAddEditContract.Action.SelectAlarmSound(
-                                        it,
-                                    ),
-                                )
+                            onSoundToggle = { enabled ->
+                                processAction(AlarmAddEditContract.Action.ToggleSoundEnabled(enabled))
                             },
-                            onComplete = {
+                            onVolumeChanged = { volume ->
+                                processAction(AlarmAddEditContract.Action.SetSoundVolume(volume))
+                            },
+                            onSoundSelected = { index ->
+                                processAction(AlarmAddEditContract.Action.SetSoundIndex(index))
+                            },
+                            onDismiss = {
                                 processAction(AlarmAddEditContract.Action.HideBottomSheet)
+                            },
+                            onComplete = { vibrationEnabled, soundEnabled, soundVolume, soundIndex ->
+                                processAction(
+                                    AlarmAddEditContract.Action.SaveSoundSetting(
+                                        vibrationEnabled = vibrationEnabled,
+                                        soundEnabled = soundEnabled,
+                                        soundVolume = soundVolume,
+                                        soundIndex = soundIndex,
+                                    ),
+                                )
                             },
                         )
                     }
