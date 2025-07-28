@@ -35,7 +35,7 @@ fun rememberOrbitBottomSheetState(): OrbitBottomSheetState {
 class OrbitBottomSheetState(
     val state: ModalBottomSheetState,
     val contentState: State<BottomSheetContent?>,
-    val setContent: (BottomSheetContent?) -> Unit,
+    private val setContent: (BottomSheetContent?) -> Unit,
 ) {
     val content: BottomSheetContent?
         get() = contentState.value
