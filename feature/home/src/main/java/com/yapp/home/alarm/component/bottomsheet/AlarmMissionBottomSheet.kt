@@ -56,7 +56,6 @@ private fun MissionType.displayData(): Pair<Int, Int> = when (this) {
     else -> throw IllegalStateException("Invalid mission type")
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AlarmMissionBottomSheet(
     missionType: MissionType,
@@ -65,31 +64,38 @@ internal fun AlarmMissionBottomSheet(
     onSaveMission: (MissionType, Int) -> Unit,
     onPreviewMission: (MissionType, Int) -> Unit,
 ) {
-    var currentStep by remember { mutableStateOf(AlarmMissionSelectBottomSheetType.MISSION_SETTING) }
-
+    var stepStack by remember { mutableStateOf(listOf(AlarmMissionSelectBottomSheetType.MISSION_SETTING)) }
     var selectedMissionType by remember { mutableStateOf(missionType) }
     var selectedMissionCount by remember { mutableIntStateOf(missionCount) }
+
+    fun push(step: AlarmMissionSelectBottomSheetType) {
+        stepStack = stepStack + step
+    }
+
+    fun pop() {
+        if (stepStack.size > 1) {
+            stepStack = stepStack.dropLast(1)
+        }
+    }
+
+    val currentStep = stepStack.last()
 
     when (currentStep) {
         AlarmMissionSelectBottomSheetType.MISSION_SETTING -> {
             if (selectedMissionType == MissionType.NONE) {
                 MissionAddContent {
-                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
+                    push(AlarmMissionSelectBottomSheetType.MISSION_SELECT)
                 }
             } else {
                 MissionSettingContent(
-                    missionType = missionType,
-                    missionCount = missionCount,
-                    onDetail = {
-                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_DETAIL
-                    },
+                    missionType = selectedMissionType,
+                    missionCount = selectedMissionCount,
+                    onDetail = { push(AlarmMissionSelectBottomSheetType.MISSION_DETAIL) },
                     onDelete = {
                         selectedMissionType = MissionType.NONE
                         onSaveMission(selectedMissionType, selectedMissionCount)
                     },
-                    onChange = {
-                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
-                    },
+                    onChange = { push(AlarmMissionSelectBottomSheetType.MISSION_SELECT) },
                     onDone = {
                         onSaveMission(selectedMissionType, selectedMissionCount)
                         onDismiss()
@@ -100,16 +106,13 @@ internal fun AlarmMissionBottomSheet(
 
         AlarmMissionSelectBottomSheetType.MISSION_SELECT -> {
             MissionSelectContent(
-                onBack = {
-                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
-                },
+                onBack = { pop() },
                 onClose = {
-                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
                     onDismiss()
                 },
                 onSelect = { mission ->
                     selectedMissionType = mission
-                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_DETAIL
+                    push(AlarmMissionSelectBottomSheetType.MISSION_DETAIL)
                 },
             )
         }
@@ -118,18 +121,12 @@ internal fun AlarmMissionBottomSheet(
             MissionDetailContent(
                 missionType = selectedMissionType,
                 selectedMissionCount = selectedMissionCount,
-                onCountChange = { count ->
-                    selectedMissionCount = count
-                },
-                onBack = {
-                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
-                },
+                onCountChange = { selectedMissionCount = it },
+                onBack = { pop() },
                 onClose = {
-                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
                     onDismiss()
                 },
                 onSave = {
-                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
                     onSaveMission(selectedMissionType, selectedMissionCount)
                     onDismiss()
                 },
