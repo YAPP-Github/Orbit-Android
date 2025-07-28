@@ -154,9 +154,7 @@ private suspend fun handleSideEffect(
 
                     AlarmAddEditContract.BottomSheetType.SnoozeSetting -> {
                         AlarmSnoozeBottomSheet(
-                            snoozeEnabled = state.snoozeState.isSnoozeEnabled,
-                            snoozeInterval = state.snoozeState.snoozeInterval,
-                            snoozeCount = state.snoozeState.snoozeCount,
+                            snoozeState = state.snoozeState,
                             onSnoozeToggle = { processAction(AlarmAddEditContract.Action.ToggleSnoozeOption) },
                             onIntervalSelected = { interval ->
                                 processAction(AlarmAddEditContract.Action.SetSnoozeInterval(interval))

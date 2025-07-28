@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.yapp.designsystem.theme.OrbitTheme
+import com.yapp.home.alarm.addedit.AlarmAddEditContract
 import com.yapp.home.alarm.component.SelectorItems
 import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.switch.OrbitSwitch
@@ -32,9 +33,7 @@ import feature.home.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AlarmSnoozeBottomSheet(
-    snoozeEnabled: Boolean,
-    snoozeInterval: Int,
-    snoozeCount: Int,
+    snoozeState: AlarmAddEditContract.AlarmSnoozeState,
     onIntervalSelected: (Int) -> Unit,
     onCountSelected: (Int) -> Unit,
     onSnoozeToggle: (Boolean) -> Unit,
@@ -54,14 +53,14 @@ internal fun AlarmSnoozeBottomSheet(
         stringResource(id = R.string.alarm_add_edit_repeat_count_infinite),
     )
 
-    var selectedSnoozeEnabled by remember { mutableStateOf(snoozeEnabled) }
-    var selectedSnoozeIntervalIndex by remember { mutableIntStateOf(snoozeIntervalOptions.indexOf(snoozeInterval)) }
+    var selectedSnoozeEnabled by remember { mutableStateOf(snoozeState.isSnoozeEnabled) }
+    var selectedSnoozeIntervalIndex by remember { mutableIntStateOf(snoozeIntervalOptions.indexOf(snoozeState.snoozeInterval)) }
     var selectedSnoozeCountIndex by remember {
         mutableIntStateOf(
-            if (snoozeCount == -1) {
+            if (snoozeState.snoozeCount == -1) {
                 snoozeCountOptions.lastIndex
             } else {
-                snoozeCountOptions.indexOf(snoozeCount)
+                snoozeCountOptions.indexOf(snoozeState.snoozeCount)
             },
         )
     }
@@ -195,9 +194,11 @@ private fun AlarmSnoozeBottomSheetPreview() {
 
     OrbitTheme {
         AlarmSnoozeBottomSheet(
-            snoozeEnabled = isSnoozeEnabled,
-            snoozeInterval = snoozeInterval,
-            snoozeCount = snoozeCount,
+            snoozeState = AlarmAddEditContract.AlarmSnoozeState(
+                isSnoozeEnabled = isSnoozeEnabled,
+                snoozeInterval = snoozeInterval,
+                snoozeCount = snoozeCount,
+            ),
             onSnoozeToggle = {
                 isSnoozeEnabled = !isSnoozeEnabled
                 Log.d("AlarmSnoozeBottomSheet", "Snooze Enabled: $isSnoozeEnabled")
