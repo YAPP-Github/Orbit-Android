@@ -488,9 +488,11 @@ private fun MissionDetailContent(
                 .fillMaxWidth()
                 .padding(
                     horizontal = 20.dp,
-                    vertical = 24.dp,
+                    vertical = 12.dp,
                 ),
         ) {
+            Spacer(modifier = Modifier.height(12.dp))
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
