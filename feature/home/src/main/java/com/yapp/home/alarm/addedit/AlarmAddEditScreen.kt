@@ -179,9 +179,23 @@ private suspend fun handleSideEffect(
                             sounds = state.soundState.sounds,
                             onVibrationToggle = { processAction(AlarmAddEditContract.Action.ToggleVibrationOption) },
                             onSoundToggle = { processAction(AlarmAddEditContract.Action.ToggleSoundOption) },
-                            onVolumeChanged = { processAction(AlarmAddEditContract.Action.AdjustSoundVolume(it)) },
-                            onSoundSelected = { processAction(AlarmAddEditContract.Action.SelectAlarmSound(it)) },
-                            onComplete = { processAction(AlarmAddEditContract.Action.HideBottomSheet) },
+                            onVolumeChanged = {
+                                processAction(
+                                    AlarmAddEditContract.Action.AdjustSoundVolume(
+                                        it,
+                                    ),
+                                )
+                            },
+                            onSoundSelected = {
+                                processAction(
+                                    AlarmAddEditContract.Action.SelectAlarmSound(
+                                        it,
+                                    ),
+                                )
+                            },
+                            onComplete = {
+                                processAction(AlarmAddEditContract.Action.HideBottomSheet)
+                            },
                         )
                     }
                 }

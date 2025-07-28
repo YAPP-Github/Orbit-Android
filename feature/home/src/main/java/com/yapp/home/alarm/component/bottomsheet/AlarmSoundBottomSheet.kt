@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,7 +36,6 @@ import com.yapp.ui.component.slider.OrbitSlider
 import com.yapp.ui.component.switch.OrbitSwitch
 import feature.home.R
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AlarmSoundBottomSheet(
     vibrationEnabled: Boolean,
@@ -51,46 +49,24 @@ internal fun AlarmSoundBottomSheet(
     onSoundSelected: (Int) -> Unit,
     onComplete: () -> Unit,
 ) {
-    BottomSheetContent(
-        vibrationEnabled = vibrationEnabled,
-        soundEnabled = soundEnabled,
-        soundVolume = soundVolume,
-        soundIndex = soundIndex,
-        sounds = sounds,
-        onVibrationToggle = onVibrationToggle,
-        onSoundToggle = onSoundToggle,
-        onVolumeChanged = onVolumeChanged,
-        onSoundSelected = onSoundSelected,
-        onComplete = onComplete,
-    )
-}
+    var selectedVibrationEnabled by remember { mutableStateOf(vibrationEnabled) }
+    var selectedSoundEnabled by remember { mutableStateOf(soundEnabled) }
+    var selectedSoundVolume by remember { mutableIntStateOf(soundVolume) }
+    var selectedSoundIndex by remember { mutableIntStateOf(soundIndex) }
 
-@Composable
-private fun BottomSheetContent(
-    vibrationEnabled: Boolean,
-    soundEnabled: Boolean,
-    soundVolume: Int,
-    soundIndex: Int,
-    sounds: List<AlarmSound>,
-    onVibrationToggle: () -> Unit,
-    onSoundToggle: () -> Unit,
-    onVolumeChanged: (Int) -> Unit,
-    onSoundSelected: (Int) -> Unit,
-    onComplete: () -> Unit,
-) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                horizontal = 24.dp,
-                vertical = 12.dp,
-            ),
+            .padding(horizontal = 24.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(6.dp))
         VibrationSection(
-            isVibrationEnabled = vibrationEnabled,
-            onVibrationToggle = onVibrationToggle,
+            isVibrationEnabled = selectedVibrationEnabled,
+            onVibrationToggle = {
+                selectedVibrationEnabled = !selectedVibrationEnabled
+                onVibrationToggle()
+            },
         )
         Spacer(
             modifier = Modifier
@@ -100,13 +76,22 @@ private fun BottomSheetContent(
         )
         SoundSection(
             modifier = Modifier.weight(1f),
-            soundEnabled = soundEnabled,
-            onSoundToggle = onSoundToggle,
-            soundVolume = soundVolume,
-            onVolumeChanged = onVolumeChanged,
-            soundIndex = soundIndex,
+            soundEnabled = selectedSoundEnabled,
+            onSoundToggle = {
+                selectedSoundEnabled = !selectedSoundEnabled
+                onSoundToggle()
+            },
+            soundVolume = selectedSoundVolume,
+            onVolumeChanged = {
+                selectedSoundVolume = it
+                onVolumeChanged(it)
+            },
+            soundIndex = selectedSoundIndex,
             sounds = sounds,
-            onSoundSelected = { onSoundSelected(it) },
+            onSoundSelected = {
+                selectedSoundIndex = it
+                onSoundSelected(it)
+            },
         )
 
         OrbitButton(
@@ -294,7 +279,7 @@ private fun AlarmSoundBottomSheetPreview() {
                 onSoundToggle = { isSoundEnabled = !isSoundEnabled },
                 onVolumeChanged = { soundVolume = it },
                 onSoundSelected = { soundIndex = it },
-                onComplete = { isSheetOpen = false },
+                onComplete = { },
             )
         }
     }
