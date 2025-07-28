@@ -60,29 +60,18 @@ jobs:
                   echo "admobAppIdRelease=$ADMOB_APP_ID_RELEASE" >> local.properties
                   echo "admobAdUnitIdRelease=$ADMOB_AD_UNIT_ID_RELEASE" >> local.properties
 
-            # 7. Build Release AAB
-            - name: Build Release AAB
-              run: ./gradlew bundleRelease --stacktrace
-
-            # 8. Build Release APK (Optional)
+            # 7. Build Release APK
             - name: Build Release APK
               run: ./gradlew assembleRelease --stacktrace
 
-            # 9. Upload Release AAB
-            - name: Upload Release AAB
-              uses: actions/upload-artifact@v4
-              with:
-                  name: release-aab
-                  path: app/build/outputs/bundle/release/app-release.aab
-
-            # 10. Upload Release APK
+            # 8. Upload Release APK
             - name: Upload Release APK
               uses: actions/upload-artifact@v4
               with:
                   name: release-apk
                   path: app/build/outputs/apk/release/app-release.apk
 
-            # 11. Set up Firebase Credentials
+            # 9. Set up Firebase Credentials
             - name: Set up Firebase Credentials
               env:
                   GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
@@ -90,11 +79,11 @@ jobs:
                   echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" | base64 --decode > $HOME/firebase-credentials.json
                   echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-credentials.json" >> $GITHUB_ENV
 
-            # 12. Install Firebase CLI
+            # 10. Install Firebase CLI
             - name: Install Firebase CLI
               run: curl -sL https://firebase.tools | bash
 
-            # 13. Upload to Firebase App Distribution
+            # 11. Upload to Firebase App Distribution
             - name: Upload APK to Firebase App Distribution
               env:
                   GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
@@ -110,7 +99,7 @@ jobs:
                     --release-notes "🚀 release 브랜치에서 새 빌드가 업로드되었습니다!" \
                     --groups "orbit-tester-group"
 
-            # 14. Notify Discord
+            # 12. Notify Discord
             - name: Notify Discord
               env:
                   DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
