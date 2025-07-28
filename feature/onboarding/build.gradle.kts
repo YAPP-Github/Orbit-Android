@@ -17,6 +17,7 @@ dependencies {
     implementation(libs.orbit.core)
     implementation(libs.orbit.compose)
     implementation(libs.orbit.viewmodel)
+    implementation(libs.compose.material)
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
     implementation(libs.accompanist.permission)

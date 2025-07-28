@@ -62,6 +62,7 @@ import com.yapp.home.alarm.component.bottomsheet.AlarmSnoozeBottomSheet
 import com.yapp.home.alarm.component.bottomsheet.AlarmSoundBottomSheet
 import com.yapp.home.alarm.getLabelStringRes
 import com.yapp.ui.component.bottomsheet.OrbitBottomSheetState
+import com.yapp.ui.component.bottomsheet.rememberOrbitBottomSheetState
 import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.dialog.OrbitDialog
 import com.yapp.ui.component.lottie.LottieAnimation
@@ -97,8 +98,9 @@ fun AlarmAddEditRoute(
     }
 
     AlarmAddEditScreen(
-        stateProvider = { state },
-        eventDispatcher = viewModel::processAction,
+        state = state,
+        bottomSheetState = bottomSheetState,
+        processAction = viewModel::processAction,
     )
 }
 
@@ -250,17 +252,17 @@ private suspend fun handleSideEffect(
 
 @Composable
 fun AlarmAddEditScreen(
-    stateProvider: () -> AlarmAddEditContract.State,
-    eventDispatcher: (AlarmAddEditContract.Action) -> Unit,
+    state: AlarmAddEditContract.State,
+    bottomSheetState: OrbitBottomSheetState,
+    processAction: (AlarmAddEditContract.Action) -> Unit,
 ) {
-    val state = stateProvider()
-
     if (state.initialLoading) {
         AlarmAddEditLoadingScreen()
     } else {
         AlarmAddEditContent(
             state = state,
-            eventDispatcher = eventDispatcher,
+            bottomSheetState = bottomSheetState,
+            processAction = processAction,
         )
     }
 }
@@ -269,10 +271,15 @@ fun AlarmAddEditScreen(
 @Composable
 fun AlarmAddEditContent(
     state: AlarmAddEditContract.State,
-    eventDispatcher: (AlarmAddEditContract.Action) -> Unit,
+    bottomSheetState: OrbitBottomSheetState,
+    processAction: (AlarmAddEditContract.Action) -> Unit,
 ) {
     BackHandler {
-        eventDispatcher(AlarmAddEditContract.Action.CheckUnsavedChangesBeforeExit)
+        if (bottomSheetState.state.isVisible) {
+            processAction(AlarmAddEditContract.Action.HideBottomSheet)
+        } else {
+            processAction(AlarmAddEditContract.Action.CheckUnsavedChangesBeforeExit)
+        }
     }
 
     Column(
@@ -282,8 +289,8 @@ fun AlarmAddEditContent(
         AlarmAddEditTopBar(
             mode = state.mode,
             title = state.timeState.alarmMessage,
-            onBack = { eventDispatcher(AlarmAddEditContract.Action.CheckUnsavedChangesBeforeExit) },
-            onDelete = { eventDispatcher(AlarmAddEditContract.Action.ShowDeleteDialog) },
+            onBack = { processAction(AlarmAddEditContract.Action.CheckUnsavedChangesBeforeExit) },
+            onDelete = { processAction(AlarmAddEditContract.Action.ShowDeleteDialog) },
         )
         Box(
             modifier = Modifier.weight(1f),
@@ -292,25 +299,25 @@ fun AlarmAddEditContent(
             OrbitPicker(
                 initialTime = state.timeState.initialTime,
             ) { newTime ->
-                eventDispatcher(AlarmAddEditContract.Action.SetAlarmTime(newTime))
+                processAction(AlarmAddEditContract.Action.SetAlarmTime(newTime))
             }
         }
         AlarmAddEditSelectDaysSection(
             modifier = Modifier.padding(horizontal = 20.dp),
             daysSelectionState = state.daySelectionState,
             holidayState = state.holidayState,
-            processAction = eventDispatcher,
+            processAction = processAction,
         )
         Spacer(modifier = Modifier.height(12.dp))
         AlarmAddEditSettingsSection(
             modifier = Modifier.padding(horizontal = 20.dp),
             state = state,
-            processAction = eventDispatcher,
+            processAction = processAction,
         )
         Spacer(modifier = Modifier.height(24.dp))
         OrbitButton(
             label = stringResource(R.string.alarm_add_edit_save),
-            onClick = { eventDispatcher(AlarmAddEditContract.Action.SaveAlarm) },
+            onClick = { processAction(AlarmAddEditContract.Action.SaveAlarm) },
             enabled = true,
             modifier = Modifier
                 .padding(
@@ -328,10 +335,10 @@ fun AlarmAddEditContent(
             confirmText = stringResource(id = R.string.alarm_delete_dialog_btn_delete),
             cancelText = stringResource(id = R.string.alarm_delete_dialog_btn_cancel),
             onConfirm = {
-                eventDispatcher(AlarmAddEditContract.Action.DeleteAlarm)
+                processAction(AlarmAddEditContract.Action.DeleteAlarm)
             },
             onCancel = {
-                eventDispatcher(AlarmAddEditContract.Action.HideDeleteDialog)
+                processAction(AlarmAddEditContract.Action.HideDeleteDialog)
             },
         )
     }
@@ -343,10 +350,10 @@ fun AlarmAddEditContent(
             confirmText = stringResource(id = R.string.alarm_unsaved_changes_dialog_btn_discard),
             cancelText = stringResource(id = R.string.alarm_unsaved_changes_dialog_btn_cancel),
             onConfirm = {
-                eventDispatcher(AlarmAddEditContract.Action.NavigateBack)
+                processAction(AlarmAddEditContract.Action.NavigateBack)
             },
             onCancel = {
-                eventDispatcher(AlarmAddEditContract.Action.HideUnsavedChangesDialog)
+                processAction(AlarmAddEditContract.Action.HideUnsavedChangesDialog)
             },
         )
     }
@@ -782,24 +789,23 @@ fun AlarmAddEditScreenPreview() {
             ),
         ) {
             AlarmAddEditScreen(
-                stateProvider = {
-                    AlarmAddEditContract.State(
-                        initialLoading = false,
-                        timeState = AlarmAddEditContract.AlarmTimeState(
-                            currentTime = LocalTime.of(19, 30),
-                        ),
-                        daySelectionState = AlarmAddEditContract.AlarmDaySelectionState(
-                            isWeekdaysChecked = true,
-                            isWeekendsChecked = false,
-                            selectedDays = setOf(AlarmDay.MON, AlarmDay.TUE),
-                            days = AlarmDay.entries.toSet(),
-                        ),
-                        holidayState = AlarmAddEditContract.AlarmHolidayState(
-                            isDisableHolidayChecked = false,
-                        ),
-                    )
-                },
-                eventDispatcher = { },
+                state = AlarmAddEditContract.State(
+                    initialLoading = false,
+                    timeState = AlarmAddEditContract.AlarmTimeState(
+                        currentTime = LocalTime.of(19, 30),
+                    ),
+                    daySelectionState = AlarmAddEditContract.AlarmDaySelectionState(
+                        isWeekdaysChecked = true,
+                        isWeekendsChecked = false,
+                        selectedDays = setOf(AlarmDay.MON, AlarmDay.TUE),
+                        days = AlarmDay.entries.toSet(),
+                    ),
+                    holidayState = AlarmAddEditContract.AlarmHolidayState(
+                        isDisableHolidayChecked = false,
+                    ),
+                ),
+                bottomSheetState = rememberOrbitBottomSheetState(),
+                processAction = { },
             )
         }
     }

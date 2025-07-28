@@ -30,6 +30,7 @@ import com.yapp.common.navigation.route.OnboardingBaseRoute
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.onboarding.component.UserInfoBottomSheet
 import com.yapp.ui.component.bottomsheet.OrbitBottomSheetState
+import com.yapp.ui.component.bottomsheet.rememberOrbitBottomSheetState
 import com.yapp.ui.component.dialog.OrbitDialog
 import com.yapp.ui.toggle.OrbitGenderToggle
 import com.yapp.ui.utils.heightForScreenPercentage
@@ -58,10 +59,6 @@ fun OnboardingGenderRoute(
         )
     }
 
-    BackHandler {
-        viewModel.processAction(OnboardingContract.Action.PreviousStep)
-    }
-
     viewModel.collectSideEffect { sideEffect ->
         handleSideEffect(
             sideEffect = sideEffect,
@@ -74,24 +71,10 @@ fun OnboardingGenderRoute(
 
     OnboardingGenderScreen(
         state = state,
+        bottomSheetState = bottomSheetState,
         currentStep = 5,
         totalSteps = 6,
-        onNextClick = { viewModel.processAction(OnboardingContract.Action.ShowBottomSheet) },
-        onBackClick = { viewModel.processAction(OnboardingContract.Action.PreviousStep) },
-        onGenderSelect = { gender ->
-            analyticsHelper.logEvent(
-                AnalyticsEvent(
-                    type = "onboarding_gender_select",
-                    properties = mapOf(
-                        AnalyticsEvent.OnboardingPropertiesKeys.GENDER to gender,
-                    ),
-                ),
-            )
-            viewModel.processAction(OnboardingContract.Action.UpdateGender(gender))
-        },
-        onDialogConfirm = {
-            viewModel.processAction(OnboardingContract.Action.HideWarningDialog)
-        },
+        processAction = viewModel::processAction,
     )
 }
 
@@ -154,19 +137,32 @@ private suspend fun handleSideEffect(
 @Composable
 fun OnboardingGenderScreen(
     state: OnboardingContract.State,
+    bottomSheetState: OrbitBottomSheetState,
     currentStep: Int,
     totalSteps: Int,
-    onNextClick: () -> Unit,
-    onBackClick: () -> Unit,
-    onGenderSelect: (String) -> Unit,
-    onDialogConfirm: () -> Unit,
+    processAction: (OnboardingContract.Action) -> Unit,
+    logEvent: (AnalyticsEvent) -> Unit = { },
 ) {
+    BackHandler {
+        if (state.isShowWarningDialog) {
+            processAction(OnboardingContract.Action.HideWarningDialog)
+        } else if (bottomSheetState.state.isVisible) {
+            processAction(OnboardingContract.Action.HideBottomSheet)
+        } else {
+            processAction(OnboardingContract.Action.PreviousStep)
+        }
+    }
+
     OnboardingScreen(
         currentStep = currentStep,
         totalSteps = totalSteps,
         isButtonEnabled = state.selectedGender != null,
-        onNextClick = onNextClick,
-        onBackClick = onBackClick,
+        onNextClick = {
+            processAction(OnboardingContract.Action.ShowBottomSheet)
+        },
+        onBackClick = {
+            processAction(OnboardingContract.Action.PreviousStep)
+        },
         buttonLabel = "다음",
     ) {
         Column(
@@ -189,19 +185,24 @@ fun OnboardingGenderScreen(
                     .paddingForScreenPercentage(topPercentage = 0.11f),
                 horizontalArrangement = Arrangement.spacedBy(15.dp),
             ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    OrbitGenderToggle(
-                        label = "남성",
-                        isSelected = state.selectedGender == "남성",
-                        onToggle = { onGenderSelect("남성") },
-                    )
-                }
-                Box(modifier = Modifier.weight(1f)) {
-                    OrbitGenderToggle(
-                        label = "여성",
-                        isSelected = state.selectedGender == "여성",
-                        onToggle = { onGenderSelect("여성") },
-                    )
+                listOf("남성", "여성").forEach { gender ->
+                    Box(modifier = Modifier.weight(1f)) {
+                        OrbitGenderToggle(
+                            label = gender,
+                            isSelected = state.selectedGender == gender,
+                            onToggle = {
+                                logEvent(
+                                    AnalyticsEvent(
+                                        type = "onboarding_gender_select",
+                                        properties = mapOf(
+                                            AnalyticsEvent.OnboardingPropertiesKeys.GENDER to gender,
+                                        ),
+                                    ),
+                                )
+                                processAction(OnboardingContract.Action.UpdateGender(gender))
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -212,7 +213,7 @@ fun OnboardingGenderScreen(
             title = stringResource(id = R.string.onboarding_warning_dialog_title),
             message = stringResource(id = R.string.onboarding_warning_dialog_message),
             confirmText = stringResource(id = R.string.onboarding_warning_dialog_btn_confirm),
-            onConfirm = onDialogConfirm,
+            onConfirm = { processAction(OnboardingContract.Action.HideWarningDialog) },
         )
     }
 }
@@ -224,11 +225,9 @@ fun OnboardingGenderScreenPreview() {
         state = OnboardingContract.State(
             isButtonEnabled = true,
         ),
+        bottomSheetState = rememberOrbitBottomSheetState(),
         currentStep = 0,
         totalSteps = 0,
-        onNextClick = {},
-        onBackClick = {},
-        onGenderSelect = {},
-        onDialogConfirm = {},
+        processAction = {},
     )
 }
