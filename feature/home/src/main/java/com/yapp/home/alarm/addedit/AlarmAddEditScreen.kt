@@ -128,8 +128,7 @@ private suspend fun handleSideEffect(
                 when (sideEffect.sheetType) {
                     AlarmAddEditContract.BottomSheetType.MissionSetting -> {
                         AlarmMissionBottomSheet(
-                            missionType = state.missionState.missionType,
-                            missionCount = state.missionState.missionCount,
+                            missionState = state.missionState,
                             onDismiss = {
                                 processAction(AlarmAddEditContract.Action.HideBottomSheet)
                             },

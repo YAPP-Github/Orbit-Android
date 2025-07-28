@@ -36,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.MissionType
+import com.yapp.home.alarm.addedit.AlarmAddEditContract
 import com.yapp.home.alarm.component.SelectorItems
 import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.lottie.LottieAnimation
@@ -58,15 +59,14 @@ private fun MissionType.displayData(): Pair<Int, Int> = when (this) {
 
 @Composable
 internal fun AlarmMissionBottomSheet(
-    missionType: MissionType,
-    missionCount: Int,
+    missionState: AlarmAddEditContract.AlarmMissionState,
     onDismiss: () -> Unit,
     onSaveMission: (MissionType, Int) -> Unit,
     onPreviewMission: (MissionType, Int) -> Unit,
 ) {
     var stepStack by remember { mutableStateOf(listOf(AlarmMissionSelectBottomSheetType.MISSION_SETTING)) }
-    var selectedMissionType by remember { mutableStateOf(missionType) }
-    var selectedMissionCount by remember { mutableIntStateOf(missionCount) }
+    var selectedMissionType by remember { mutableStateOf(missionState.missionType) }
+    var selectedMissionCount by remember { mutableIntStateOf(missionState.missionCount) }
 
     fun push(step: AlarmMissionSelectBottomSheetType) {
         stepStack = stepStack + step
@@ -630,9 +630,8 @@ private fun MissionSelectTopAppBar(
 private fun AlarmMissionSelectBottomSheetPreview() {
     OrbitTheme {
         AlarmMissionBottomSheet(
-            missionType = MissionType.SHAKE,
-            missionCount = 15,
-            onDismiss = {},
+            missionState = AlarmAddEditContract.AlarmMissionState(),
+            onDismiss = { },
             onSaveMission = { _, _ -> },
             onPreviewMission = { _, _ -> },
         )
