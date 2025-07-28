@@ -25,6 +25,9 @@ import com.yapp.mission.missionScreen
 import com.yapp.onboarding.onboardingNavGraph
 import com.yapp.setting.settingNavGraph
 import com.yapp.splash.splashScreen
+import com.yapp.ui.component.bottomsheet.OrbitBottomSheetLayout
+import com.yapp.ui.component.bottomsheet.OrbitBottomSheetState
+import com.yapp.ui.component.bottomsheet.rememberOrbitBottomSheetState
 import com.yapp.ui.component.snackbar.CustomSnackBarVisuals
 import com.yapp.ui.component.snackbar.OrbitSnackBar
 import com.yapp.webview.webViewScreen
@@ -34,34 +37,45 @@ import com.yapp.webview.webViewScreen
 internal fun OrbitNavHost(
     modifier: Modifier = Modifier,
     navigator: OrbitNavigator = rememberOrbitNavigator(),
+    bottomSheetState: OrbitBottomSheetState = rememberOrbitBottomSheetState(),
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
 
-    Scaffold(
-        modifier = modifier,
-        snackbarHost = {
-            OrbitSnackBarHost(snackBarHostState = snackBarHostState)
-        },
-        containerColor = OrbitTheme.colors.gray_900,
+    OrbitBottomSheetLayout(
+        sheetState = bottomSheetState,
     ) {
-        NavHost(
-            navController = navigator.navController,
-            startDestination = navigator.startDestination,
-            modifier = Modifier.navigationBarsPadding(),
+        Scaffold(
+            modifier = modifier,
+            snackbarHost = {
+                OrbitSnackBarHost(snackBarHostState = snackBarHostState)
+            },
+            containerColor = OrbitTheme.colors.gray_900,
         ) {
-            splashScreen(navigator = navigator)
-            onboardingNavGraph(navigator = navigator)
-            homeNavGraph(
-                navigator = navigator,
-                snackBarHostState = snackBarHostState,
-            )
-            missionScreen(navigator = navigator)
-            fortuneNavGraph(
-                navigator = navigator,
-                snackBarHostState = snackBarHostState,
-            )
-            settingNavGraph(navigator = navigator)
-            webViewScreen(navigator = navigator)
+            NavHost(
+                navController = navigator.navController,
+                startDestination = navigator.startDestination,
+                modifier = Modifier.navigationBarsPadding(),
+            ) {
+                splashScreen(
+                    navigator = navigator,
+                )
+                onboardingNavGraph(
+                    navigator = navigator,
+                    bottomSheetState = bottomSheetState,
+                )
+                homeNavGraph(
+                    navigator = navigator,
+                    bottomSheetState = bottomSheetState,
+                    snackBarHostState = snackBarHostState,
+                )
+                missionScreen(navigator = navigator)
+                fortuneNavGraph(
+                    navigator = navigator,
+                    snackBarHostState = snackBarHostState,
+                )
+                settingNavGraph(navigator = navigator)
+                webViewScreen(navigator = navigator)
+            }
         }
     }
 }

@@ -90,7 +90,8 @@ sealed class AlarmAddEditContract {
         data object ToggleSoundOption : Action()
         data class AdjustSoundVolume(val volume: Int) : Action()
         data class SelectAlarmSound(val index: Int) : Action()
-        data class ToggleBottomSheet(val sheetType: BottomSheetType) : Action()
+        data class ShowBottomSheet(val sheetType: BottomSheetType) : Action()
+        data object HideBottomSheet : Action()
     }
 
     sealed class BottomSheetType {
@@ -106,6 +107,12 @@ sealed class AlarmAddEditContract {
             val missionType: MissionType,
             val missionCount: Int,
         ) : SideEffect()
+
+        data class ShowBottomSheet(
+            val sheetType: BottomSheetType,
+        ) : SideEffect()
+
+        data object HideBottomSheet : SideEffect()
 
         data class SaveAlarm(val id: Long) : SideEffect()
 

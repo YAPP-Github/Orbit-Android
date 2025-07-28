@@ -1,22 +1,19 @@
-package com.yapp.ui.component
+package com.yapp.ui.component.bottomsheet
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
@@ -33,40 +30,31 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OrbitBottomSheet(
+fun OrbitBottomSheetLayout(
     modifier: Modifier = Modifier,
-    sheetState: SheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-    ),
-    onDismissRequest: () -> Unit = { },
+    sheetState: OrbitBottomSheetState,
     shape: Shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
     containerColor: Color = OrbitTheme.colors.gray_800,
     strokeColor: Color = OrbitTheme.colors.gray_700,
     strokeThickness: Dp = 1.dp,
     content: @Composable () -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
-
-    ModalBottomSheet(
-        modifier = modifier,
-        sheetState = sheetState,
-        shape = shape,
-        onDismissRequest = {
-            scope.launch {
-                sheetState.hide()
-                onDismissRequest()
+    ModalBottomSheetLayout(
+        modifier = modifier.navigationBarsPadding(),
+        sheetState = sheetState.state,
+        sheetShape = shape,
+        sheetBackgroundColor = containerColor,
+        sheetContent = {
+            Box {
+                sheetState.content?.invoke(this)
+                BottomSheetTopRoundedStroke(
+                    strokeColor = strokeColor,
+                    strokeThickness = strokeThickness,
+                )
             }
         },
-        containerColor = containerColor,
-        dragHandle = null,
     ) {
-        Box {
-            content()
-            BottomSheetTopRoundedStroke(
-                strokeColor = strokeColor,
-                strokeThickness = strokeThickness,
-            )
-        }
+        content()
     }
 }
 
@@ -137,41 +125,31 @@ fun BottomSheetTopRoundedStroke(
 @Preview
 @Composable
 fun OrbitBottomSheetPreview() {
-    var isSheetOpen by rememberSaveable { mutableStateOf(true) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberOrbitBottomSheetState()
     val scope = rememberCoroutineScope()
 
     OrbitTheme {
-        Button(
-            onClick = {
-                scope.launch {
-                    sheetState.show()
-                }.invokeOnCompletion {
-                    if (!isSheetOpen) {
-                        isSheetOpen = true
-                    }
-                }
-            },
-        ) {
-            Text("Toggle Bottom Sheet")
-        }
-
-        OrbitBottomSheet(
+        OrbitBottomSheetLayout(
             sheetState = sheetState,
             content = {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(600.dp),
+                        .fillMaxSize()
+                        .background(color = OrbitTheme.colors.white),
                     contentAlignment = Alignment.Center,
                 ) {
                     Button(
                         onClick = {
                             scope.launch {
-                                sheetState.hide()
-                            }.invokeOnCompletion {
-                                if (isSheetOpen) {
-                                    isSheetOpen = false
+                                sheetState.show {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(500.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text("This is a bottom sheet content")
+                                    }
                                 }
                             }
                         },

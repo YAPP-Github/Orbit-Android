@@ -19,7 +19,6 @@ sealed class OnboardingContract {
         val isBirthDateValid: Boolean = false,
         val isBirthTimeValid: Boolean = false,
         val isValid: Boolean = false,
-        val isBottomSheetOpen: Boolean = false,
         val isShowWarningDialog: Boolean = false,
     ) : UiState {
         val birthDateFormatted: String
@@ -54,7 +53,8 @@ sealed class OnboardingContract {
         data object Submit : Action()
         data class UpdateGender(val gender: String) : Action()
         data class UpdateBirthDate(val lunar: String, val year: Int, val month: Int, val day: Int) : Action()
-        data object ToggleBottomSheet : Action()
+        data object ShowBottomSheet : Action()
+        data object HideBottomSheet : Action()
         data object CompleteOnboarding : Action()
         data class OpenWebView(val url: String) : Action()
         data object ShowWarningDialog : Action()
@@ -70,6 +70,10 @@ sealed class OnboardingContract {
         data class NavigateToNextStep(val currentStep: Int) : SideEffect()
 
         data object NavigateBack : SideEffect()
+
+        data object ShowBottomSheet : SideEffect()
+
+        data object HideBottomSheet : SideEffect()
 
         data object OnboardingCompleted : SideEffect()
 

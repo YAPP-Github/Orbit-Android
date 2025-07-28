@@ -12,13 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,11 +25,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.home.alarm.component.SelectorItems
-import com.yapp.ui.component.OrbitBottomSheet
 import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.switch.OrbitSwitch
 import feature.home.R
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,9 +40,6 @@ internal fun AlarmSnoozeBottomSheet(
     onSnoozeToggle: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
     val snoozeIntervalOptions = listOf(1, 3, 5, 10, 15)
     val snoozeCountOptions = listOf(1, 3, 5, 10, -1)
 
@@ -73,65 +66,56 @@ internal fun AlarmSnoozeBottomSheet(
         )
     }
 
-    OrbitBottomSheet(
-        sheetState = sheetState,
-        onDismissRequest = onDismiss,
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(modifier = Modifier.height(6.dp))
-            VibrationSection(selectedSnoozeEnabled) {
-                selectedSnoozeEnabled = !selectedSnoozeEnabled
-                onSnoozeToggle(selectedSnoozeEnabled)
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-            SelectorSection(
-                title = stringResource(id = R.string.alarm_add_edit_interval),
-                selectedIndex = selectedSnoozeIntervalIndex,
-                items = snoozeIntervals,
-                enabled = selectedSnoozeEnabled,
-                onItemSelected = {
-                    selectedSnoozeIntervalIndex = it
-                    onIntervalSelected(snoozeIntervalOptions[it])
-                },
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-            SelectorSection(
-                title = stringResource(id = R.string.alarm_add_edit_repeat_count),
-                selectedIndex = selectedSnoozeCountIndex,
-                items = snoozeCounts,
-                enabled = selectedSnoozeEnabled,
-                onItemSelected = {
-                    selectedSnoozeCountIndex = it
-                    onCountSelected(snoozeCountOptions[it])
-                },
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            if (selectedSnoozeEnabled) {
-                AlarmSnoozeMessage(
-                    interval = snoozeIntervals[selectedSnoozeIntervalIndex],
-                    count = snoozeCounts[selectedSnoozeCountIndex],
-                )
-            }
-            Spacer(modifier = Modifier.height(40.dp))
-            OrbitButton(
-                label = stringResource(id = R.string.alarm_add_edit_complete),
-                enabled = true,
-                containerColor = OrbitTheme.colors.gray_600,
-                contentColor = OrbitTheme.colors.white,
-                pressedContainerColor = OrbitTheme.colors.gray_500,
-                pressedContentColor = OrbitTheme.colors.white.copy(alpha = 0.7f),
-                onClick = {
-                    scope.launch { sheetState.hide() }.invokeOnCompletion {
-                        onDismiss()
-                    }
-                },
+        Spacer(modifier = Modifier.height(6.dp))
+        VibrationSection(selectedSnoozeEnabled) {
+            selectedSnoozeEnabled = !selectedSnoozeEnabled
+            onSnoozeToggle(selectedSnoozeEnabled)
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+        SelectorSection(
+            title = stringResource(id = R.string.alarm_add_edit_interval),
+            selectedIndex = selectedSnoozeIntervalIndex,
+            items = snoozeIntervals,
+            enabled = selectedSnoozeEnabled,
+            onItemSelected = {
+                selectedSnoozeIntervalIndex = it
+                onIntervalSelected(snoozeIntervalOptions[it])
+            },
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        SelectorSection(
+            title = stringResource(id = R.string.alarm_add_edit_repeat_count),
+            selectedIndex = selectedSnoozeCountIndex,
+            items = snoozeCounts,
+            enabled = selectedSnoozeEnabled,
+            onItemSelected = {
+                selectedSnoozeCountIndex = it
+                onCountSelected(snoozeCountOptions[it])
+            },
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        if (selectedSnoozeEnabled) {
+            AlarmSnoozeMessage(
+                interval = snoozeIntervals[selectedSnoozeIntervalIndex],
+                count = snoozeCounts[selectedSnoozeCountIndex],
             )
         }
+        Spacer(modifier = Modifier.height(40.dp))
+        OrbitButton(
+            label = stringResource(id = R.string.alarm_add_edit_complete),
+            enabled = true,
+            containerColor = OrbitTheme.colors.gray_600,
+            contentColor = OrbitTheme.colors.white,
+            pressedContainerColor = OrbitTheme.colors.gray_500,
+            pressedContentColor = OrbitTheme.colors.white.copy(alpha = 0.7f),
+            onClick = onDismiss,
+        )
     }
 }
 

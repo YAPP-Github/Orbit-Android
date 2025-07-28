@@ -9,90 +9,106 @@ import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.common.navigation.extensions.sharedHiltViewModel
 import com.yapp.common.navigation.route.OnboardingBaseRoute
 import com.yapp.common.navigation.route.OnboardingDestination
+import com.yapp.ui.component.bottomsheet.OrbitBottomSheetState
 import org.orbitmvi.orbit.compose.collectSideEffect
 
 fun NavGraphBuilder.onboardingNavGraph(
     navigator: OrbitNavigator,
+    bottomSheetState: OrbitBottomSheetState,
 ) {
     navigation<OnboardingBaseRoute>(startDestination = OnboardingDestination.Explain) {
         composable<OnboardingDestination.Explain> {
             val viewModel = it.sharedHiltViewModel<OnboardingViewModel>(navigator.navController)
-            viewModel.collectSideEffect {
-                handleSideEffect(it, navigator, viewModel)
+
+            viewModel.collectSideEffect { sideEffect ->
+                handleOnboardingCommonSideEffect(sideEffect, navigator, viewModel::processAction)
             }
+
             OnboardingExplainRoute(viewModel)
         }
 
         composable<OnboardingDestination.AlarmTimeSelection> {
             val viewModel = it.sharedHiltViewModel<OnboardingViewModel>(navigator.navController)
-            viewModel.collectSideEffect {
-                handleSideEffect(it, navigator, viewModel)
+
+            viewModel.collectSideEffect { sideEffect ->
+                handleOnboardingCommonSideEffect(sideEffect, navigator, viewModel::processAction)
             }
+
             OnboardingAlarmTimeSelectionRoute(viewModel)
         }
 
         composable<OnboardingDestination.Birthday> {
             val viewModel = it.sharedHiltViewModel<OnboardingViewModel>(navigator.navController)
-            viewModel.collectSideEffect {
-                handleSideEffect(it, navigator, viewModel)
+
+            viewModel.collectSideEffect { sideEffect ->
+                handleOnboardingCommonSideEffect(sideEffect, navigator, viewModel::processAction)
             }
+
             OnboardingBirthdayRoute(viewModel)
         }
 
         composable<OnboardingDestination.TimeOfBirth> {
             val viewModel = it.sharedHiltViewModel<OnboardingViewModel>(navigator.navController)
-            viewModel.collectSideEffect {
-                handleSideEffect(it, navigator, viewModel)
+
+            viewModel.collectSideEffect { sideEffect ->
+                handleOnboardingCommonSideEffect(sideEffect, navigator, viewModel::processAction)
             }
+
             OnboardingTimeOfBirthRoute(viewModel)
         }
 
         composable<OnboardingDestination.Name> {
             val viewModel = it.sharedHiltViewModel<OnboardingViewModel>(navigator.navController)
-            viewModel.collectSideEffect {
-                handleSideEffect(it, navigator, viewModel)
+
+            viewModel.collectSideEffect { sideEffect ->
+                handleOnboardingCommonSideEffect(sideEffect, navigator, viewModel::processAction)
             }
+
             OnboardingNameRoute(viewModel)
         }
 
         composable<OnboardingDestination.Gender> {
             val viewModel = it.sharedHiltViewModel<OnboardingViewModel>(navigator.navController)
-            viewModel.collectSideEffect {
-                handleSideEffect(it, navigator, viewModel)
-            }
-            OnboardingGenderRoute(viewModel)
+
+            OnboardingGenderRoute(navigator, bottomSheetState, viewModel)
         }
 
         composable<OnboardingDestination.Access> {
             val viewModel = it.sharedHiltViewModel<OnboardingViewModel>(navigator.navController)
-            viewModel.collectSideEffect {
-                handleSideEffect(it, navigator, viewModel)
+
+            viewModel.collectSideEffect { sideEffect ->
+                handleOnboardingCommonSideEffect(sideEffect, navigator, viewModel::processAction)
             }
+
             OnboardingAccessRoute(viewModel)
         }
 
         composable<OnboardingDestination.Complete1> {
             val viewModel = it.sharedHiltViewModel<OnboardingViewModel>(navigator.navController)
-            viewModel.collectSideEffect {
-                handleSideEffect(it, navigator, viewModel)
+
+            viewModel.collectSideEffect { sideEffect ->
+                handleOnboardingCommonSideEffect(sideEffect, navigator, viewModel::processAction)
             }
+
             OnboardingCompleteRoute(viewModel)
         }
 
         composable<OnboardingDestination.Complete2> {
             val viewModel = it.sharedHiltViewModel<OnboardingViewModel>(navigator.navController)
-            viewModel.collectSideEffect {
-                handleSideEffect(it, navigator, viewModel)
+
+            viewModel.collectSideEffect { sideEffect ->
+                handleOnboardingCommonSideEffect(sideEffect, navigator, viewModel::processAction)
             }
+
             OnboardingCompleteRoute2(viewModel)
         }
     }
 }
 
-private fun handleSideEffect(
+private fun handleOnboardingCommonSideEffect(
     sideEffect: OnboardingContract.SideEffect,
     navigator: OrbitNavigator,
-    viewModel: OnboardingViewModel,
+    processAction: (OnboardingContract.Action) -> Unit,
 ) {
     when (sideEffect) {
         is OnboardingContract.SideEffect.NavigateToNextStep -> {
@@ -100,7 +116,7 @@ private fun handleSideEffect(
         }
 
         OnboardingContract.SideEffect.NavigateBack -> {
-            viewModel.processAction(OnboardingContract.Action.Reset)
+            processAction(OnboardingContract.Action.Reset)
             navigator.navigateBack()
         }
 
@@ -117,5 +133,7 @@ private fun handleSideEffect(
         is OnboardingContract.SideEffect.OpenWebView -> {
             navigator.navigateToWebView(Uri.encode(sideEffect.url))
         }
+
+        else -> { }
     }
 }

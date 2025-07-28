@@ -183,7 +183,8 @@ class AlarmAddEditViewModel @Inject constructor(
             is AlarmAddEditContract.Action.ToggleSoundOption -> toggleSoundOption()
             is AlarmAddEditContract.Action.AdjustSoundVolume -> adjustSoundVolume(action.volume)
             is AlarmAddEditContract.Action.SelectAlarmSound -> selectAlarmSound(action.index)
-            is AlarmAddEditContract.Action.ToggleBottomSheet -> toggleBottomSheet(action.sheetType)
+            is AlarmAddEditContract.Action.ShowBottomSheet -> showBottomSheet(action.sheetType)
+            is AlarmAddEditContract.Action.HideBottomSheet -> hideBottomSheet()
         }
     }
 
@@ -520,18 +521,12 @@ class AlarmAddEditViewModel @Inject constructor(
         alarmUseCase.playAlarmSound(state.soundState.soundVolume)
     }
 
-    private fun toggleBottomSheet(sheetType: AlarmAddEditContract.BottomSheetType) = intent {
-        val newBottomSheetState = if (state.bottomSheetState == sheetType) {
-            if (state.bottomSheetState == AlarmAddEditContract.BottomSheetType.SoundSetting) {
-                alarmUseCase.stopAlarmSound()
-            }
-            null
-        } else {
-            sheetType
-        }
-        reduce {
-            state.copy(bottomSheetState = newBottomSheetState)
-        }
+    private fun showBottomSheet(sheetType: AlarmAddEditContract.BottomSheetType) = intent {
+        postSideEffect(AlarmAddEditContract.SideEffect.ShowBottomSheet(sheetType))
+    }
+
+    private fun hideBottomSheet() = intent {
+        postSideEffect(AlarmAddEditContract.SideEffect.HideBottomSheet)
     }
 
     private fun getAlarmMessage(currentTime: LocalTime, selectedDays: Set<AlarmDay>): String {

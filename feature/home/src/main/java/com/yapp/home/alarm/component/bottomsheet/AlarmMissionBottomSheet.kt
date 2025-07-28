@@ -19,9 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -39,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.MissionType
 import com.yapp.home.alarm.component.SelectorItems
-import com.yapp.ui.component.OrbitBottomSheet
 import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.extensions.customClickable
@@ -62,7 +59,6 @@ private fun MissionType.displayData(): Pair<Int, Int> = when (this) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AlarmMissionBottomSheet(
-    sheetState: SheetState,
     missionType: MissionType,
     missionCount: Int,
     onDismiss: () -> Unit,
@@ -74,81 +70,73 @@ internal fun AlarmMissionBottomSheet(
     var selectedMissionType by remember { mutableStateOf(missionType) }
     var selectedMissionCount by remember { mutableIntStateOf(missionCount) }
 
-    OrbitBottomSheet(
-        sheetState = sheetState,
-        onDismissRequest = {
-            currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
-            onDismiss()
-        },
-    ) {
-        when (currentStep) {
-            AlarmMissionSelectBottomSheetType.MISSION_SETTING -> {
-                if (selectedMissionType == MissionType.NONE) {
-                    MissionAddContent {
-                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
-                    }
-                } else {
-                    MissionSettingContent(
-                        missionType = missionType,
-                        missionCount = missionCount,
-                        onDetail = {
-                            currentStep = AlarmMissionSelectBottomSheetType.MISSION_DETAIL
-                        },
-                        onDelete = {
-                            selectedMissionType = MissionType.NONE
-                            onSaveMission(selectedMissionType, selectedMissionCount)
-                        },
-                        onChange = {
-                            currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
-                        },
-                        onDone = {
-                            onSaveMission(selectedMissionType, selectedMissionCount)
-                            onDismiss()
-                        },
-                    )
+    when (currentStep) {
+        AlarmMissionSelectBottomSheetType.MISSION_SETTING -> {
+            if (selectedMissionType == MissionType.NONE) {
+                MissionAddContent {
+                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
                 }
-            }
-
-            AlarmMissionSelectBottomSheetType.MISSION_SELECT -> {
-                MissionSelectContent(
-                    onBack = {
-                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
-                    },
-                    onClose = {
-                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
-                        onDismiss()
-                    },
-                    onSelect = { mission ->
-                        selectedMissionType = mission
+            } else {
+                MissionSettingContent(
+                    missionType = missionType,
+                    missionCount = missionCount,
+                    onDetail = {
                         currentStep = AlarmMissionSelectBottomSheetType.MISSION_DETAIL
                     },
-                )
-            }
-
-            AlarmMissionSelectBottomSheetType.MISSION_DETAIL -> {
-                MissionDetailContent(
-                    missionType = selectedMissionType,
-                    selectedMissionCount = selectedMissionCount,
-                    onCountChange = { count ->
-                        selectedMissionCount = count
+                    onDelete = {
+                        selectedMissionType = MissionType.NONE
+                        onSaveMission(selectedMissionType, selectedMissionCount)
                     },
-                    onBack = {
+                    onChange = {
                         currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
                     },
-                    onClose = {
-                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
-                        onDismiss()
-                    },
-                    onSave = {
-                        currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
+                    onDone = {
                         onSaveMission(selectedMissionType, selectedMissionCount)
                         onDismiss()
                     },
-                    onPreview = {
-                        onPreviewMission(selectedMissionType, selectedMissionCount)
-                    },
                 )
             }
+        }
+
+        AlarmMissionSelectBottomSheetType.MISSION_SELECT -> {
+            MissionSelectContent(
+                onBack = {
+                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
+                },
+                onClose = {
+                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
+                    onDismiss()
+                },
+                onSelect = { mission ->
+                    selectedMissionType = mission
+                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_DETAIL
+                },
+            )
+        }
+
+        AlarmMissionSelectBottomSheetType.MISSION_DETAIL -> {
+            MissionDetailContent(
+                missionType = selectedMissionType,
+                selectedMissionCount = selectedMissionCount,
+                onCountChange = { count ->
+                    selectedMissionCount = count
+                },
+                onBack = {
+                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_SELECT
+                },
+                onClose = {
+                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
+                    onDismiss()
+                },
+                onSave = {
+                    currentStep = AlarmMissionSelectBottomSheetType.MISSION_SETTING
+                    onSaveMission(selectedMissionType, selectedMissionCount)
+                    onDismiss()
+                },
+                onPreview = {
+                    onPreviewMission(selectedMissionType, selectedMissionCount)
+                },
+            )
         }
     }
 }
@@ -644,10 +632,7 @@ private fun MissionSelectTopAppBar(
 @Composable
 private fun AlarmMissionSelectBottomSheetPreview() {
     OrbitTheme {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
         AlarmMissionBottomSheet(
-            sheetState = sheetState,
             missionType = MissionType.SHAKE,
             missionCount = 15,
             onDismiss = {},
