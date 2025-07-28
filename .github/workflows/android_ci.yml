@@ -1,12 +1,19 @@
 name: Orbit CI
 
 on:
-  pull_request:
-    branches: [develop]
-    paths:
-      - 'app/**'
-      - 'build.gradle'
-      - '**/*.kt'
+    pull_request:
+        branches: [develop]
+        paths:
+            - '**/*.kt'
+            - 'build.gradle'
+            - 'app/**'
+    push:
+        branches:
+            - 'release/**'
+        paths:
+            - '**/*.kt'
+            - 'build.gradle'
+            - 'app/**'
 
 jobs:
   build:
