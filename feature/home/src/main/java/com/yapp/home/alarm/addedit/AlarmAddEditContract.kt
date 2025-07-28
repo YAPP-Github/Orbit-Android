@@ -51,10 +51,8 @@ sealed class AlarmAddEditContract {
 
     data class AlarmSnoozeState(
         val isSnoozeEnabled: Boolean = true,
-        val snoozeIntervalIndex: Int = 2,
-        val snoozeCountIndex: Int = 2,
-        val snoozeIntervals: List<String> = listOf("1분", "3분", "5분", "10분", "15분"),
-        val snoozeCounts: List<String> = listOf("1회", "3회", "5회", "10회", "무한"),
+        val snoozeInterval: Int = 5,
+        val snoozeCount: Int = 5,
     )
 
     data class AlarmSoundState(
@@ -83,16 +81,25 @@ sealed class AlarmAddEditContract {
         data object ToggleWeekendsSelection : Action()
         data class ToggleSpecificDaySelection(val day: AlarmDay) : Action()
         data object ToggleHolidaySkipOption : Action()
-        data object ToggleSnoozeOption : Action()
-        data class SaveMission(val type: MissionType, val count: Int) : Action()
+        data class SaveMissionSetting(val type: MissionType, val count: Int) : Action()
+        data class SaveSnoozeSetting(
+            val enabled: Boolean,
+            val interval: Int,
+            val count: Int,
+        ) : Action()
+        data class SaveSoundSetting(
+            val vibrationEnabled: Boolean,
+            val soundEnabled: Boolean,
+            val soundVolume: Int,
+            val soundIndex: Int,
+        ) : Action()
+        data class ToggleVibrationEnabled(val enabled: Boolean) : Action()
+        data class ToggleSoundEnabled(val enabled: Boolean) : Action()
+        data class SetSoundVolume(val volume: Int) : Action()
+        data class SetSoundIndex(val index: Int) : Action()
+        data class ShowBottomSheet(val sheetType: BottomSheetType) : Action()
         data class NavigateToMissionPreview(val missionType: MissionType, val missionCount: Int) : Action()
-        data class SetSnoozeInterval(val index: Int) : Action()
-        data class SetSnoozeRepeatCount(val index: Int) : Action()
-        data object ToggleVibrationOption : Action()
-        data object ToggleSoundOption : Action()
-        data class AdjustSoundVolume(val volume: Int) : Action()
-        data class SelectAlarmSound(val index: Int) : Action()
-        data class ToggleBottomSheet(val sheetType: BottomSheetType) : Action()
+        data object HideBottomSheet : Action()
     }
 
     sealed class BottomSheetType {
@@ -108,6 +115,12 @@ sealed class AlarmAddEditContract {
             val missionType: MissionType,
             val missionCount: Int,
         ) : SideEffect()
+
+        data class ShowBottomSheet(
+            val sheetType: BottomSheetType,
+        ) : SideEffect()
+
+        data object HideBottomSheet : SideEffect()
 
         data class SaveAlarm(val id: Long) : SideEffect()
 
@@ -137,13 +150,8 @@ internal fun AlarmAddEditContract.State.toAlarm(id: Long = 0): Alarm {
         missionType = missionState.missionType,
         missionCount = missionState.missionCount,
         isSnoozeEnabled = snoozeState.isSnoozeEnabled,
-        snoozeInterval = snoozeState.snoozeIntervals.getOrNull(snoozeState.snoozeIntervalIndex)
-            ?.filter { it.isDigit() }
-            ?.toIntOrNull()
-            ?: 5,
-        snoozeCount = snoozeState.snoozeCounts.getOrNull(snoozeState.snoozeCountIndex)
-            ?.let { if (it == "무한") -1 else it.filter { char -> char.isDigit() }.toIntOrNull() ?: 1 }
-            ?: 1,
+        snoozeInterval = snoozeState.snoozeInterval,
+        snoozeCount = snoozeState.snoozeCount,
         isVibrationEnabled = soundState.isVibrationEnabled,
         isSoundEnabled = soundState.isSoundEnabled,
         soundUri = soundState.sounds.getOrNull(soundState.soundIndex)?.uri.toString(),

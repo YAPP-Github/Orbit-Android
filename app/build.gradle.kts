@@ -48,6 +48,7 @@ dependencies {
     implementation(projects.feature.setting)
     implementation(projects.feature.webview)
     implementation(platform(libs.firebase.bom))
+    implementation(libs.compose.material)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
     implementation(libs.play.services.ads)

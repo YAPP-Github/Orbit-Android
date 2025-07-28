@@ -28,7 +28,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -62,6 +61,8 @@ import com.yapp.home.alarm.component.bottomsheet.AlarmMissionBottomSheet
 import com.yapp.home.alarm.component.bottomsheet.AlarmSnoozeBottomSheet
 import com.yapp.home.alarm.component.bottomsheet.AlarmSoundBottomSheet
 import com.yapp.home.alarm.getLabelStringRes
+import com.yapp.ui.component.bottomsheet.OrbitBottomSheetState
+import com.yapp.ui.component.bottomsheet.rememberOrbitBottomSheetState
 import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.dialog.OrbitDialog
 import com.yapp.ui.component.lottie.LottieAnimation
@@ -70,7 +71,6 @@ import com.yapp.ui.component.switch.OrbitSwitch
 import com.yapp.ui.component.timepicker.OrbitPicker
 import feature.home.R
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.compose.collectSideEffect
 import java.time.LocalTime
 
@@ -78,56 +78,159 @@ import java.time.LocalTime
 fun AlarmAddEditRoute(
     viewModel: AlarmAddEditViewModel = hiltViewModel(),
     navigator: OrbitNavigator,
+    bottomSheetState: OrbitBottomSheetState,
     snackBarHostState: SnackbarHostState,
 ) {
     val state by viewModel.container.stateFlow.collectAsStateWithLifecycle()
 
     val coroutineScope = rememberCoroutineScope()
 
-    viewModel.collectSideEffect {
-        handleSideEffect(it, navigator, snackBarHostState, coroutineScope)
+    viewModel.collectSideEffect { sideEffect ->
+        handleSideEffect(
+            sideEffect = sideEffect,
+            navigator = navigator,
+            bottomSheetState = bottomSheetState,
+            snackBarHostState = snackBarHostState,
+            coroutineScope = coroutineScope,
+            state = state,
+            processAction = viewModel::processAction,
+        )
     }
 
     AlarmAddEditScreen(
-        stateProvider = { state },
-        eventDispatcher = viewModel::processAction,
+        state = state,
+        bottomSheetState = bottomSheetState,
+        processAction = viewModel::processAction,
     )
 }
 
 private suspend fun handleSideEffect(
     sideEffect: AlarmAddEditContract.SideEffect,
     navigator: OrbitNavigator,
+    bottomSheetState: OrbitBottomSheetState,
     snackBarHostState: SnackbarHostState,
     coroutineScope: CoroutineScope,
+    state: AlarmAddEditContract.State,
+    processAction: (AlarmAddEditContract.Action) -> Unit,
 ) {
     when (sideEffect) {
         is AlarmAddEditContract.SideEffect.NavigateBack -> {
             navigator.navigateBack()
         }
+
         is AlarmAddEditContract.SideEffect.NavigateToMissionPreview -> {
             navigator.navigateToMissionPreview(
                 missionType = sideEffect.missionType.value,
                 missionCount = sideEffect.missionCount,
             )
         }
+
+        is AlarmAddEditContract.SideEffect.ShowBottomSheet -> {
+            bottomSheetState.show {
+                when (sideEffect.sheetType) {
+                    AlarmAddEditContract.BottomSheetType.MissionSetting -> {
+                        AlarmMissionBottomSheet(
+                            missionState = state.missionState,
+                            onDismiss = {
+                                processAction(AlarmAddEditContract.Action.HideBottomSheet)
+                            },
+                            onSaveMission = { missionType, missionCount ->
+                                processAction(
+                                    AlarmAddEditContract.Action.SaveMissionSetting(
+                                        type = missionType,
+                                        count = missionCount,
+                                    ),
+                                )
+                            },
+                            onPreviewMission = { missionType, missionCount ->
+                                processAction(
+                                    AlarmAddEditContract.Action.NavigateToMissionPreview(
+                                        missionType = missionType,
+                                        missionCount = missionCount,
+                                    ),
+                                )
+                            },
+                        )
+                    }
+
+                    AlarmAddEditContract.BottomSheetType.SnoozeSetting -> {
+                        AlarmSnoozeBottomSheet(
+                            snoozeState = state.snoozeState,
+                            onDismiss = {
+                                processAction(AlarmAddEditContract.Action.HideBottomSheet)
+                            },
+                            onComplete = { enabled, interval, count ->
+                                processAction(
+                                    AlarmAddEditContract.Action.SaveSnoozeSetting(
+                                        enabled = enabled,
+                                        interval = interval,
+                                        count = count,
+                                    ),
+                                )
+                                processAction(AlarmAddEditContract.Action.HideBottomSheet)
+                            },
+                        )
+                    }
+
+                    AlarmAddEditContract.BottomSheetType.SoundSetting -> {
+                        AlarmSoundBottomSheet(
+                            soundState = state.soundState,
+                            onVibrationToggle = { enabled ->
+                                processAction(AlarmAddEditContract.Action.ToggleVibrationEnabled(enabled))
+                            },
+                            onSoundToggle = { enabled ->
+                                processAction(AlarmAddEditContract.Action.ToggleSoundEnabled(enabled))
+                            },
+                            onVolumeChanged = { volume ->
+                                processAction(AlarmAddEditContract.Action.SetSoundVolume(volume))
+                            },
+                            onSoundSelected = { index ->
+                                processAction(AlarmAddEditContract.Action.SetSoundIndex(index))
+                            },
+                            onDismiss = {
+                                processAction(AlarmAddEditContract.Action.HideBottomSheet)
+                            },
+                            onComplete = { vibrationEnabled, soundEnabled, soundVolume, soundIndex ->
+                                processAction(
+                                    AlarmAddEditContract.Action.SaveSoundSetting(
+                                        vibrationEnabled = vibrationEnabled,
+                                        soundEnabled = soundEnabled,
+                                        soundVolume = soundVolume,
+                                        soundIndex = soundIndex,
+                                    ),
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+        }
+
+        is AlarmAddEditContract.SideEffect.HideBottomSheet -> {
+            bottomSheetState.hide()
+        }
+
         is AlarmAddEditContract.SideEffect.SaveAlarm -> {
             navigator.navController.previousBackStackEntry
                 ?.savedStateHandle
                 ?.set(ADD_ALARM_RESULT_KEY, sideEffect.id)
             navigator.navController.popBackStack()
         }
+
         is AlarmAddEditContract.SideEffect.UpdateAlarm -> {
             navigator.navController.previousBackStackEntry
                 ?.savedStateHandle
                 ?.set(UPDATE_ALARM_RESULT_KEY, sideEffect.id)
             navigator.navigateBack()
         }
+
         is AlarmAddEditContract.SideEffect.DeleteAlarm -> {
             navigator.navController.previousBackStackEntry
                 ?.savedStateHandle
                 ?.set(DELETE_ALARM_RESULT_KEY, sideEffect.id)
             navigator.navigateBack()
         }
+
         is AlarmAddEditContract.SideEffect.ShowSnackBar -> {
             val result = showCustomSnackBar(
                 scope = coroutineScope,
@@ -149,17 +252,17 @@ private suspend fun handleSideEffect(
 
 @Composable
 fun AlarmAddEditScreen(
-    stateProvider: () -> AlarmAddEditContract.State,
-    eventDispatcher: (AlarmAddEditContract.Action) -> Unit,
+    state: AlarmAddEditContract.State,
+    bottomSheetState: OrbitBottomSheetState,
+    processAction: (AlarmAddEditContract.Action) -> Unit,
 ) {
-    val state = stateProvider()
-
     if (state.initialLoading) {
         AlarmAddEditLoadingScreen()
     } else {
         AlarmAddEditContent(
             state = state,
-            eventDispatcher = eventDispatcher,
+            bottomSheetState = bottomSheetState,
+            processAction = processAction,
         )
     }
 }
@@ -168,18 +271,16 @@ fun AlarmAddEditScreen(
 @Composable
 fun AlarmAddEditContent(
     state: AlarmAddEditContract.State,
-    eventDispatcher: (AlarmAddEditContract.Action) -> Unit,
+    bottomSheetState: OrbitBottomSheetState,
+    processAction: (AlarmAddEditContract.Action) -> Unit,
 ) {
     BackHandler {
-        eventDispatcher(AlarmAddEditContract.Action.CheckUnsavedChangesBeforeExit)
+        if (bottomSheetState.state.isVisible) {
+            processAction(AlarmAddEditContract.Action.HideBottomSheet)
+        } else {
+            processAction(AlarmAddEditContract.Action.CheckUnsavedChangesBeforeExit)
+        }
     }
-
-    val missionState = state.missionState
-    val snoozeState = state.snoozeState
-    val missionBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val snoozeBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val soundBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -188,8 +289,8 @@ fun AlarmAddEditContent(
         AlarmAddEditTopBar(
             mode = state.mode,
             title = state.timeState.alarmMessage,
-            onBack = { eventDispatcher(AlarmAddEditContract.Action.CheckUnsavedChangesBeforeExit) },
-            onDelete = { eventDispatcher(AlarmAddEditContract.Action.ShowDeleteDialog) },
+            onBack = { processAction(AlarmAddEditContract.Action.CheckUnsavedChangesBeforeExit) },
+            onDelete = { processAction(AlarmAddEditContract.Action.ShowDeleteDialog) },
         )
         Box(
             modifier = Modifier.weight(1f),
@@ -198,25 +299,25 @@ fun AlarmAddEditContent(
             OrbitPicker(
                 initialTime = state.timeState.initialTime,
             ) { newTime ->
-                eventDispatcher(AlarmAddEditContract.Action.SetAlarmTime(newTime))
+                processAction(AlarmAddEditContract.Action.SetAlarmTime(newTime))
             }
         }
         AlarmAddEditSelectDaysSection(
             modifier = Modifier.padding(horizontal = 20.dp),
             daysSelectionState = state.daySelectionState,
             holidayState = state.holidayState,
-            processAction = eventDispatcher,
+            processAction = processAction,
         )
         Spacer(modifier = Modifier.height(12.dp))
         AlarmAddEditSettingsSection(
             modifier = Modifier.padding(horizontal = 20.dp),
             state = state,
-            processAction = eventDispatcher,
+            processAction = processAction,
         )
         Spacer(modifier = Modifier.height(24.dp))
         OrbitButton(
             label = stringResource(R.string.alarm_add_edit_save),
-            onClick = { eventDispatcher(AlarmAddEditContract.Action.SaveAlarm) },
+            onClick = { processAction(AlarmAddEditContract.Action.SaveAlarm) },
             enabled = true,
             modifier = Modifier
                 .padding(
@@ -227,101 +328,6 @@ fun AlarmAddEditContent(
         )
     }
 
-    AlarmMissionBottomSheet(
-        sheetState = missionBottomSheetState,
-        missionType = missionState.missionType,
-        missionCount = missionState.missionCount,
-        isSheetOpen = state.bottomSheetState == AlarmAddEditContract.BottomSheetType.MissionSetting,
-        onDismiss = {
-            scope.launch {
-                missionBottomSheetState.hide()
-            }.invokeOnCompletion {
-                eventDispatcher(AlarmAddEditContract.Action.ToggleBottomSheet(AlarmAddEditContract.BottomSheetType.MissionSetting))
-            }
-        },
-        onSaveMission = { missionType, missionCount ->
-            eventDispatcher(
-                AlarmAddEditContract.Action.SaveMission(
-                    type = missionType,
-                    count = missionCount,
-                ),
-            )
-        },
-        onPreviewMission = { missionType, missionCount ->
-            eventDispatcher(
-                AlarmAddEditContract.Action.NavigateToMissionPreview(
-                    missionType = missionType,
-                    missionCount = missionCount,
-                ),
-            )
-        },
-    )
-
-    AlarmSnoozeBottomSheet(
-        snoozeEnabled = snoozeState.isSnoozeEnabled,
-        snoozeIntervalIndex = snoozeState.snoozeIntervalIndex,
-        snoozeCountIndex = snoozeState.snoozeCountIndex,
-        snoozeIntervals = snoozeState.snoozeIntervals,
-        snoozeCounts = snoozeState.snoozeCounts,
-        onSnoozeToggle = { eventDispatcher(AlarmAddEditContract.Action.ToggleSnoozeOption) },
-        onIntervalSelected = { index ->
-            eventDispatcher(
-                AlarmAddEditContract.Action.SetSnoozeInterval(
-                    index,
-                ),
-            )
-        },
-        onCountSelected = { index ->
-            eventDispatcher(
-                AlarmAddEditContract.Action.SetSnoozeRepeatCount(
-                    index,
-                ),
-            )
-        },
-        onComplete = {
-            scope.launch {
-                snoozeBottomSheetState.hide()
-            }.invokeOnCompletion {
-                eventDispatcher(AlarmAddEditContract.Action.ToggleBottomSheet(AlarmAddEditContract.BottomSheetType.SnoozeSetting))
-            }
-        },
-        isSheetOpen = state.bottomSheetState == AlarmAddEditContract.BottomSheetType.SnoozeSetting,
-        onDismiss = {
-            scope.launch {
-                snoozeBottomSheetState.hide()
-            }.invokeOnCompletion {
-                eventDispatcher(AlarmAddEditContract.Action.ToggleBottomSheet(AlarmAddEditContract.BottomSheetType.SnoozeSetting))
-            }
-        },
-    )
-
-    AlarmSoundBottomSheet(
-        vibrationEnabled = state.soundState.isVibrationEnabled,
-        soundEnabled = state.soundState.isSoundEnabled,
-        soundVolume = state.soundState.soundVolume,
-        soundIndex = state.soundState.soundIndex,
-        sounds = state.soundState.sounds,
-        onVibrationToggle = { eventDispatcher(AlarmAddEditContract.Action.ToggleVibrationOption) },
-        onSoundToggle = { eventDispatcher(AlarmAddEditContract.Action.ToggleSoundOption) },
-        onVolumeChanged = { eventDispatcher(AlarmAddEditContract.Action.AdjustSoundVolume(it)) },
-        onSoundSelected = { eventDispatcher(AlarmAddEditContract.Action.SelectAlarmSound(it)) },
-        onComplete = {
-            scope.launch {
-                soundBottomSheetState.hide()
-            }.invokeOnCompletion {
-                eventDispatcher(AlarmAddEditContract.Action.ToggleBottomSheet(AlarmAddEditContract.BottomSheetType.SoundSetting))
-            }
-        },
-        isSheetOpen = state.bottomSheetState == AlarmAddEditContract.BottomSheetType.SoundSetting,
-        onDismiss = {
-            scope.launch {
-                soundBottomSheetState.hide()
-            }.invokeOnCompletion {
-                eventDispatcher(AlarmAddEditContract.Action.ToggleBottomSheet(AlarmAddEditContract.BottomSheetType.SoundSetting))
-            }
-        },
-    )
-
     if (state.isDeleteDialogVisible) {
         OrbitDialog(
             title = stringResource(id = R.string.alarm_delete_dialog_title),
@@ -329,10 +335,10 @@ fun AlarmAddEditContent(
             confirmText = stringResource(id = R.string.alarm_delete_dialog_btn_delete),
             cancelText = stringResource(id = R.string.alarm_delete_dialog_btn_cancel),
             onConfirm = {
-                eventDispatcher(AlarmAddEditContract.Action.DeleteAlarm)
+                processAction(AlarmAddEditContract.Action.DeleteAlarm)
             },
             onCancel = {
-                eventDispatcher(AlarmAddEditContract.Action.HideDeleteDialog)
+                processAction(AlarmAddEditContract.Action.HideDeleteDialog)
             },
         )
     }
@@ -344,10 +350,10 @@ fun AlarmAddEditContent(
             confirmText = stringResource(id = R.string.alarm_unsaved_changes_dialog_btn_discard),
             cancelText = stringResource(id = R.string.alarm_unsaved_changes_dialog_btn_cancel),
             onConfirm = {
-                eventDispatcher(AlarmAddEditContract.Action.NavigateBack)
+                processAction(AlarmAddEditContract.Action.NavigateBack)
             },
             onCancel = {
-                eventDispatcher(AlarmAddEditContract.Action.HideUnsavedChangesDialog)
+                processAction(AlarmAddEditContract.Action.HideUnsavedChangesDialog)
             },
         )
     }
@@ -480,7 +486,7 @@ private fun AlarmAddEditSettingsSection(
             },
             onClick = {
                 processAction(
-                    AlarmAddEditContract.Action.ToggleBottomSheet(
+                    AlarmAddEditContract.Action.ShowBottomSheet(
                         AlarmAddEditContract.BottomSheetType.MissionSetting,
                     ),
                 )
@@ -496,17 +502,29 @@ private fun AlarmAddEditSettingsSection(
         AlarmAddEditSettingItem(
             label = stringResource(id = R.string.alarm_add_edit_alarm_snooze),
             description = if (state.snoozeState.isSnoozeEnabled) {
+                val interval = stringResource(
+                    id = R.string.alarm_add_edit_interval_minute,
+                    state.snoozeState.snoozeInterval,
+                )
+                val count = if (state.snoozeState.snoozeCount == -1) {
+                    stringResource(id = R.string.alarm_add_edit_repeat_count_infinite)
+                } else {
+                    stringResource(
+                        id = R.string.alarm_add_edit_repeat_count_times,
+                        state.snoozeState.snoozeCount,
+                    )
+                }
                 stringResource(
                     id = R.string.alarm_add_edit_alarm_selected_option,
-                    state.snoozeState.snoozeIntervals[state.snoozeState.snoozeIntervalIndex],
-                    state.snoozeState.snoozeCounts[state.snoozeState.snoozeCountIndex],
+                    interval,
+                    count,
                 )
             } else {
                 stringResource(id = R.string.alarm_add_edit_alarm_selected_option_none)
             },
             onClick = {
                 processAction(
-                    AlarmAddEditContract.Action.ToggleBottomSheet(
+                    AlarmAddEditContract.Action.ShowBottomSheet(
                         AlarmAddEditContract.BottomSheetType.SnoozeSetting,
                     ),
                 )
@@ -542,7 +560,7 @@ private fun AlarmAddEditSettingsSection(
             },
             onClick = {
                 processAction(
-                    AlarmAddEditContract.Action.ToggleBottomSheet(
+                    AlarmAddEditContract.Action.ShowBottomSheet(
                         AlarmAddEditContract.BottomSheetType.SoundSetting,
                     ),
                 )
@@ -771,24 +789,23 @@ fun AlarmAddEditScreenPreview() {
             ),
         ) {
             AlarmAddEditScreen(
-                stateProvider = {
-                    AlarmAddEditContract.State(
-                        initialLoading = false,
-                        timeState = AlarmAddEditContract.AlarmTimeState(
-                            currentTime = LocalTime.of(19, 30),
-                        ),
-                        daySelectionState = AlarmAddEditContract.AlarmDaySelectionState(
-                            isWeekdaysChecked = true,
-                            isWeekendsChecked = false,
-                            selectedDays = setOf(AlarmDay.MON, AlarmDay.TUE),
-                            days = AlarmDay.entries.toSet(),
-                        ),
-                        holidayState = AlarmAddEditContract.AlarmHolidayState(
-                            isDisableHolidayChecked = false,
-                        ),
-                    )
-                },
-                eventDispatcher = { },
+                state = AlarmAddEditContract.State(
+                    initialLoading = false,
+                    timeState = AlarmAddEditContract.AlarmTimeState(
+                        currentTime = LocalTime.of(19, 30),
+                    ),
+                    daySelectionState = AlarmAddEditContract.AlarmDaySelectionState(
+                        isWeekdaysChecked = true,
+                        isWeekendsChecked = false,
+                        selectedDays = setOf(AlarmDay.MON, AlarmDay.TUE),
+                        days = AlarmDay.entries.toSet(),
+                    ),
+                    holidayState = AlarmAddEditContract.AlarmHolidayState(
+                        isDisableHolidayChecked = false,
+                    ),
+                ),
+                bottomSheetState = rememberOrbitBottomSheetState(),
+                processAction = { },
             )
         }
     }

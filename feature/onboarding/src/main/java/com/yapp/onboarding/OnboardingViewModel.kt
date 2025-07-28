@@ -57,7 +57,8 @@ class OnboardingViewModel @Inject constructor(
             is OnboardingContract.Action.Reset -> resetFields()
             is OnboardingContract.Action.Submit -> submitUserInfo()
             is OnboardingContract.Action.UpdateGender -> updateGender(action.gender)
-            is OnboardingContract.Action.ToggleBottomSheet -> toggleBottomSheet()
+            is OnboardingContract.Action.ShowBottomSheet -> showBottomSheet()
+            is OnboardingContract.Action.HideBottomSheet -> hideBottomSheet()
             is OnboardingContract.Action.CompleteOnboarding -> completeOnboarding()
             is OnboardingContract.Action.OpenWebView -> openWebView(action.url)
             is OnboardingContract.Action.ShowWarningDialog -> showWarningDialog()
@@ -90,7 +91,6 @@ class OnboardingViewModel @Inject constructor(
                 ),
             )
 
-            reduce { state.copy(isBottomSheetOpen = false) }
             moveToNextStep()
         } else {
             showWarningDialog()
@@ -225,9 +225,12 @@ class OnboardingViewModel @Inject constructor(
         reduce { state.copy(selectedGender = gender, isButtonEnabled = true) }
     }
 
-    private fun toggleBottomSheet() = intent {
-        val isCurrentlyOpen = state.isBottomSheetOpen
-        reduce { state.copy(isBottomSheetOpen = !isCurrentlyOpen) }
+    private fun showBottomSheet() = intent {
+        postSideEffect(OnboardingContract.SideEffect.ShowBottomSheet)
+    }
+
+    private fun hideBottomSheet() = intent {
+        postSideEffect(OnboardingContract.SideEffect.HideBottomSheet)
     }
 
     private fun completeOnboarding() = intent {

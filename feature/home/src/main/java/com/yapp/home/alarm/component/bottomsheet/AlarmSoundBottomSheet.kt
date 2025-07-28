@@ -10,21 +10,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,88 +30,41 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.AlarmSound
-import com.yapp.ui.component.OrbitBottomSheet
+import com.yapp.home.alarm.addedit.AlarmAddEditContract
 import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.radiobutton.OrbitRadioButton
 import com.yapp.ui.component.slider.OrbitSlider
 import com.yapp.ui.component.switch.OrbitSwitch
 import feature.home.R
-import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AlarmSoundBottomSheet(
-    vibrationEnabled: Boolean,
-    soundEnabled: Boolean,
-    soundVolume: Int,
-    soundIndex: Int,
-    sounds: List<AlarmSound>,
-    onVibrationToggle: () -> Unit,
-    onSoundToggle: () -> Unit,
+    soundState: AlarmAddEditContract.AlarmSoundState,
+    onVibrationToggle: (Boolean) -> Unit,
+    onSoundToggle: (Boolean) -> Unit,
     onVolumeChanged: (Int) -> Unit,
     onSoundSelected: (Int) -> Unit,
-    onComplete: () -> Unit,
-    isSheetOpen: Boolean,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit = {},
+    onComplete: (vibrationEnabled: Boolean, soundEnabled: Boolean, soundVolume: Int, soundIndex: Int) -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var selectedVibrationEnabled by remember { mutableStateOf(soundState.isVibrationEnabled) }
+    var selectedSoundEnabled by remember { mutableStateOf(soundState.isSoundEnabled) }
+    var selectedSoundVolume by remember { mutableIntStateOf(soundState.soundVolume) }
+    var selectedSoundIndex by remember { mutableIntStateOf(soundState.soundIndex) }
 
-    OrbitBottomSheet(
-        modifier = Modifier.statusBarsPadding(),
-        isSheetOpen = isSheetOpen,
-        sheetState = sheetState,
-        onDismissRequest = {
-            scope.launch {
-                sheetState.hide()
-            }.invokeOnCompletion { onDismiss() }
-        },
-    ) {
-        BottomSheetContent(
-            vibrationEnabled = vibrationEnabled,
-            soundEnabled = soundEnabled,
-            soundVolume = soundVolume,
-            soundIndex = soundIndex,
-            sounds = sounds,
-            onVibrationToggle = onVibrationToggle,
-            onSoundToggle = onSoundToggle,
-            onVolumeChanged = onVolumeChanged,
-            onSoundSelected = onSoundSelected,
-            onComplete = {
-                scope.launch {
-                    sheetState.hide()
-                }.invokeOnCompletion { onComplete() }
-            },
-        )
-    }
-}
-
-@Composable
-private fun BottomSheetContent(
-    vibrationEnabled: Boolean,
-    soundEnabled: Boolean,
-    soundVolume: Int,
-    soundIndex: Int,
-    sounds: List<AlarmSound>,
-    onVibrationToggle: () -> Unit,
-    onSoundToggle: () -> Unit,
-    onVolumeChanged: (Int) -> Unit,
-    onSoundSelected: (Int) -> Unit,
-    onComplete: () -> Unit,
-) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                horizontal = 24.dp,
-                vertical = 12.dp,
-            ),
+            .padding(horizontal = 24.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(6.dp))
         VibrationSection(
-            isVibrationEnabled = vibrationEnabled,
-            onVibrationToggle = onVibrationToggle,
+            isVibrationEnabled = selectedVibrationEnabled,
+            onVibrationToggle = {
+                selectedVibrationEnabled = !selectedVibrationEnabled
+                onVibrationToggle(selectedVibrationEnabled)
+            },
         )
         Spacer(
             modifier = Modifier
@@ -125,13 +74,22 @@ private fun BottomSheetContent(
         )
         SoundSection(
             modifier = Modifier.weight(1f),
-            soundEnabled = soundEnabled,
-            onSoundToggle = onSoundToggle,
-            soundVolume = soundVolume,
-            onVolumeChanged = onVolumeChanged,
-            soundIndex = soundIndex,
-            sounds = sounds,
-            onSoundSelected = { onSoundSelected(it) },
+            soundEnabled = selectedSoundEnabled,
+            onSoundToggle = {
+                selectedSoundEnabled = !selectedSoundEnabled
+                onSoundToggle(selectedSoundEnabled)
+            },
+            soundVolume = selectedSoundVolume,
+            onVolumeChanged = {
+                selectedSoundVolume = it
+                onVolumeChanged(it)
+            },
+            soundIndex = selectedSoundIndex,
+            sounds = soundState.sounds,
+            onSoundSelected = {
+                selectedSoundIndex = it
+                onSoundSelected(it)
+            },
         )
 
         OrbitButton(
@@ -141,7 +99,15 @@ private fun BottomSheetContent(
             contentColor = OrbitTheme.colors.white,
             pressedContainerColor = OrbitTheme.colors.gray_500,
             pressedContentColor = OrbitTheme.colors.white.copy(alpha = 0.7f),
-            onClick = onComplete,
+            onClick = {
+                onDismiss()
+                onComplete(
+                    selectedVibrationEnabled,
+                    selectedSoundEnabled,
+                    selectedSoundVolume,
+                    selectedSoundIndex,
+                )
+            },
         )
     }
 }
@@ -300,27 +266,17 @@ private fun SoundSelectionItem(
 @Preview
 @Composable
 private fun AlarmSoundBottomSheetPreview() {
-    var isVibrationEnabled by remember { mutableStateOf(true) }
-    var isSoundEnabled by remember { mutableStateOf(true) }
-    var soundVolume by remember { mutableIntStateOf(0) }
-    var soundIndex by remember { mutableIntStateOf(0) }
-    val sounds by remember { mutableStateOf((1..20).map { AlarmSound("sound $it", Uri.EMPTY) }) }
-    var isSheetOpen by remember { mutableStateOf(true) }
-
     OrbitTheme {
         AlarmSoundBottomSheet(
-            vibrationEnabled = isVibrationEnabled,
-            soundEnabled = isSoundEnabled,
-            soundVolume = soundVolume,
-            soundIndex = soundIndex,
-            sounds = sounds,
-            onVibrationToggle = { isVibrationEnabled = !isVibrationEnabled },
-            onSoundToggle = { isSoundEnabled = !isSoundEnabled },
-            onVolumeChanged = { soundVolume = it },
-            onSoundSelected = { soundIndex = it },
-            onComplete = { isSheetOpen = false },
-            isSheetOpen = isSheetOpen,
-            onDismiss = { isSheetOpen = false },
+            soundState = AlarmAddEditContract.AlarmSoundState(
+                sounds = (1..20).map { AlarmSound("sound $it", Uri.EMPTY) },
+            ),
+            onVibrationToggle = {},
+            onSoundToggle = {},
+            onVolumeChanged = {},
+            onSoundSelected = {},
+            onComplete = { _, _, _, _ ->
+            },
         )
     }
 }

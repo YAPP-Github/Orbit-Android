@@ -149,15 +149,9 @@ class AlarmAddEditViewModel @Inject constructor(
     ): AlarmAddEditContract.AlarmSnoozeState {
         return currentState.snoozeState.copy(
             isSnoozeEnabled = alarm.isSnoozeEnabled,
-            snoozeIntervalIndex = findSnoozeIndex(alarm.snoozeInterval, currentState.snoozeState.snoozeIntervals),
-            snoozeCountIndex = findSnoozeIndex(alarm.snoozeCount, currentState.snoozeState.snoozeCounts),
+            snoozeInterval = alarm.snoozeInterval,
+            snoozeCount = alarm.snoozeCount,
         )
-    }
-
-    private fun findSnoozeIndex(value: Int, list: List<String>): Int {
-        return list.indexOfFirst {
-            it == "무한" && value == -1 || it.filter { char -> char.isDigit() }.toIntOrNull() == value
-        }.takeIf { it >= 0 } ?: 0
     }
 
     override fun onCleared() {
@@ -180,16 +174,25 @@ class AlarmAddEditViewModel @Inject constructor(
             is AlarmAddEditContract.Action.ToggleWeekendsSelection -> toggleWeekendsSelection()
             is AlarmAddEditContract.Action.ToggleSpecificDaySelection -> toggleSpecificDaySelection(action.day)
             is AlarmAddEditContract.Action.ToggleHolidaySkipOption -> toggleHolidaySkipOption()
-            is AlarmAddEditContract.Action.SaveMission -> saveMission(action.type, action.count)
+            is AlarmAddEditContract.Action.SaveMissionSetting -> saveMissionSetting(action.type, action.count)
+            is AlarmAddEditContract.Action.SaveSnoozeSetting -> saveSnoozeSetting(
+                action.enabled,
+                action.interval,
+                action.count,
+            )
+            is AlarmAddEditContract.Action.SaveSoundSetting -> saveSoundSetting(
+                action.vibrationEnabled,
+                action.soundEnabled,
+                action.soundVolume,
+                action.soundIndex,
+            )
+            is AlarmAddEditContract.Action.ToggleVibrationEnabled -> toggleVibrationEnabled(action.enabled)
+            is AlarmAddEditContract.Action.ToggleSoundEnabled -> toggleSoundEnabled(action.enabled)
+            is AlarmAddEditContract.Action.SetSoundVolume -> setSoundVolume(action.volume)
+            is AlarmAddEditContract.Action.SetSoundIndex -> setSoundIndex(action.index)
             is AlarmAddEditContract.Action.NavigateToMissionPreview -> navigateToMissionPreview(action.missionType, action.missionCount)
-            is AlarmAddEditContract.Action.ToggleSnoozeOption -> toggleSnoozeOption()
-            is AlarmAddEditContract.Action.SetSnoozeInterval -> setSnoozeInterval(action.index)
-            is AlarmAddEditContract.Action.SetSnoozeRepeatCount -> setSnoozeRepeatCount(action.index)
-            is AlarmAddEditContract.Action.ToggleVibrationOption -> toggleVibrationOption()
-            is AlarmAddEditContract.Action.ToggleSoundOption -> toggleSoundOption()
-            is AlarmAddEditContract.Action.AdjustSoundVolume -> adjustSoundVolume(action.volume)
-            is AlarmAddEditContract.Action.SelectAlarmSound -> selectAlarmSound(action.index)
-            is AlarmAddEditContract.Action.ToggleBottomSheet -> toggleBottomSheet(action.sheetType)
+            is AlarmAddEditContract.Action.ShowBottomSheet -> showBottomSheet(action.sheetType)
+            is AlarmAddEditContract.Action.HideBottomSheet -> hideBottomSheet()
         }
     }
 
@@ -453,7 +456,7 @@ class AlarmAddEditViewModel @Inject constructor(
         }
     }
 
-    private fun saveMission(type: MissionType, count: Int) = intent {
+    private fun saveMissionSetting(type: MissionType, count: Int) = intent {
         val newMissionState = state.missionState.copy(
             missionType = type,
             missionCount = count,
@@ -463,81 +466,68 @@ class AlarmAddEditViewModel @Inject constructor(
         }
     }
 
-    private fun toggleSnoozeOption() = intent {
+    private fun saveSnoozeSetting(
+        isSnoozeEnabled: Boolean,
+        snoozeInterval: Int,
+        snoozeCount: Int,
+    ) = intent {
         val newSnoozeState = state.snoozeState.copy(
-            isSnoozeEnabled = !state.snoozeState.isSnoozeEnabled,
+            isSnoozeEnabled = isSnoozeEnabled,
+            snoozeInterval = snoozeInterval,
+            snoozeCount = snoozeCount,
         )
+
         reduce {
             state.copy(snoozeState = newSnoozeState)
         }
     }
 
-    private fun setSnoozeInterval(index: Int) = intent {
-        val newSnoozeState = state.snoozeState.copy(snoozeIntervalIndex = index)
+    private fun saveSoundSetting(
+        vibrationEnabled: Boolean,
+        soundEnabled: Boolean,
+        soundVolume: Int,
+        soundIndex: Int,
+    ) = intent {
+        val newSoundState = state.soundState.copy(
+            isVibrationEnabled = vibrationEnabled,
+            isSoundEnabled = soundEnabled,
+            soundVolume = soundVolume,
+            soundIndex = soundIndex,
+        )
+
         reduce {
-            state.copy(snoozeState = newSnoozeState)
+            state.copy(soundState = newSoundState)
         }
     }
 
-    private fun setSnoozeRepeatCount(index: Int) = intent {
-        val newSnoozeState = state.snoozeState.copy(snoozeCountIndex = index)
-        reduce {
-            state.copy(snoozeState = newSnoozeState)
-        }
-    }
-
-    private fun toggleVibrationOption() = intent {
-        val newSoundState = state.soundState.copy(isVibrationEnabled = !state.soundState.isVibrationEnabled)
-
-        if (newSoundState.isVibrationEnabled) {
+    private fun toggleVibrationEnabled(enabled: Boolean) = intent {
+        if (enabled) {
             hapticFeedbackManager.performHapticFeedback(HapticType.SUCCESS)
         }
-        reduce {
-            state.copy(soundState = newSoundState)
-        }
     }
 
-    private fun toggleSoundOption() = intent {
-        val newSoundState = state.soundState.copy(isSoundEnabled = !state.soundState.isSoundEnabled)
-        if (!newSoundState.isSoundEnabled) {
+    private fun toggleSoundEnabled(enabled: Boolean) = intent {
+        if (!enabled) {
             alarmUseCase.stopAlarmSound()
         }
-        reduce {
-            state.copy(soundState = newSoundState)
-        }
     }
 
-    private fun adjustSoundVolume(volume: Int) = intent {
-        val newSoundState = state.soundState.copy(soundVolume = volume)
+    private fun setSoundVolume(volume: Int) = intent {
         alarmUseCase.updateAlarmVolume(volume)
-        reduce {
-            state.copy(soundState = newSoundState)
-        }
     }
 
-    private fun selectAlarmSound(index: Int) = intent {
-        val newSoundState = state.soundState.copy(soundIndex = index)
-        reduce {
-            state.copy(soundState = newSoundState)
-        }
-
+    private fun setSoundIndex(index: Int) = intent {
         val selectedSound = state.soundState.sounds[index]
         alarmUseCase.initializeSoundPlayer(selectedSound.uri)
         alarmUseCase.playAlarmSound(state.soundState.soundVolume)
     }
 
-    private fun toggleBottomSheet(sheetType: AlarmAddEditContract.BottomSheetType) = intent {
-        val newBottomSheetState = if (state.bottomSheetState == sheetType) {
-            if (state.bottomSheetState == AlarmAddEditContract.BottomSheetType.SoundSetting) {
-                alarmUseCase.stopAlarmSound()
-            }
-            null
-        } else {
-            sheetType
-        }
-        reduce {
-            state.copy(bottomSheetState = newBottomSheetState)
-        }
+    private fun showBottomSheet(sheetType: AlarmAddEditContract.BottomSheetType) = intent {
+        postSideEffect(AlarmAddEditContract.SideEffect.ShowBottomSheet(sheetType))
+    }
+
+    private fun hideBottomSheet() = intent {
+        postSideEffect(AlarmAddEditContract.SideEffect.HideBottomSheet)
     }
 
     private fun getAlarmMessage(currentTime: LocalTime, selectedDays: Set<AlarmDay>): String {
