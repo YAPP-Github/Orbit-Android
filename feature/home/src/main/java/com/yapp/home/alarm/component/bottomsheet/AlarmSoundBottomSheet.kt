@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.AlarmSound
+import com.yapp.home.alarm.addedit.AlarmAddEditContract
 import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.radiobutton.OrbitRadioButton
 import com.yapp.ui.component.slider.OrbitSlider
@@ -38,21 +39,17 @@ import feature.home.R
 
 @Composable
 internal fun AlarmSoundBottomSheet(
-    vibrationEnabled: Boolean,
-    soundEnabled: Boolean,
-    soundVolume: Int,
-    soundIndex: Int,
-    sounds: List<AlarmSound>,
+    soundState: AlarmAddEditContract.AlarmSoundState,
     onVibrationToggle: () -> Unit,
     onSoundToggle: () -> Unit,
     onVolumeChanged: (Int) -> Unit,
     onSoundSelected: (Int) -> Unit,
     onComplete: () -> Unit,
 ) {
-    var selectedVibrationEnabled by remember { mutableStateOf(vibrationEnabled) }
-    var selectedSoundEnabled by remember { mutableStateOf(soundEnabled) }
-    var selectedSoundVolume by remember { mutableIntStateOf(soundVolume) }
-    var selectedSoundIndex by remember { mutableIntStateOf(soundIndex) }
+    var selectedVibrationEnabled by remember { mutableStateOf(soundState.isVibrationEnabled) }
+    var selectedSoundEnabled by remember { mutableStateOf(soundState.isSoundEnabled) }
+    var selectedSoundVolume by remember { mutableIntStateOf(soundState.soundVolume) }
+    var selectedSoundIndex by remember { mutableIntStateOf(soundState.soundIndex) }
 
     Column(
         modifier = Modifier
@@ -87,7 +84,7 @@ internal fun AlarmSoundBottomSheet(
                 onVolumeChanged(it)
             },
             soundIndex = selectedSoundIndex,
-            sounds = sounds,
+            sounds = soundState.sounds,
             onSoundSelected = {
                 selectedSoundIndex = it
                 onSoundSelected(it)
@@ -262,23 +259,18 @@ private fun SoundSelectionItem(
 private fun AlarmSoundBottomSheetPreview() {
     var isVibrationEnabled by remember { mutableStateOf(true) }
     var isSoundEnabled by remember { mutableStateOf(true) }
-    var soundVolume by remember { mutableIntStateOf(0) }
-    var soundIndex by remember { mutableIntStateOf(0) }
-    val sounds by remember { mutableStateOf((1..20).map { AlarmSound("sound $it", Uri.EMPTY) }) }
     var isSheetOpen by remember { mutableStateOf(true) }
 
     OrbitTheme {
         if (isSheetOpen) {
             AlarmSoundBottomSheet(
-                vibrationEnabled = isVibrationEnabled,
-                soundEnabled = isSoundEnabled,
-                soundVolume = soundVolume,
-                soundIndex = soundIndex,
-                sounds = sounds,
+                soundState = AlarmAddEditContract.AlarmSoundState(
+                    sounds = (1..20).map { AlarmSound("sound $it", Uri.EMPTY) },
+                ),
                 onVibrationToggle = { isVibrationEnabled = !isVibrationEnabled },
                 onSoundToggle = { isSoundEnabled = !isSoundEnabled },
-                onVolumeChanged = { soundVolume = it },
-                onSoundSelected = { soundIndex = it },
+                onVolumeChanged = { _ -> },
+                onSoundSelected = { _ -> },
                 onComplete = { },
             )
         }

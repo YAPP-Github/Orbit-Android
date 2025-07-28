@@ -172,11 +172,7 @@ private suspend fun handleSideEffect(
 
                     AlarmAddEditContract.BottomSheetType.SoundSetting -> {
                         AlarmSoundBottomSheet(
-                            vibrationEnabled = state.soundState.isVibrationEnabled,
-                            soundEnabled = state.soundState.isSoundEnabled,
-                            soundVolume = state.soundState.soundVolume,
-                            soundIndex = state.soundState.soundIndex,
-                            sounds = state.soundState.sounds,
+                            soundState = state.soundState,
                             onVibrationToggle = { processAction(AlarmAddEditContract.Action.ToggleVibrationOption) },
                             onSoundToggle = { processAction(AlarmAddEditContract.Action.ToggleSoundOption) },
                             onVolumeChanged = {
