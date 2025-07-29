@@ -12,7 +12,7 @@ android {
     defaultConfig {
         versionCode = 5
         versionName = "1.0.3"
-        targetSdk = 34
+        targetSdk = 35
     }
 
     buildTypes {

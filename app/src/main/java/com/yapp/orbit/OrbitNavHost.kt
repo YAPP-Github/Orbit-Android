@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -54,7 +53,6 @@ internal fun OrbitNavHost(
             NavHost(
                 navController = navigator.navController,
                 startDestination = navigator.startDestination,
-                modifier = Modifier.navigationBarsPadding(),
             ) {
                 splashScreen(
                     navigator = navigator,

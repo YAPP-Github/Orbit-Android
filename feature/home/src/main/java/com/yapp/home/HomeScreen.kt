@@ -15,12 +15,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -278,6 +282,8 @@ private fun HomeContent(
     eventDispatcher: (HomeContract.Action) -> Unit,
 ) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val navBarHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     var sheetHalfExpandHeight by remember { mutableStateOf(0.dp) }
 
     val listState = rememberLazyListState()
@@ -391,7 +397,7 @@ private fun HomeContent(
                             .fillMaxWidth()
                             .layout { measurable, constraints ->
                                 val placeable = measurable.measure(constraints)
-                                sheetHalfExpandHeight = screenHeight - placeable.height.toDp()
+                                sheetHalfExpandHeight = screenHeight - placeable.height.toDp() - statusBarHeight - navBarHeight
                                 layout(placeable.width, placeable.height) {
                                     placeable.placeRelative(0, 0)
                                 }
@@ -536,7 +542,7 @@ private fun HomeTopBar(
 }
 
 @Composable
-fun HillWithGradient() {
+private fun HillWithGradient() {
     val hillTopY = (LocalConfiguration.current.screenHeightDp.dp * 0.28f).toPx()
 
     Canvas(
@@ -572,7 +578,7 @@ fun HillWithGradient() {
 }
 
 @Composable
-fun SkyImage() {
+private fun SkyImage() {
     Image(
         painter = painterResource(id = core.designsystem.R.drawable.ic_main_sky),
         contentDescription = "IMG_MAIN_SKY",
