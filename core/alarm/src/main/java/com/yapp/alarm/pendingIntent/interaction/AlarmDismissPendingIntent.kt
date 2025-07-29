@@ -12,8 +12,10 @@ import com.yapp.alarm.receivers.AlarmReceiver
 fun createAlarmDismissPendingIntent(
     applicationContext: Context,
     pendingIntentId: Long,
+    missionType: Int,
+    missionCount: Int,
 ): PendingIntent {
-    val alarmDismissIntent = createAlarmDismissIntent(applicationContext, pendingIntentId)
+    val alarmDismissIntent = createAlarmDismissIntent(applicationContext, pendingIntentId, missionType, missionCount)
     return PendingIntent.getBroadcast(
         applicationContext,
         pendingIntentId.toInt(),
@@ -25,10 +27,14 @@ fun createAlarmDismissPendingIntent(
 fun createAlarmDismissIntent(
     context: Context,
     notificationId: Long,
+    missionType: Int,
+    missionCount: Int,
 ): Intent {
     return Intent(AlarmConstants.ACTION_ALARM_DISMISSED).apply {
         setClass(context, AlarmReceiver::class.java)
         putExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, notificationId)
+        putExtra(AlarmConstants.EXTRA_MISSION_TYPE, missionType)
+        putExtra(AlarmConstants.EXTRA_MISSION_COUNT, missionCount)
     }
 }
 

@@ -32,15 +32,13 @@ class MissionViewModel @Inject constructor(
     private val fortuneRepository: FortuneRepository,
     private val userInfoRepository: UserInfoRepository,
     private val app: Application,
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel(), ContainerHost<MissionContract.State, MissionContract.SideEffect> {
 
     override val container: Container<MissionContract.State, MissionContract.SideEffect> = container(
         initialState = MissionContract.State(),
     ) {
-        savedStateHandle.get<String>("notificationId")?.toLong()?.let {
-            sendAlarmDismissIntent(it)
-        }
+        sendAlarmDismissIntent()
         loadMissionInfo(
             missionTypeRaw = savedStateHandle.get<String>("missionType"),
             missionCountRaw = savedStateHandle.get<String>("missionCount"),
@@ -57,6 +55,20 @@ class MissionViewModel @Inject constructor(
             is MissionContract.Action.HideExitDialog -> hideExitDialog()
             is MissionContract.Action.RetryPostFortune -> retryPostFortune()
         }
+    }
+
+    private fun sendAlarmDismissIntent() {
+        val notificationId = savedStateHandle.get<String>("notificationId")?.toLongOrNull() ?: return
+        val missionType = savedStateHandle.get<String>("missionType")?.toIntOrNull() ?: -1
+        val missionCount = savedStateHandle.get<String>("missionCount")?.toIntOrNull() ?: -1
+
+        val alarmDismissIntent = createAlarmDismissIntent(
+            context = app,
+            notificationId = notificationId,
+            missionType = missionType,
+            missionCount = missionCount,
+        )
+        app.sendBroadcast(alarmDismissIntent)
     }
 
     private fun loadMissionInfo(
@@ -122,6 +134,16 @@ class MissionViewModel @Inject constructor(
         }
     }
 
+    private fun completeMission(type: String) = intent {
+        performHapticSuccess()
+        logMissionSuccess(type)
+        if (state.missionMode == MissionMode.REAL) {
+            postFortune()
+        } else {
+            postSideEffect(MissionContract.SideEffect.NavigateBack)
+        }
+    }
+
     private fun postFortune(isRetry: Boolean = false) = intent {
         val userId = userInfoRepository.userIdFlow.firstOrNull() ?: return@intent
 
@@ -147,20 +169,6 @@ class MissionViewModel @Inject constructor(
         postFortune(isRetry = true)
     }
 
-    private fun completeMission(type: String) = intent {
-        performHapticSuccess()
-        logMissionSuccess(type)
-        if (state.missionMode == MissionMode.REAL) {
-            postFortune()
-        } else {
-            postSideEffect(MissionContract.SideEffect.NavigateBack)
-        }
-    }
-
-    private fun performHapticSuccess() {
-        hapticFeedbackManager.performHapticFeedback(HapticType.SUCCESS)
-    }
-
     private fun logMissionSuccess(type: String) {
         analyticsHelper.logEvent(
             AnalyticsEvent(
@@ -172,15 +180,11 @@ class MissionViewModel @Inject constructor(
         )
     }
 
-    private fun navigateToHome() = intent {
-        postSideEffect(MissionContract.SideEffect.NavigateToHome)
+    private fun performHapticSuccess() {
+        hapticFeedbackManager.performHapticFeedback(HapticType.SUCCESS)
     }
 
-    private fun sendAlarmDismissIntent(id: Long) {
-        val alarmDismissIntent = createAlarmDismissIntent(
-            context = app,
-            notificationId = id,
-        )
-        app.sendBroadcast(alarmDismissIntent)
+    private fun navigateToHome() = intent {
+        postSideEffect(MissionContract.SideEffect.NavigateToHome)
     }
 }
