@@ -84,7 +84,7 @@ internal fun AlarmActionScreen(
             snoozeEnabled = state.snoozeEnabled,
             snoozeInterval = state.snoozeInterval,
             snoozeCount = state.snoozeCount,
-            isFirstMission = state.isFirstMission,
+            isFirstMission = state.shouldShowMissionStart,
             onSnoozeClick = { processAction(AlarmActionContract.Action.Snooze) },
             onDismissClick = {
                 processAction(AlarmActionContract.Action.Dismiss)

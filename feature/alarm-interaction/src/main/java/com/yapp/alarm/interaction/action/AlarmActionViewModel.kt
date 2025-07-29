@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmSnoozeIntent
 import com.yapp.domain.model.Alarm
+import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -33,7 +34,7 @@ class AlarmActionViewModel @Inject constructor(
     override val container: Container<AlarmActionContract.State, AlarmActionContract.SideEffect> = container(
         initialState = AlarmActionContract.State(),
     ) {
-        fetchIsFirstMission()
+        fetchShouldShowMissionStart()
         initializeAlarmState()
         startClock()
     }
@@ -58,13 +59,16 @@ class AlarmActionViewModel @Inject constructor(
         }
     }
 
-    private fun fetchIsFirstMission() = intent {
+    private fun fetchShouldShowMissionStart() = intent {
+        val missionType = alarm?.missionType
         val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
         val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-        val isFirstMission = fortuneDate != todayDate
+        val shouldShowMissionStart = missionType != null &&
+            missionType != MissionType.NONE &&
+            fortuneDate != todayDate
 
         reduce {
-            state.copy(isFirstMission = isFirstMission)
+            state.copy(shouldShowMissionStart = shouldShowMissionStart)
         }
     }
 

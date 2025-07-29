@@ -3,10 +3,10 @@ package com.yapp.alarm.receivers
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.core.net.toUri
 import com.yapp.alarm.AlarmConstants
+import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -31,27 +31,33 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
 
             if (!isSnoozed) {
                 val notificationId = intent.getLongExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, -1L)
-                val missionType = intent.getIntExtra(AlarmConstants.EXTRA_MISSION_TYPE, -1)
+                val missionTypeRaw = intent.getIntExtra(AlarmConstants.EXTRA_MISSION_TYPE, -1)
                 val missionCount = intent.getIntExtra(AlarmConstants.EXTRA_MISSION_COUNT, -1)
 
-                if (notificationId == -1L || missionType == -1 || missionCount == -1) {
-                    Log.e("AlarmInteraction", "필수 값 누락")
-                    return
-                }
+                val missionType = MissionType.fromInt(missionTypeRaw)
+
+                val hasValidMissionData = (
+                    notificationId != -1L &&
+                        missionType != MissionType.NONE &&
+                        missionCount != -1
+                    )
+
+                if (!hasValidMissionData) return
 
                 CoroutineScope(Dispatchers.IO).launch {
                     val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
                     val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
 
-                    if (fortuneDate != todayDate) {
+                    val shouldLaunchMission = fortuneDate != todayDate
+
+                    if (shouldLaunchMission) {
                         context?.let {
                             val uriString =
-                                "orbitapp://mission?notificationId=$notificationId&missionType=$missionType&missionCount=$missionCount"
-                            val missionIntent =
-                                Intent(Intent.ACTION_VIEW, uriString.toUri()).apply {
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    setPackage(context.packageName)
-                                }
+                                "orbitapp://mission?notificationId=$notificationId&missionType=${missionType.value}&missionCount=$missionCount"
+                            val missionIntent = Intent(Intent.ACTION_VIEW, uriString.toUri()).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                setPackage(it.packageName)
+                            }
                             it.startActivity(missionIntent)
                         }
                     }

@@ -25,6 +25,7 @@ import com.yapp.alarm.pendingIntent.interaction.createAlarmSnoozePendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createNavigateToMissionPendingIntent
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
+import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.media.sound.SoundPlayer
@@ -113,7 +114,7 @@ class AlarmService : Service() {
             false -> {
                 startForeground(
                     notificationId.toInt(),
-                    createNotification(alarm, shouldNavigateToMission()),
+                    createNotification(alarm, shouldNavigateToMission(alarm.missionType)),
                 )
                 if (alarm.isVibrationEnabled) startVibration()
                 if (alarm.isSoundEnabled) startSound(alarm.soundUri, alarm.soundVolume)
@@ -125,7 +126,11 @@ class AlarmService : Service() {
         }
     }
 
-    private suspend fun shouldNavigateToMission(): Boolean {
+    private suspend fun shouldNavigateToMission(
+        missionType: MissionType,
+    ): Boolean {
+        if (missionType == MissionType.NONE) return false
+
         val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
         val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
         return fortuneDate != todayDate
