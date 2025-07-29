@@ -7,6 +7,8 @@ object AlarmConstants {
     const val ACTION_ALARM_INTERACTION_ACTIVITY_CLOSE = "com.yapp.orbit.ACTION_ALERT_INTERACTION_CLOSE"
 
     const val EXTRA_NOTIFICATION_ID = "com.yapp.orbit.EXTRA_NOTIFICATION_ID"
+    const val EXTRA_MISSION_TYPE = "com.yapp.orbit.EXTRA_MISSION_TYPE"
+    const val EXTRA_MISSION_COUNT = "com.yapp.orbit.EXTRA_MISSION_COUNT"
 
     const val EXTRA_ALARM = "com.yapp.orbit.EXTRA_ALARM"
     const val EXTRA_ALARM_DAY = "com.yapp.orbit.EXTRA_ALARM_DAY"

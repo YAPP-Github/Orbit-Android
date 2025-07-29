@@ -46,10 +46,11 @@ class AlarmReceiver : BroadcastReceiver() {
         val alarmServiceIntent = createAlarmServiceIntent(context, intent)
         when (intent.action) {
             AlarmConstants.ACTION_ALARM_TRIGGERED -> {
-                Log.d("AlarmReceiver", "Alarm Triggered")
-
                 val alarm: Alarm? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    alarmServiceIntent.getParcelableExtra(AlarmConstants.EXTRA_ALARM, Alarm::class.java)
+                    alarmServiceIntent.getParcelableExtra(
+                        AlarmConstants.EXTRA_ALARM,
+                        Alarm::class.java,
+                    )
                 } else {
                     @Suppress("DEPRECATION")
                     alarmServiceIntent.getParcelableExtra(AlarmConstants.EXTRA_ALARM)
@@ -68,8 +69,6 @@ class AlarmReceiver : BroadcastReceiver() {
             }
 
             AlarmConstants.ACTION_ALARM_SNOOZED -> {
-                Log.d("AlarmReceiver", "Alarm Snoozed")
-
                 val alarm: Alarm? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     intent.getParcelableExtra(AlarmConstants.EXTRA_ALARM, Alarm::class.java)
                 } else {
@@ -86,44 +85,54 @@ class AlarmReceiver : BroadcastReceiver() {
                 )
                 alarm?.let { handleSnooze(context, it) }
 
-                Toast.makeText(context, "알람이 ${alarm?.snoozeInterval}분 후 다시 울려요", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "알람이 ${alarm?.snoozeInterval}분 후 다시 울려요",
+                    Toast.LENGTH_SHORT,
+                ).show()
             }
 
             AlarmConstants.ACTION_ALARM_DISMISSED -> {
-                Log.d("AlarmReceiver", "Alarm Dismissed")
+                val notificationId = intent.getLongExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, -1L)
+                val missionType = intent.getIntExtra(AlarmConstants.EXTRA_MISSION_TYPE, -1)
+                val missionCount = intent.getIntExtra(AlarmConstants.EXTRA_MISSION_COUNT, -1)
 
-                val alarmId = intent.getLongExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, -1L)
-                if (alarmId != -1L) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        val alarms = alarmUseCase.getAllAlarms().first().sortedBy { it.isAlarmActive }
-                        val isFirstAlarm = alarms.firstOrNull()?.id == alarmId
-
-                        analyticsHelper.logEvent(
-                            AnalyticsEvent(
-                                type = "alarm_dismiss",
-                                properties = mapOf(
-                                    AnalyticsEvent.AlarmPropertiesKeys.ALARM_ID to "$alarmId",
-                                    AnalyticsEvent.AlarmPropertiesKeys.DISMISS_IS_FIRST_ALARM to isFirstAlarm,
-                                ),
-                            ),
-                        )
-                        val existingId = fortuneRepository.firstDismissedAlarmIdFlow.firstOrNull()
-                        if (existingId == null) {
-                            // 첫 번째 알람 해제 기록
-                            fortuneRepository.saveFirstDismissedAlarmId(alarmId)
-                        } else if (existingId != alarmId) {
-                            // 두 번째 알람 해제 감지 - 기존 기록 삭제
-                            fortuneRepository.clearDismissedAlarmId()
-                        }
-                    }
-
-                    androidAlarmScheduler.cancelSnoozedAlarm(alarmId)
-                } else {
-                    Log.e("AlarmReceiver", "알람 ID 수신 실패")
+                if (notificationId == -1L) {
+                    Log.e("AlarmReceiver", "notificationId 수신 실패")
+                    return
                 }
-                androidAlarmScheduler.cancelSnoozedAlarm(alarmId)
+
+                androidAlarmScheduler.cancelSnoozedAlarm(notificationId)
                 context.stopService(alarmServiceIntent)
-                sendBroadCastToCloseAlarmInteractionActivity(context)
+
+                sendBroadCastToCloseAlarmInteractionActivity(
+                    context = context,
+                    notificationId = notificationId,
+                    missionType = missionType,
+                    missionCount = missionCount,
+                )
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    val alarms = alarmUseCase.getAllAlarms().first().sortedBy { it.isAlarmActive }
+                    val isFirstAlarm = alarms.firstOrNull()?.id == notificationId
+
+                    analyticsHelper.logEvent(
+                        AnalyticsEvent(
+                            type = "alarm_dismiss",
+                            properties = mapOf(
+                                AnalyticsEvent.AlarmPropertiesKeys.ALARM_ID to "$notificationId",
+                                AnalyticsEvent.AlarmPropertiesKeys.DISMISS_IS_FIRST_ALARM to isFirstAlarm,
+                            ),
+                        ),
+                    )
+
+                    val existingId = fortuneRepository.firstDismissedAlarmIdFlow.firstOrNull()
+                    if (existingId == null) {
+                        fortuneRepository.saveFirstDismissedAlarmId(notificationId)
+                    } else if (existingId != notificationId) {
+                        fortuneRepository.clearDismissedAlarmId()
+                    }
+                }
 
                 Toast.makeText(context, "알람이 해제되었어요", Toast.LENGTH_SHORT).show()
             }
@@ -160,21 +169,22 @@ class AlarmReceiver : BroadcastReceiver() {
             id = alarm.id + AlarmConstants.SNOOZE_ID_OFFSET,
         )
 
-        Log.d(
-            "AlarmReceiver",
-            "Scheduling snooze alarm: alarmId=${updatedAlarm.id}, newTime=${updatedAlarm.hour}:${updatedAlarm.minute}, remaining snoozeCount=$newSnoozeCount",
-        )
-
         context.stopService(Intent(context, AlarmService::class.java))
         androidAlarmScheduler.scheduleAlarm(updatedAlarm)
     }
 
-    private fun sendBroadCastToCloseAlarmInteractionActivity(context: Context) {
-        Log.d("AlarmReceiver", "Send Broadcast to close Alarm Interaction Activity")
-        val alarmAlertActivityCloseIntent =
-            Intent(AlarmConstants.ACTION_ALARM_INTERACTION_ACTIVITY_CLOSE).apply {
-                putExtra(AlarmConstants.EXTRA_IS_SNOOZED, false)
-            }
-        context.sendBroadcast(alarmAlertActivityCloseIntent)
+    private fun sendBroadCastToCloseAlarmInteractionActivity(
+        context: Context,
+        notificationId: Long,
+        missionType: Int,
+        missionCount: Int,
+    ) {
+        val intent = Intent(AlarmConstants.ACTION_ALARM_INTERACTION_ACTIVITY_CLOSE).apply {
+            putExtra(AlarmConstants.EXTRA_IS_SNOOZED, false)
+            putExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, notificationId)
+            putExtra(AlarmConstants.EXTRA_MISSION_TYPE, missionType)
+            putExtra(AlarmConstants.EXTRA_MISSION_COUNT, missionCount)
+        }
+        context.sendBroadcast(intent)
     }
 }

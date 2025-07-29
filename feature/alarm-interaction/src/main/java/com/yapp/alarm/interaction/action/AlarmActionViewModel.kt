@@ -119,10 +119,12 @@ class AlarmActionViewModel @Inject constructor(
     }
 
     private fun sendAlarmDismissEventToAlarmReceiver() {
-        alarm?.id?.let { id ->
+        alarm?.let { alarm ->
             val alarmDismissIntent = createAlarmDismissIntent(
                 context = app,
-                notificationId = id,
+                notificationId = alarm.id,
+                missionType = alarm.missionType.value,
+                missionCount = alarm.missionCount,
             )
             app.sendBroadcast(alarmDismissIntent)
         }
