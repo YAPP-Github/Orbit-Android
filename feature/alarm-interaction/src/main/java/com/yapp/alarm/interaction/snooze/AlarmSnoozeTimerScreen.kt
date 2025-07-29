@@ -53,17 +53,16 @@ internal fun AlarmSnoozeTimerRoute(
     val state by viewModel.container.stateFlow.collectAsStateWithLifecycle()
 
     AlarmSnoozeTimerScreen(
-        stateProvider = { state },
-        eventDispatcher = viewModel::processAction,
+        state = state,
+        processAction = viewModel::processAction,
     )
 }
 
 @Composable
 internal fun AlarmSnoozeTimerScreen(
-    stateProvider: () -> AlarmSnoozeTimerContract.State,
-    eventDispatcher: (AlarmSnoozeTimerContract.Action) -> Unit,
+    state: AlarmSnoozeTimerContract.State,
+    processAction: (AlarmSnoozeTimerContract.Action) -> Unit,
 ) {
-    val state = stateProvider()
     val context = LocalContext.current
 
     if (state.initialLoading) {
@@ -74,7 +73,7 @@ internal fun AlarmSnoozeTimerScreen(
             totalSeconds = state.totalSeconds,
             isFirstMission = state.isFirstMission,
             onDismissClick = {
-                eventDispatcher(AlarmSnoozeTimerContract.Action.Dismiss)
+                processAction(AlarmSnoozeTimerContract.Action.Dismiss)
                 (context as? ComponentActivity)?.finish()
             },
         )
@@ -296,8 +295,8 @@ private fun AlarmOffButton(
 internal fun PreviewAlarmSnoozeTimerScreen() {
     OrbitTheme {
         AlarmSnoozeTimerScreen(
-            stateProvider = { AlarmSnoozeTimerContract.State() },
-            eventDispatcher = {},
+            state = AlarmSnoozeTimerContract.State(),
+            processAction = {},
         )
     }
 }
