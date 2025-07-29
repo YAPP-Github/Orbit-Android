@@ -48,14 +48,6 @@ fun NavGraphBuilder.alarmInteractionNavGraph(
                             }
                         },
                     )
-                } ?: run {
-                    navigator.navigateToHome(
-                        navOptions {
-                            popUpTo(AlarmInteractionBaseRoute) {
-                                inclusive = true
-                            }
-                        },
-                    )
                 }
             }
         }
