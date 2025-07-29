@@ -10,8 +10,8 @@ android {
     namespace = "com.yapp.orbit"
 
     defaultConfig {
-        versionCode = 5
-        versionName = "1.0.3"
+        versionCode = 6
+        versionName = "1.1.3"
         targetSdk = 35
     }
 
