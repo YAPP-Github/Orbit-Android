@@ -123,7 +123,7 @@ private fun handleOnboardingCommonSideEffect(
         OnboardingContract.SideEffect.OnboardingCompleted -> {
             navigator.navigateToHome(
                 navOptions = navOptions {
-                    popUpTo(OnboardingBaseRoute) {
+                    popUpTo<OnboardingBaseRoute> {
                         inclusive = true
                     }
                 },

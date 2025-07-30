@@ -121,7 +121,7 @@ private suspend fun handleSideEffect(
         OnboardingContract.SideEffect.OnboardingCompleted -> {
             navigator.navigateToHome(
                 navOptions = navOptions {
-                    popUpTo(OnboardingBaseRoute) {
+                    popUpTo<OnboardingBaseRoute> {
                         inclusive = true
                     }
                 },
