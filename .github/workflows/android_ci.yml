@@ -7,17 +7,6 @@ on:
             - '**/*.kt'
             - 'build.gradle'
             - 'app/**'
-    push:
-        branches:
-            - 'release/**'
-        paths:
-            - '**/*.kt'
-            - 'build.gradle'
-            - 'app/**'
-
-concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
 
 jobs:
   build:
