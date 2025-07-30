@@ -88,6 +88,7 @@ internal fun AlarmListBottomSheet(
     onToggleSelect: (Long) -> Unit,
     onToggleActive: (Long) -> Unit,
     onSwipe: (Long) -> Unit,
+    onExpanded: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     var expandedType by remember { mutableStateOf(BottomSheetExpandState.HALF_EXPANDED) }
@@ -100,7 +101,10 @@ internal fun AlarmListBottomSheet(
         snapshotFlow { sheetState.currentValue }
             .collect { value ->
                 expandedType = when (value) {
-                    SheetValue.Expanded -> BottomSheetExpandState.EXPANDED
+                    SheetValue.Expanded -> {
+                        onExpanded()
+                        BottomSheetExpandState.EXPANDED
+                    }
                     SheetValue.PartiallyExpanded, SheetValue.Hidden -> BottomSheetExpandState.HALF_EXPANDED
                 }
             }

@@ -130,8 +130,8 @@ fun HomeRoute(
     }
 
     HomeScreen(
-        stateProvider = { state },
-        eventDispatcher = viewModel::processAction,
+        state = state,
+        processAction = viewModel::processAction,
     )
 }
 
@@ -179,23 +179,21 @@ private suspend fun handleSideEffect(
 
 @Composable
 fun HomeScreen(
-    stateProvider: () -> HomeContract.State,
-    eventDispatcher: (HomeContract.Action) -> Unit,
+    state: HomeContract.State,
+    processAction: (HomeContract.Action) -> Unit,
 ) {
-    val state = stateProvider()
-
     if (state.initialLoading) {
         HomeLoadingScreen()
     } else if (state.alarms.isEmpty()) {
         HomeAlarmEmptyScreen(
             onSettingClick = {
-                eventDispatcher(HomeContract.Action.NavigateToSetting)
+                processAction(HomeContract.Action.NavigateToSetting)
             },
             onMailClick = {
-                eventDispatcher(HomeContract.Action.ShowDailyFortune)
+                processAction(HomeContract.Action.ShowDailyFortune)
             },
             onAddClick = {
-                eventDispatcher(HomeContract.Action.NavigateToAlarmCreation)
+                processAction(HomeContract.Action.NavigateToAlarmCreation)
             },
             hasNewFortune = state.hasNewFortune,
             isTooltipVisible = state.isToolTipVisible,
@@ -203,7 +201,7 @@ fun HomeScreen(
     } else {
         HomeContent(
             state = state,
-            eventDispatcher = eventDispatcher,
+            processAction = processAction,
         )
     }
 
@@ -214,10 +212,10 @@ fun HomeScreen(
             confirmText = stringResource(id = R.string.alarm_delete_dialog_btn_delete),
             cancelText = stringResource(id = R.string.alarm_delete_dialog_btn_cancel),
             onConfirm = {
-                eventDispatcher(HomeContract.Action.ConfirmDeletion)
+                processAction(HomeContract.Action.ConfirmDeletion)
             },
             onCancel = {
-                eventDispatcher(HomeContract.Action.HideDeleteDialog)
+                processAction(HomeContract.Action.HideDeleteDialog)
             },
         )
     }
@@ -229,10 +227,10 @@ fun HomeScreen(
             confirmText = stringResource(id = R.string.no_active_alarm_dialog_btn_confirm),
             cancelText = stringResource(id = R.string.no_active_alarm_dialog_btn_cancel),
             onConfirm = {
-                eventDispatcher(HomeContract.Action.HideNoActivatedAlarmDialog)
+                processAction(HomeContract.Action.HideNoActivatedAlarmDialog)
             },
             onCancel = {
-                eventDispatcher(HomeContract.Action.RollbackPendingAlarmToggle)
+                processAction(HomeContract.Action.RollbackPendingAlarmToggle)
             },
         )
     }
@@ -243,7 +241,7 @@ fun HomeScreen(
             message = stringResource(id = R.string.no_daily_fortune_dialog_message),
             confirmText = stringResource(id = R.string.no_daily_fortune_dialog_btn_confirm),
             onConfirm = {
-                eventDispatcher(HomeContract.Action.HideNoDailyFortuneDialog)
+                processAction(HomeContract.Action.HideNoDailyFortuneDialog)
             },
         )
     }
@@ -280,7 +278,7 @@ private fun HomeLoadingScreen() {
 @Composable
 private fun HomeContent(
     state: HomeContract.State,
-    eventDispatcher: (HomeContract.Action) -> Unit,
+    processAction: (HomeContract.Action) -> Unit,
 ) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -292,7 +290,7 @@ private fun HomeContent(
     LaunchedEffect(state.lastAddedAlarmIndex) {
         state.lastAddedAlarmIndex?.let { index ->
             listState.scrollToItem(index)
-            eventDispatcher(HomeContract.Action.ResetLastAddedAlarmIndex)
+            processAction(HomeContract.Action.ResetLastAddedAlarmIndex)
         }
     }
 
@@ -302,7 +300,7 @@ private fun HomeContent(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
             ) {
-                eventDispatcher(HomeContract.Action.HideToolTip)
+                processAction(HomeContract.Action.HideToolTip)
             },
     ) {
         if (state.activeItemMenu != null) {
@@ -313,7 +311,7 @@ private fun HomeContent(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                     ) {
-                        eventDispatcher(HomeContract.Action.HideItemMenu)
+                        processAction(HomeContract.Action.HideItemMenu)
                     }
                     .zIndex(1f),
             )
@@ -339,47 +337,50 @@ private fun HomeContent(
                 halfExpandedHeight = sheetHalfExpandHeight,
                 listState = listState,
                 onClickAlarm = { alarmId ->
-                    eventDispatcher(HomeContract.Action.EditAlarm(alarmId))
+                    processAction(HomeContract.Action.EditAlarm(alarmId))
                 },
                 onLongPressAlarm = { alarmId, x, y ->
-                    eventDispatcher(HomeContract.Action.ShowItemMenu(alarmId, x, y))
+                    processAction(HomeContract.Action.ShowItemMenu(alarmId, x, y))
                 },
                 onClickAdd = {
-                    eventDispatcher(HomeContract.Action.NavigateToAlarmCreation)
+                    processAction(HomeContract.Action.NavigateToAlarmCreation)
                 },
                 onClickMore = {
                     if (state.dropdownMenuExpanded || state.sortDropDownMenuExpanded) {
-                        eventDispatcher(HomeContract.Action.HideDropDownMenu)
+                        processAction(HomeContract.Action.HideDropDownMenu)
                     } else {
-                        eventDispatcher(HomeContract.Action.ShowDropDownMenu)
+                        processAction(HomeContract.Action.ShowDropDownMenu)
                     }
                 },
                 onClickCheckAll = {
-                    eventDispatcher(HomeContract.Action.ToggleAllAlarmSelection)
+                    processAction(HomeContract.Action.ToggleAllAlarmSelection)
                 },
                 onClickClose = {
-                    eventDispatcher(HomeContract.Action.ToggleMultiSelectionMode)
+                    processAction(HomeContract.Action.ToggleMultiSelectionMode)
                 },
                 onClickEdit = {
-                    eventDispatcher(HomeContract.Action.ToggleMultiSelectionMode)
+                    processAction(HomeContract.Action.ToggleMultiSelectionMode)
                 },
                 onClickSort = {
-                    eventDispatcher(HomeContract.Action.ShowSortDropDownMenu)
+                    processAction(HomeContract.Action.ShowSortDropDownMenu)
                 },
                 onSetSortOrder = { sortOrder ->
-                    eventDispatcher(HomeContract.Action.SetSortOrder(sortOrder))
+                    processAction(HomeContract.Action.SetSortOrder(sortOrder))
                 },
                 onDismissRequest = {
-                    eventDispatcher(HomeContract.Action.HideDropDownMenu)
+                    processAction(HomeContract.Action.HideDropDownMenu)
                 },
                 onToggleSelect = { alarmId ->
-                    eventDispatcher(HomeContract.Action.ToggleAlarmSelection(alarmId))
+                    processAction(HomeContract.Action.ToggleAlarmSelection(alarmId))
                 },
                 onToggleActive = { alarmId ->
-                    eventDispatcher(HomeContract.Action.ToggleAlarmActivation(alarmId))
+                    processAction(HomeContract.Action.ToggleAlarmActivation(alarmId))
                 },
                 onSwipe = { alarmId ->
-                    eventDispatcher(HomeContract.Action.SwipeToDeleteAlarm(alarmId))
+                    processAction(HomeContract.Action.SwipeToDeleteAlarm(alarmId))
+                },
+                onExpanded = {
+                    processAction(HomeContract.Action.HideToolTip)
                 },
             ) {
                 Box(
@@ -429,8 +430,8 @@ private fun HomeContent(
                     }
 
                     HomeTopBar(
-                        onSettingClick = { eventDispatcher(HomeContract.Action.NavigateToSetting) },
-                        onMailClick = { eventDispatcher(HomeContract.Action.ShowDailyFortune) },
+                        onSettingClick = { processAction(HomeContract.Action.NavigateToSetting) },
+                        onMailClick = { processAction(HomeContract.Action.ShowDailyFortune) },
                         hasNewFortune = state.hasNewFortune,
                         isShowTooltip = state.isToolTipVisible,
                     )
@@ -447,7 +448,7 @@ private fun HomeContent(
                         .padding(bottom = 26.dp),
                     selectedAlarmCount = state.selectedAlarmIds.size,
                     onClick = {
-                        eventDispatcher(HomeContract.Action.ShowDeleteDialog)
+                        processAction(HomeContract.Action.ShowDeleteDialog)
                     },
                 )
             }
@@ -460,7 +461,7 @@ private fun HomeContent(
                     activeItemMenuPosition = state.activeItemMenuPosition,
                     selectedAlarmIds = state.selectedAlarmIds,
                     onDelete = { alarmId ->
-                        eventDispatcher(HomeContract.Action.DeleteSingleAlarm(alarmId))
+                        processAction(HomeContract.Action.DeleteSingleAlarm(alarmId))
                     },
                 )
             }
@@ -947,18 +948,16 @@ private fun AlarmWithMenu(
 fun HomeScreenPreview() {
     OrbitTheme {
         HomeScreen(
-            stateProvider = {
-                HomeContract.State()
-                    .copy(
-                        initialLoading = false,
-                        alarms = listOf(
-                            Alarm(),
-                        ),
-                        activeItemMenu = 0L,
-                        activeItemMenuPosition = Pair(0f, 0f),
-                    )
-            },
-            eventDispatcher = {},
+            state = HomeContract.State()
+                .copy(
+                    initialLoading = false,
+                    alarms = listOf(
+                        Alarm(),
+                    ),
+                    activeItemMenu = 0L,
+                    activeItemMenuPosition = Pair(0f, 0f),
+                ),
+            processAction = {},
         )
     }
 }
