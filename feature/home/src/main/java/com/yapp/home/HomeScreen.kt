@@ -1,5 +1,6 @@
 package com.yapp.home
 
+import android.os.Build
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -397,7 +398,15 @@ private fun HomeContent(
                             .fillMaxWidth()
                             .layout { measurable, constraints ->
                                 val placeable = measurable.measure(constraints)
-                                sheetHalfExpandHeight = screenHeight - placeable.height.toDp() - statusBarHeight - navBarHeight
+                                val contentHeight = placeable.height.toDp()
+
+                                val offset = if (Build.VERSION.SDK_INT < 35) {
+                                    0.dp
+                                } else {
+                                    statusBarHeight + navBarHeight
+                                }
+                                sheetHalfExpandHeight = screenHeight - contentHeight - offset
+
                                 layout(placeable.width, placeable.height) {
                                     placeable.placeRelative(0, 0)
                                 }
