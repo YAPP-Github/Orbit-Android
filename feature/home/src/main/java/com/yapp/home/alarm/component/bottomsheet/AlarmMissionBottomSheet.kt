@@ -1,5 +1,6 @@
 package com.yapp.home.alarm.component.bottomsheet
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,10 +22,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,6 +62,12 @@ private fun MissionType.displayData(): Pair<Int, Int> = when (this) {
     else -> throw IllegalStateException("Invalid mission type")
 }
 
+val StepStackSaver: Saver<MutableState<List<AlarmMissionSelectBottomSheetType>>, out Any> =
+    listSaver(
+        save = { state -> state.value.map { it.name } },
+        restore = { restored -> mutableStateOf(restored.map { AlarmMissionSelectBottomSheetType.valueOf(it) }) },
+    )
+
 @Composable
 internal fun AlarmMissionBottomSheet(
     missionState: AlarmAddEditContract.AlarmMissionState,
@@ -64,7 +75,9 @@ internal fun AlarmMissionBottomSheet(
     onSaveMission: (MissionType, Int) -> Unit,
     onPreviewMission: (MissionType, Int) -> Unit,
 ) {
-    var stepStack by remember { mutableStateOf(listOf(AlarmMissionSelectBottomSheetType.MISSION_SETTING)) }
+    var stepStack by rememberSaveable(saver = StepStackSaver) {
+        mutableStateOf(listOf(AlarmMissionSelectBottomSheetType.MISSION_SETTING))
+    }
     var selectedMissionType by remember { mutableStateOf(missionState.missionType) }
     var selectedMissionCount by remember { mutableIntStateOf(missionState.missionCount) }
 
@@ -79,6 +92,7 @@ internal fun AlarmMissionBottomSheet(
     }
 
     val currentStep = stepStack.last()
+    Log.d("AlarmMissionBottomSheet", "Current Step: $currentStep, Stack: $stepStack")
 
     when (currentStep) {
         AlarmMissionSelectBottomSheetType.MISSION_SETTING -> {

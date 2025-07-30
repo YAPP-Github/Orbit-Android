@@ -29,6 +29,7 @@ import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.common.navigation.route.OnboardingBaseRoute
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.onboarding.component.UserInfoBottomSheet
+import com.yapp.ui.component.bottomsheet.OrbitBottomSheetLayout
 import com.yapp.ui.component.bottomsheet.OrbitBottomSheetState
 import com.yapp.ui.component.bottomsheet.rememberOrbitBottomSheetState
 import com.yapp.ui.component.dialog.OrbitDialog
@@ -153,55 +154,57 @@ fun OnboardingGenderScreen(
         }
     }
 
-    OnboardingScreen(
-        currentStep = currentStep,
-        totalSteps = totalSteps,
-        isButtonEnabled = state.selectedGender != null,
-        onNextClick = {
-            processAction(OnboardingContract.Action.ShowBottomSheet)
-        },
-        onBackClick = {
-            processAction(OnboardingContract.Action.PreviousStep)
-        },
-        buttonLabel = "다음",
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+    OrbitBottomSheetLayout(sheetState = bottomSheetState) {
+        OnboardingScreen(
+            currentStep = currentStep,
+            totalSteps = totalSteps,
+            isButtonEnabled = state.selectedGender != null,
+            onNextClick = {
+                processAction(OnboardingContract.Action.ShowBottomSheet)
+            },
+            onBackClick = {
+                processAction(OnboardingContract.Action.PreviousStep)
+            },
+            buttonLabel = "다음",
         ) {
-            Spacer(modifier = Modifier.heightForScreenPercentage(0.05f))
-            Text(
-                text = stringResource(id = R.string.onboarding_step6_text_title),
-                style = OrbitTheme.typography.heading1SemiBold,
-                color = OrbitTheme.colors.white,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 38.dp)
-                    .paddingForScreenPercentage(topPercentage = 0.11f),
-                horizontalArrangement = Arrangement.spacedBy(15.dp),
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                listOf("남성", "여성").forEach { gender ->
-                    Box(modifier = Modifier.weight(1f)) {
-                        OrbitGenderToggle(
-                            label = gender,
-                            isSelected = state.selectedGender == gender,
-                            onToggle = {
-                                logEvent(
-                                    AnalyticsEvent(
-                                        type = "onboarding_gender_select",
-                                        properties = mapOf(
-                                            AnalyticsEvent.OnboardingPropertiesKeys.GENDER to gender,
+                Spacer(modifier = Modifier.heightForScreenPercentage(0.05f))
+                Text(
+                    text = stringResource(id = R.string.onboarding_step6_text_title),
+                    style = OrbitTheme.typography.heading1SemiBold,
+                    color = OrbitTheme.colors.white,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 38.dp)
+                        .paddingForScreenPercentage(topPercentage = 0.11f),
+                    horizontalArrangement = Arrangement.spacedBy(15.dp),
+                ) {
+                    listOf("남성", "여성").forEach { gender ->
+                        Box(modifier = Modifier.weight(1f)) {
+                            OrbitGenderToggle(
+                                label = gender,
+                                isSelected = state.selectedGender == gender,
+                                onToggle = {
+                                    logEvent(
+                                        AnalyticsEvent(
+                                            type = "onboarding_gender_select",
+                                            properties = mapOf(
+                                                AnalyticsEvent.OnboardingPropertiesKeys.GENDER to gender,
+                                            ),
                                         ),
-                                    ),
-                                )
-                                processAction(OnboardingContract.Action.UpdateGender(gender))
-                            },
-                        )
+                                    )
+                                    processAction(OnboardingContract.Action.UpdateGender(gender))
+                                },
+                            )
+                        }
                     }
                 }
             }

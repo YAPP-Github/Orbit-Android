@@ -61,6 +61,7 @@ import com.yapp.home.alarm.component.bottomsheet.AlarmMissionBottomSheet
 import com.yapp.home.alarm.component.bottomsheet.AlarmSnoozeBottomSheet
 import com.yapp.home.alarm.component.bottomsheet.AlarmSoundBottomSheet
 import com.yapp.home.alarm.getLabelStringRes
+import com.yapp.ui.component.bottomsheet.OrbitBottomSheetLayout
 import com.yapp.ui.component.bottomsheet.OrbitBottomSheetState
 import com.yapp.ui.component.bottomsheet.rememberOrbitBottomSheetState
 import com.yapp.ui.component.button.OrbitButton
@@ -282,50 +283,52 @@ fun AlarmAddEditContent(
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        AlarmAddEditTopBar(
-            mode = state.mode,
-            title = state.timeState.alarmMessage,
-            onBack = { processAction(AlarmAddEditContract.Action.CheckUnsavedChangesBeforeExit) },
-            onDelete = { processAction(AlarmAddEditContract.Action.ShowDeleteDialog) },
-        )
-        Box(
-            modifier = Modifier.weight(1f),
-            contentAlignment = Alignment.Center,
+    OrbitBottomSheetLayout(sheetState = bottomSheetState) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            OrbitPicker(
-                initialTime = state.timeState.initialTime,
-            ) { newTime ->
-                processAction(AlarmAddEditContract.Action.SetAlarmTime(newTime))
+            AlarmAddEditTopBar(
+                mode = state.mode,
+                title = state.timeState.alarmMessage,
+                onBack = { processAction(AlarmAddEditContract.Action.CheckUnsavedChangesBeforeExit) },
+                onDelete = { processAction(AlarmAddEditContract.Action.ShowDeleteDialog) },
+            )
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                OrbitPicker(
+                    initialTime = state.timeState.initialTime,
+                ) { newTime ->
+                    processAction(AlarmAddEditContract.Action.SetAlarmTime(newTime))
+                }
             }
+            AlarmAddEditSelectDaysSection(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                daysSelectionState = state.daySelectionState,
+                holidayState = state.holidayState,
+                processAction = processAction,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            AlarmAddEditSettingsSection(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                state = state,
+                processAction = processAction,
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            OrbitButton(
+                label = stringResource(R.string.alarm_add_edit_save),
+                onClick = { processAction(AlarmAddEditContract.Action.SaveAlarm) },
+                enabled = true,
+                modifier = Modifier
+                    .padding(
+                        start = 20.dp,
+                        end = 20.dp,
+                        bottom = 12.dp,
+                    ),
+            )
         }
-        AlarmAddEditSelectDaysSection(
-            modifier = Modifier.padding(horizontal = 20.dp),
-            daysSelectionState = state.daySelectionState,
-            holidayState = state.holidayState,
-            processAction = processAction,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        AlarmAddEditSettingsSection(
-            modifier = Modifier.padding(horizontal = 20.dp),
-            state = state,
-            processAction = processAction,
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        OrbitButton(
-            label = stringResource(R.string.alarm_add_edit_save),
-            onClick = { processAction(AlarmAddEditContract.Action.SaveAlarm) },
-            enabled = true,
-            modifier = Modifier
-                .padding(
-                    start = 20.dp,
-                    end = 20.dp,
-                    bottom = 12.dp,
-                ),
-        )
     }
 
     if (state.isDeleteDialogVisible) {
