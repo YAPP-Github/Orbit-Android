@@ -1,6 +1,5 @@
 package com.yapp.home.alarm.component.bottomsheet
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +25,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -78,8 +76,8 @@ internal fun AlarmMissionBottomSheet(
     var stepStack by rememberSaveable(saver = StepStackSaver) {
         mutableStateOf(listOf(AlarmMissionSelectBottomSheetType.MISSION_SETTING))
     }
-    var selectedMissionType by remember { mutableStateOf(missionState.missionType) }
-    var selectedMissionCount by remember { mutableIntStateOf(missionState.missionCount) }
+    var selectedMissionType by rememberSaveable { mutableStateOf(missionState.missionType) }
+    var selectedMissionCount by rememberSaveable { mutableIntStateOf(missionState.missionCount) }
 
     fun push(step: AlarmMissionSelectBottomSheetType) {
         stepStack = stepStack + step
@@ -92,7 +90,6 @@ internal fun AlarmMissionBottomSheet(
     }
 
     val currentStep = stepStack.last()
-    Log.d("AlarmMissionBottomSheet", "Current Step: $currentStep, Stack: $stepStack")
 
     when (currentStep) {
         AlarmMissionSelectBottomSheetType.MISSION_SETTING -> {
