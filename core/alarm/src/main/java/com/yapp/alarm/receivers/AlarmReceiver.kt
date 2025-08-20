@@ -120,7 +120,7 @@ class AlarmReceiver : BroadcastReceiver() {
 
                     val earliestIdToday: Long? = alarms
                         .asSequence()
-                        .filter { it.isAlarmActive && it.ringsToday() }
+                        .filter { (it.isAlarmActive || it.id == notificationId) && it.ringsToday() }
                         .sortedWith(compareBy({ it.hour }, { it.minute }, { it.second }))
                         .firstOrNull()
                         ?.id
