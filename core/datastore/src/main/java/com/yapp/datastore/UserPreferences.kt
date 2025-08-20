@@ -1,5 +1,6 @@
 package com.yapp.datastore
 
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -34,6 +35,9 @@ class UserPreferences @Inject constructor(
         val FORTUNE_TOOLTIP_SHOWN = booleanPreferencesKey("fortune_tooltip_shown")
         val FORTUNE_CREATING = booleanPreferencesKey("fortune_creating")
         val FORTUNE_FAILED = booleanPreferencesKey("fortune_failed")
+
+        val FIRST_ALARM_DISMISSED_TODAY = booleanPreferencesKey("first_alarm_dismissed_today")
+        val FIRST_ALARM_DISMISSED_DATE = stringPreferencesKey("first_alarm_dismissed_date")
     }
 
     private fun today(): String = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
@@ -101,6 +105,15 @@ class UserPreferences @Inject constructor(
         .map { it[Keys.FORTUNE_FAILED] ?: false }
         .distinctUntilChanged()
 
+    val isFirstAlarmDismissedTodayFlow: Flow<Boolean> = dataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { pref ->
+            val flag = pref[Keys.FIRST_ALARM_DISMISSED_TODAY] ?: false
+            val date = pref[Keys.FIRST_ALARM_DISMISSED_DATE]
+            flag && date == today()
+        }
+        .distinctUntilChanged()
+
     suspend fun saveUserId(userId: Long) {
         dataStore.edit { pref ->
             pref[Keys.USER_ID] = userId
@@ -143,6 +156,7 @@ class UserPreferences @Inject constructor(
     suspend fun markFortuneCreated(fortuneId: Long) {
         dataStore.edit { pref ->
             val isNewForToday = pref[Keys.FORTUNE_ID] != fortuneId || pref[Keys.FORTUNE_DATE] != today()
+            Log.d("UserPreferences", "markFortuneCreated: isNewForToday=$isNewForToday, fortuneId=$fortuneId")
 
             pref[Keys.FORTUNE_ID] = fortuneId
             pref[Keys.FORTUNE_DATE] = today()
@@ -184,6 +198,13 @@ class UserPreferences @Inject constructor(
     suspend fun saveFortuneScore(score: Int) {
         dataStore.edit { pref ->
             pref[Keys.FORTUNE_SCORE] = score
+        }
+    }
+
+    suspend fun markFirstAlarmDismissedToday() {
+        dataStore.edit { pref ->
+            pref[Keys.FIRST_ALARM_DISMISSED_TODAY] = true
+            pref[Keys.FIRST_ALARM_DISMISSED_DATE] = today()
         }
     }
 

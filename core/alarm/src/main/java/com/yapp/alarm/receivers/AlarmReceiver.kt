@@ -128,6 +128,8 @@ class AlarmReceiver : BroadcastReceiver() {
                     val isEarliestAlarmDismissedToday =
                         !isSnoozeId && (earliestIdToday == notificationId)
 
+                    if (isEarliestAlarmDismissedToday) fortuneRepository.markFirstAlarmDismissedToday()
+
                     val isFirstAlarm = alarms.firstOrNull()?.id == notificationId
                     analyticsHelper.logEvent(
                         AnalyticsEvent(
@@ -144,7 +146,6 @@ class AlarmReceiver : BroadcastReceiver() {
                         notificationId = notificationId,
                         missionType = missionType,
                         missionCount = missionCount,
-                        isEarliestToday = isEarliestAlarmDismissedToday,
                     )
                 }
 
@@ -192,14 +193,12 @@ class AlarmReceiver : BroadcastReceiver() {
         notificationId: Long,
         missionType: Int,
         missionCount: Int,
-        isEarliestToday: Boolean,
     ) {
         val intent = Intent(AlarmConstants.ACTION_ALARM_INTERACTION_ACTIVITY_CLOSE).apply {
             putExtra(AlarmConstants.EXTRA_IS_SNOOZED, false)
             putExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, notificationId)
             putExtra(AlarmConstants.EXTRA_MISSION_TYPE, missionType)
             putExtra(AlarmConstants.EXTRA_MISSION_COUNT, missionCount)
-            putExtra(AlarmConstants.EXTRA_IS_FIRST_TODAY, isEarliestToday)
         }
         context.sendBroadcast(intent)
     }

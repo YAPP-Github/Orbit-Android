@@ -21,6 +21,7 @@ class FortuneRepositoryImpl @Inject constructor(
     override val shouldShowFortuneToolTipFlow: Flow<Boolean> = fortuneLocalDataSource.shouldShowFortuneToolTipFlow
     override val isFortuneCreatingFlow: Flow<Boolean> = fortuneLocalDataSource.isFortuneCreatingFlow
     override val isFortuneFailedFlow: Flow<Boolean> = fortuneLocalDataSource.isFortuneFailedFlow
+    override val isFirstAlarmDismissedTodayFlow: Flow<Boolean> = fortuneLocalDataSource.isFirstAlarmDismissedTodayFlow
 
     override suspend fun tryMarkFortuneCreating() = fortuneLocalDataSource.tryMarkFortuneCreating()
     override suspend fun markFortuneAsCreating() = fortuneLocalDataSource.markFortuneCreating()
@@ -30,6 +31,8 @@ class FortuneRepositoryImpl @Inject constructor(
     override suspend fun markFortuneTooltipShown() = fortuneLocalDataSource.markFortuneTooltipShown()
     override suspend fun saveFortuneImageId(imageResId: Int) = fortuneLocalDataSource.saveFortuneImageId(imageResId)
     override suspend fun saveFortuneScore(score: Int) = fortuneLocalDataSource.saveFortuneScore(score)
+    override suspend fun markFirstAlarmDismissedToday() = fortuneLocalDataSource.markFirstAlarmDismissedToday()
+
     override suspend fun clearFortuneData() = fortuneLocalDataSource.clearFortuneData()
 
     override suspend fun postFortune(userId: Long): Result<Fortune> {

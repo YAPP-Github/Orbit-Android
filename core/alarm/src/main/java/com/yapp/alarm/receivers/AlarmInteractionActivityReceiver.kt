@@ -49,12 +49,8 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
                                 fortuneRepository.hasUnseenFortuneFlow.first()
                             }
                             if (hasUnseenFortune) {
-                                val isFirstToday = intent.getBooleanExtra(
-                                    AlarmConstants.EXTRA_IS_FIRST_TODAY,
-                                    false,
-                                )
                                 context?.let { ctx ->
-                                    val uri = "orbitapp://fortune?hasReward=$isFirstToday".toUri()
+                                    val uri = "orbitapp://fortune".toUri()
                                     val fortuneIntent = Intent(Intent.ACTION_VIEW, uri).apply {
                                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                         setPackage(ctx.packageName)

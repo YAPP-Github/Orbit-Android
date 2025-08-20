@@ -3,7 +3,6 @@ package com.yapp.fortune
 import android.app.Application
 import android.util.Log
 import androidx.annotation.DrawableRes
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.fortune.page.toFortunePages
@@ -25,10 +24,7 @@ class FortuneViewModel @Inject constructor(
     private val application: Application,
     private val fortuneRepository: FortuneRepository,
     private val imageSaver: ImageSaver,
-    savedStateHandle: SavedStateHandle,
 ) : ViewModel(), ContainerHost<FortuneContract.State, FortuneContract.SideEffect> {
-
-    private val hasReward = savedStateHandle.get<String>("hasReward")?.toBooleanStrictOrNull() ?: false
 
     override val container: Container<FortuneContract.State, FortuneContract.SideEffect> = container(
         initialState = FortuneContract.State(),
@@ -56,16 +52,17 @@ class FortuneViewModel @Inject constructor(
     private fun observeFortune() = intent {
         combine(
             fortuneRepository.fortuneIdFlow,
+            fortuneRepository.isFirstAlarmDismissedTodayFlow,
             fortuneRepository.isFortuneCreatingFlow,
-        ) { fortuneId: Long?, isCreating: Boolean ->
-            Pair(fortuneId, isCreating)
-        }.collect { (fortuneId, isCreating) ->
+        ) { fortuneId: Long?, isFirstAlarmDismissedToday: Boolean, isCreating: Boolean ->
+            Triple(fortuneId, isFirstAlarmDismissedToday, isCreating)
+        }.collect { (fortuneId, isFirstAlarmDismissedToday, isCreating) ->
             when {
                 isCreating -> {
                     reduce { state.copy(isLoading = true) }
                 }
                 fortuneId != null -> {
-                    fetchAndUpdateFortune(fortuneId, hasReward == true)
+                    fetchAndUpdateFortune(fortuneId, isFirstAlarmDismissedToday)
                 }
                 else -> {
                     reduce { state.copy(isLoading = false) }
@@ -76,7 +73,7 @@ class FortuneViewModel @Inject constructor(
 
     private fun fetchAndUpdateFortune(
         fortuneId: Long,
-        hasReward: Boolean,
+        isFirstAlarmDismissedToday: Boolean,
     ) = intent {
         reduce { state.copy(isLoading = true) }
 
@@ -96,7 +93,7 @@ class FortuneViewModel @Inject constructor(
                     avgFortuneScore = fortune.avgFortuneScore,
                     fortunePages = fortune.toFortunePages(),
                     fortuneImageId = imageId,
-                    hasReward = hasReward,
+                    hasReward = isFirstAlarmDismissedToday,
                 )
             }
         }.onFailure { error ->

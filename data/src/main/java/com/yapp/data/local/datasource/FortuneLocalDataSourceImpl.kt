@@ -15,6 +15,7 @@ class FortuneLocalDataSourceImpl @Inject constructor(
     override val shouldShowFortuneToolTipFlow = userPreferences.shouldShowFortuneToolTipFlow
     override val isFortuneCreatingFlow = userPreferences.isFortuneCreatingFlow
     override val isFortuneFailedFlow = userPreferences.isFortuneFailedFlow
+    override val isFirstAlarmDismissedTodayFlow = userPreferences.isFirstAlarmDismissedTodayFlow
 
     override suspend fun tryMarkFortuneCreating(): Boolean {
         return userPreferences.tryMarkFortuneCreating()
@@ -46,6 +47,10 @@ class FortuneLocalDataSourceImpl @Inject constructor(
 
     override suspend fun saveFortuneScore(score: Int) {
         userPreferences.saveFortuneScore(score)
+    }
+
+    override suspend fun markFirstAlarmDismissedToday() {
+        userPreferences.markFirstAlarmDismissedToday()
     }
 
     override suspend fun clearFortuneData() {

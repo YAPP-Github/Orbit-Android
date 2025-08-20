@@ -12,6 +12,7 @@ interface FortuneRepository {
     val shouldShowFortuneToolTipFlow: Flow<Boolean>
     val isFortuneCreatingFlow: Flow<Boolean>
     val isFortuneFailedFlow: Flow<Boolean>
+    val isFirstAlarmDismissedTodayFlow: Flow<Boolean>
 
     suspend fun tryMarkFortuneCreating(): Boolean
     suspend fun markFortuneAsCreating()
@@ -21,6 +22,8 @@ interface FortuneRepository {
     suspend fun markFortuneTooltipShown()
     suspend fun saveFortuneImageId(imageResId: Int)
     suspend fun saveFortuneScore(score: Int)
+    suspend fun markFirstAlarmDismissedToday()
+
     suspend fun clearFortuneData()
 
     suspend fun postFortune(userId: Long): Result<Fortune>

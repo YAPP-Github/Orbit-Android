@@ -11,6 +11,7 @@ interface FortuneLocalDataSource {
     val shouldShowFortuneToolTipFlow: Flow<Boolean>
     val isFortuneCreatingFlow: Flow<Boolean>
     val isFortuneFailedFlow: Flow<Boolean>
+    val isFirstAlarmDismissedTodayFlow: Flow<Boolean>
 
     suspend fun tryMarkFortuneCreating(): Boolean
     suspend fun markFortuneCreating()
@@ -20,6 +21,7 @@ interface FortuneLocalDataSource {
     suspend fun markFortuneTooltipShown()
     suspend fun saveFortuneImageId(imageResId: Int)
     suspend fun saveFortuneScore(score: Int)
+    suspend fun markFirstAlarmDismissedToday()
 
     suspend fun clearFortuneData()
 }

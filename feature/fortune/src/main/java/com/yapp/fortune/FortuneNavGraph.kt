@@ -22,7 +22,7 @@ fun NavGraphBuilder.fortuneNavGraph(
     navigation<FortuneBaseRoute>(startDestination = FortuneDestination.Fortune) {
         composable<FortuneDestination.Fortune>(
             deepLinks = listOf(
-                navDeepLink { uriPattern = "orbitapp://fortune?hasReward={hasReward}" },
+                navDeepLink { uriPattern = "orbitapp://fortune" },
             ),
         ) { backStackEntry ->
             val viewModel = backStackEntry.sharedHiltViewModel<FortuneViewModel>(navigator.navController)
