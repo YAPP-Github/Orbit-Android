@@ -17,6 +17,10 @@ class FortuneLocalDataSourceImpl @Inject constructor(
     override val isFortuneCreatingFlow = userPreferences.isFortuneCreatingFlow
     override val isFortuneFailedFlow = userPreferences.isFortuneFailedFlow
 
+    override suspend fun tryMarkFortuneCreating(): Boolean {
+        return userPreferences.tryMarkFortuneCreating()
+    }
+
     override suspend fun markFortuneCreating() {
         userPreferences.markFortuneCreating()
     }

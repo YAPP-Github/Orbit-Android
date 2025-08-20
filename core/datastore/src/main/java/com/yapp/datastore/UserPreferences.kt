@@ -77,6 +77,13 @@ class UserPreferences @Inject constructor(
         .map { it[Keys.FORTUNE_SCORE] }
         .distinctUntilChanged()
 
+    val hasTodayFortuneFlow: Flow<Boolean> = dataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { pref ->
+            pref[Keys.FORTUNE_DATE] == today() && pref[Keys.FORTUNE_ID] != null
+        }
+        .distinctUntilChanged()
+
     val hasUnseenFortuneFlow: Flow<Boolean> = dataStore.data
         .map { pref ->
             pref[Keys.FORTUNE_DATE] == today() &&
@@ -129,6 +136,20 @@ class UserPreferences @Inject constructor(
         }
     }
 
+    suspend fun tryMarkFortuneCreating(): Boolean {
+        var canStart = false
+        dataStore.edit { pref ->
+            val hasTodayFortune = pref[Keys.FORTUNE_DATE] == today() && pref[Keys.FORTUNE_ID] != null
+            val creating = pref[Keys.FORTUNE_CREATING] ?: false
+            if (!hasTodayFortune && !creating) {
+                pref[Keys.FORTUNE_CREATING] = true
+                pref[Keys.FORTUNE_FAILED] = false
+                canStart = true
+            }
+        }
+        return canStart
+    }
+
     suspend fun markFortuneCreating() {
         dataStore.edit { pref ->
             pref[Keys.FORTUNE_CREATING] = true
@@ -138,12 +159,17 @@ class UserPreferences @Inject constructor(
 
     suspend fun markFortuneCreated(fortuneId: Long) {
         dataStore.edit { pref ->
+            val isNewForToday = pref[Keys.FORTUNE_ID] != fortuneId || pref[Keys.FORTUNE_DATE] != today()
+
             pref[Keys.FORTUNE_ID] = fortuneId
             pref[Keys.FORTUNE_DATE] = today()
             pref[Keys.FORTUNE_CREATING] = false
             pref[Keys.FORTUNE_FAILED] = false
-            pref[Keys.FORTUNE_SEEN] = false
-            pref[Keys.FORTUNE_TOOLTIP_SHOWN] = false
+
+            if (isNewForToday) {
+                pref[Keys.FORTUNE_SEEN] = false
+                pref[Keys.FORTUNE_TOOLTIP_SHOWN] = false
+            }
         }
     }
 

@@ -21,13 +21,16 @@ class PostFortuneWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         val hasUnseenFortune = fortuneRepository.hasUnseenFortuneFlow.first()
-        val creating = fortuneRepository.isFortuneCreatingFlow.first()
+        if (hasUnseenFortune) return Result.success()
 
-        if (hasUnseenFortune || creating) {
-            return Result.success()
-        }
+        val acquired = fortuneRepository.tryMarkFortuneCreating()
+        if (!acquired) return Result.success()
 
-        val userId = userInfoRepository.userIdFlow.firstOrNull() ?: return Result.failure()
+        val userId = userInfoRepository.userIdFlow.firstOrNull()
+            ?: run {
+                fortuneRepository.markFortuneAsFailed()
+                return Result.failure()
+            }
 
         return try {
             fortuneRepository.markFortuneAsCreating()

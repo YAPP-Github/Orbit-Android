@@ -14,6 +14,7 @@ interface FortuneRepository {
     val isFortuneCreatingFlow: Flow<Boolean>
     val isFortuneFailedFlow: Flow<Boolean>
 
+    suspend fun tryMarkFortuneCreating(): Boolean
     suspend fun markFortuneAsCreating()
     suspend fun markFortuneAsCreated(fortuneId: Long)
     suspend fun markFortuneAsFailed()

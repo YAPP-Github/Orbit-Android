@@ -23,6 +23,7 @@ class FortuneRepositoryImpl @Inject constructor(
     override val isFortuneCreatingFlow: Flow<Boolean> = fortuneLocalDataSource.isFortuneCreatingFlow
     override val isFortuneFailedFlow: Flow<Boolean> = fortuneLocalDataSource.isFortuneFailedFlow
 
+    override suspend fun tryMarkFortuneCreating() = fortuneLocalDataSource.tryMarkFortuneCreating()
     override suspend fun markFortuneAsCreating() = fortuneLocalDataSource.markFortuneCreating()
     override suspend fun markFortuneAsCreated(fortuneId: Long) = fortuneLocalDataSource.markFortuneCreated(fortuneId)
     override suspend fun markFortuneAsFailed() = fortuneLocalDataSource.markFortuneFailed()

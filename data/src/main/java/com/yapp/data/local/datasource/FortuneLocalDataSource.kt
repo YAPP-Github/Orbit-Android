@@ -13,6 +13,7 @@ interface FortuneLocalDataSource {
     val isFortuneCreatingFlow: Flow<Boolean>
     val isFortuneFailedFlow: Flow<Boolean>
 
+    suspend fun tryMarkFortuneCreating(): Boolean
     suspend fun markFortuneCreating()
     suspend fun markFortuneCreated(fortuneId: Long)
     suspend fun markFortuneFailed()
