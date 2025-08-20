@@ -89,8 +89,8 @@ class UserPreferences @Inject constructor(
         .catch { emit(emptyPreferences()) }
         .map { pref ->
             val hasTodayFortune = pref[Keys.FORTUNE_DATE] == today() && pref[Keys.FORTUNE_ID] != null
-            val tooltipNotShown = pref[Keys.FORTUNE_TOOLTIP_SHOWN] ?: true
-            hasTodayFortune && tooltipNotShown
+            val tooltipNotShown = pref[Keys.FORTUNE_TOOLTIP_SHOWN] ?: false
+            hasTodayFortune && !tooltipNotShown
         }
         .distinctUntilChanged()
 
