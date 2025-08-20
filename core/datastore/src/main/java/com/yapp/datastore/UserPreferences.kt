@@ -1,6 +1,5 @@
 package com.yapp.datastore
 
-import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -35,9 +34,6 @@ class UserPreferences @Inject constructor(
         val FORTUNE_TOOLTIP_SHOWN = booleanPreferencesKey("fortune_tooltip_shown")
         val FORTUNE_CREATING = booleanPreferencesKey("fortune_creating")
         val FORTUNE_FAILED = booleanPreferencesKey("fortune_failed")
-
-        val FIRST_DISMISSED_ALARM_ID = longPreferencesKey("first_dismissed_alarm_id")
-        val DISMISSED_DATE = stringPreferencesKey("dismissed_date")
     }
 
     private fun today(): String = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
@@ -109,13 +105,6 @@ class UserPreferences @Inject constructor(
     val isFortuneFailedFlow: Flow<Boolean> = dataStore.data
         .catch { emit(emptyPreferences()) }
         .map { it[Keys.FORTUNE_FAILED] ?: false }
-        .distinctUntilChanged()
-
-    val isFirstAlarmDismissedTodayFlow: Flow<Boolean> = dataStore.data
-        .catch { emit(emptyPreferences()) }
-        .map { pref ->
-            pref[Keys.DISMISSED_DATE] == today() && pref[Keys.FIRST_DISMISSED_ALARM_ID] != null
-        }
         .distinctUntilChanged()
 
     suspend fun saveUserId(userId: Long) {
@@ -201,24 +190,6 @@ class UserPreferences @Inject constructor(
     suspend fun saveFortuneScore(score: Int) {
         dataStore.edit { pref ->
             pref[Keys.FORTUNE_SCORE] = score
-        }
-    }
-
-    suspend fun saveFirstAlarmDismissedToday(firstAlarmId: Long) {
-        dataStore.edit { pref ->
-            if (pref[Keys.DISMISSED_DATE] == today() && pref[Keys.FIRST_DISMISSED_ALARM_ID] != null) {
-                Log.d("UserPreferences", "이미 오늘 첫 알람 해제 기록이 있음")
-                return@edit
-            }
-            pref[Keys.FIRST_DISMISSED_ALARM_ID] = firstAlarmId
-            pref[Keys.DISMISSED_DATE] = today()
-        }
-    }
-
-    suspend fun clearFirstAlarmDismissedToday() {
-        dataStore.edit { pref ->
-            pref.remove(Keys.FIRST_DISMISSED_ALARM_ID)
-            pref.remove(Keys.DISMISSED_DATE)
         }
     }
 

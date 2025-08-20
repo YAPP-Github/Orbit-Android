@@ -105,37 +105,26 @@ class AlarmReceiver : BroadcastReceiver() {
                 androidAlarmScheduler.cancelSnoozedAlarm(notificationId)
                 context.stopService(alarmServiceIntent)
 
-                sendBroadCastToCloseAlarmInteractionActivity(
-                    context = context,
-                    notificationId = notificationId,
-                    missionType = missionType,
-                    missionCount = missionCount,
-                )
-
                 CoroutineScope(Dispatchers.IO).launch {
                     val alarms = alarmUseCase.getAllAlarms().first()
 
                     val isSnoozeId = notificationId >= AlarmConstants.SNOOZE_ID_OFFSET
-                    if (!isSnoozeId) {
-                        val today = LocalDate.now().dayOfWeek
-                        fun Alarm.ringsToday(): Boolean {
-                            if (repeatDays == 0) return true
-                            return (repeatDays and (1 shl today.ordinal)) != 0
-                        }
 
-                        val earliestIdToday: Long? = alarms
-                            .asSequence()
-                            .filter { it.isAlarmActive && it.ringsToday() }
-                            .sortedWith(compareBy({ it.hour }, { it.minute }, { it.second }))
-                            .firstOrNull()
-                            ?.id
-
-                        val isEarliestAlarmDismissedToday = (earliestIdToday == notificationId)
-
-                        if (isEarliestAlarmDismissedToday) {
-                            fortuneRepository.saveFirstAlarmDismissedToday(notificationId)
-                        }
+                    val today = LocalDate.now().dayOfWeek
+                    fun Alarm.ringsToday(): Boolean {
+                        if (repeatDays == 0) return true
+                        return (repeatDays and (1 shl today.ordinal)) != 0
                     }
+
+                    val earliestIdToday: Long? = alarms
+                        .asSequence()
+                        .filter { it.isAlarmActive && it.ringsToday() }
+                        .sortedWith(compareBy({ it.hour }, { it.minute }, { it.second }))
+                        .firstOrNull()
+                        ?.id
+
+                    val isEarliestAlarmDismissedToday =
+                        !isSnoozeId && (earliestIdToday == notificationId)
 
                     val isFirstAlarm = alarms.firstOrNull()?.id == notificationId
                     analyticsHelper.logEvent(
@@ -146,6 +135,14 @@ class AlarmReceiver : BroadcastReceiver() {
                                 AnalyticsEvent.AlarmPropertiesKeys.DISMISS_IS_FIRST_ALARM to isFirstAlarm,
                             ),
                         ),
+                    )
+
+                    sendBroadCastToCloseAlarmInteractionActivity(
+                        context = context,
+                        notificationId = notificationId,
+                        missionType = missionType,
+                        missionCount = missionCount,
+                        isEarliestToday = isEarliestAlarmDismissedToday,
                     )
                 }
 
@@ -193,12 +190,14 @@ class AlarmReceiver : BroadcastReceiver() {
         notificationId: Long,
         missionType: Int,
         missionCount: Int,
+        isEarliestToday: Boolean,
     ) {
         val intent = Intent(AlarmConstants.ACTION_ALARM_INTERACTION_ACTIVITY_CLOSE).apply {
             putExtra(AlarmConstants.EXTRA_IS_SNOOZED, false)
             putExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, notificationId)
             putExtra(AlarmConstants.EXTRA_MISSION_TYPE, missionType)
             putExtra(AlarmConstants.EXTRA_MISSION_COUNT, missionCount)
+            putExtra(AlarmConstants.EXTRA_IS_FIRST_TODAY, isEarliestToday)
         }
         context.sendBroadcast(intent)
     }

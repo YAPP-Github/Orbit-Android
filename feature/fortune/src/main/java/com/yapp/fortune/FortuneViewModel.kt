@@ -3,6 +3,7 @@ package com.yapp.fortune
 import android.app.Application
 import android.util.Log
 import androidx.annotation.DrawableRes
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.fortune.page.toFortunePages
@@ -17,23 +18,17 @@ import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-
-private data class FortuneSnapshot(
-    val fortuneId: Long?,
-    val fortuneDate: String?,
-    val isFirstAlarmDismissedToday: Boolean,
-    val isCreating: Boolean,
-)
 
 @HiltViewModel
 class FortuneViewModel @Inject constructor(
     private val application: Application,
     private val fortuneRepository: FortuneRepository,
     private val imageSaver: ImageSaver,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel(), ContainerHost<FortuneContract.State, FortuneContract.SideEffect> {
+
+    private val hasReward = savedStateHandle.get<String>("hasReward")?.toBooleanStrictOrNull() ?: false
 
     override val container: Container<FortuneContract.State, FortuneContract.SideEffect> = container(
         initialState = FortuneContract.State(),
@@ -61,18 +56,16 @@ class FortuneViewModel @Inject constructor(
     private fun observeFortune() = intent {
         combine(
             fortuneRepository.fortuneIdFlow,
-            fortuneRepository.fortuneDateFlow,
-            fortuneRepository.isFirstAlarmDismissedTodayFlow,
             fortuneRepository.isFortuneCreatingFlow,
-        ) { fortuneId: Long?, fortuneDate: String?, isFirstAlarmDismissedToday: Boolean, isCreating: Boolean ->
-            FortuneSnapshot(fortuneId, fortuneDate, isFirstAlarmDismissedToday, isCreating)
-        }.collect { (fortuneId, fortuneDate, isFirstAlarmDismissedToday, isCreating) ->
+        ) { fortuneId: Long?, isCreating: Boolean ->
+            Pair(fortuneId, isCreating)
+        }.collect { (fortuneId, isCreating) ->
             when {
                 isCreating -> {
                     reduce { state.copy(isLoading = true) }
                 }
                 fortuneId != null -> {
-                    fetchAndUpdateFortune(fortuneId, isFirstAlarmDismissedToday, fortuneDate)
+                    fetchAndUpdateFortune(fortuneId, hasReward == true)
                 }
                 else -> {
                     reduce { state.copy(isLoading = false) }
@@ -83,8 +76,7 @@ class FortuneViewModel @Inject constructor(
 
     private fun fetchAndUpdateFortune(
         fortuneId: Long,
-        isFirstAlarmDismissedToday: Boolean,
-        fortuneDate: String?,
+        hasReward: Boolean,
     ) = intent {
         reduce { state.copy(isLoading = true) }
 
@@ -93,9 +85,6 @@ class FortuneViewModel @Inject constructor(
             val imageId = savedImageId ?: getRandomImage()
 
             val formattedTitle = fortune.dailyFortuneTitle.replace(",", ",\n").trim()
-            val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-
-            val hasReward = (fortuneDate == todayDate) && isFirstAlarmDismissedToday
 
             fortuneRepository.markFortuneSeen()
 
