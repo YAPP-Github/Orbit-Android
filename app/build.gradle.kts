@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.yapp.orbit"
+    compileSdk = 35
 
     defaultConfig {
         versionCode = 6
         versionName = "1.1.3"
         targetSdk = 35
-        compileSdk = 35
     }
 
     buildTypes {
