@@ -12,6 +12,7 @@ import com.yapp.alarm.services.AlarmService
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
 import com.yapp.domain.model.Alarm
+import com.yapp.domain.model.toAlarmDay
 import com.yapp.domain.model.toTimeString
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.usecase.AlarmUseCase
@@ -110,10 +111,11 @@ class AlarmReceiver : BroadcastReceiver() {
 
                     val isSnoozeId = notificationId >= AlarmConstants.SNOOZE_ID_OFFSET
 
-                    val today = LocalDate.now().dayOfWeek
                     fun Alarm.ringsToday(): Boolean {
                         if (repeatDays == 0) return true
-                        return (repeatDays and (1 shl today.ordinal)) != 0
+
+                        val todayAlarmDay = LocalDate.now().dayOfWeek.toAlarmDay()
+                        return (repeatDays and todayAlarmDay.bitValue) != 0
                     }
 
                     val earliestIdToday: Long? = alarms

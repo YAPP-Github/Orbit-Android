@@ -1,5 +1,7 @@
 package com.yapp.domain.model
 
+import java.time.DayOfWeek
+
 enum class AlarmDay(val bitValue: Int) {
     SUN(0b0000001), // 1
     MON(0b0000010), // 2
@@ -11,8 +13,13 @@ enum class AlarmDay(val bitValue: Int) {
     ;
 }
 
-fun AlarmDay.toDayOfWeek(): java.time.DayOfWeek {
-    return java.time.DayOfWeek.of(((this.ordinal + 6) % 7) + 1)
+fun AlarmDay.toDayOfWeek(): DayOfWeek {
+    return DayOfWeek.of(((this.ordinal + 6) % 7) + 1)
+}
+
+fun DayOfWeek.toAlarmDay(): AlarmDay {
+    val index = (this.value % 7)
+    return AlarmDay.entries[index]
 }
 
 fun Set<AlarmDay>.toRepeatDays(): Int {
