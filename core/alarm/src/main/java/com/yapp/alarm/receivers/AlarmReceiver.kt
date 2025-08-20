@@ -19,8 +19,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -113,9 +113,31 @@ class AlarmReceiver : BroadcastReceiver() {
                 )
 
                 CoroutineScope(Dispatchers.IO).launch {
-                    val alarms = alarmUseCase.getAllAlarms().first().sortedBy { it.isAlarmActive }
-                    val isFirstAlarm = alarms.firstOrNull()?.id == notificationId
+                    val alarms = alarmUseCase.getAllAlarms().first()
 
+                    val isSnoozeId = notificationId >= AlarmConstants.SNOOZE_ID_OFFSET
+                    if (!isSnoozeId) {
+                        val today = LocalDate.now().dayOfWeek
+                        fun Alarm.ringsToday(): Boolean {
+                            if (repeatDays == 0) return true
+                            return (repeatDays and (1 shl today.ordinal)) != 0
+                        }
+
+                        val earliestIdToday: Long? = alarms
+                            .asSequence()
+                            .filter { it.isAlarmActive && it.ringsToday() }
+                            .sortedWith(compareBy({ it.hour }, { it.minute }, { it.second }))
+                            .firstOrNull()
+                            ?.id
+
+                        val isEarliestAlarmDismissedToday = (earliestIdToday == notificationId)
+
+                        if (isEarliestAlarmDismissedToday) {
+                            fortuneRepository.saveFirstAlarmDismissedToday(notificationId)
+                        }
+                    }
+
+                    val isFirstAlarm = alarms.firstOrNull()?.id == notificationId
                     analyticsHelper.logEvent(
                         AnalyticsEvent(
                             type = "alarm_dismiss",
@@ -125,13 +147,6 @@ class AlarmReceiver : BroadcastReceiver() {
                             ),
                         ),
                     )
-
-                    val existingId = fortuneRepository.firstDismissedAlarmIdFlow.firstOrNull()
-                    if (existingId == null) {
-                        fortuneRepository.saveFirstDismissedAlarmId(notificationId)
-                    } else if (existingId != notificationId) {
-                        fortuneRepository.clearDismissedAlarmId()
-                    }
                 }
 
                 Toast.makeText(context, "알람이 해제되었어요", Toast.LENGTH_SHORT).show()
