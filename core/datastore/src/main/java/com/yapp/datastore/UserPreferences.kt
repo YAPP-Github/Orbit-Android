@@ -73,13 +73,6 @@ class UserPreferences @Inject constructor(
         .map { it[Keys.FORTUNE_SCORE] }
         .distinctUntilChanged()
 
-    val hasTodayFortuneFlow: Flow<Boolean> = dataStore.data
-        .catch { emit(emptyPreferences()) }
-        .map { pref ->
-            pref[Keys.FORTUNE_DATE] == today() && pref[Keys.FORTUNE_ID] != null
-        }
-        .distinctUntilChanged()
-
     val hasUnseenFortuneFlow: Flow<Boolean> = dataStore.data
         .map { pref ->
             pref[Keys.FORTUNE_DATE] == today() &&
