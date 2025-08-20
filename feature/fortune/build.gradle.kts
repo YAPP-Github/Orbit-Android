@@ -18,7 +18,8 @@ dependencies {
     implementation(libs.orbit.viewmodel)
     implementation(libs.coil.compose)
     implementation(libs.androidx.work.runtime)
-    implementation(libs.androidx.work.testing)
+    testImplementation(libs.androidx.work.testing)
+    androidTestImplementation(libs.androidx.work.testing)
     implementation(projects.domain)
     implementation(projects.core.media)
 }
