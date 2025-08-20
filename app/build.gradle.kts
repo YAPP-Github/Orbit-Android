@@ -13,6 +13,7 @@ android {
         versionCode = 6
         versionName = "1.1.3"
         targetSdk = 35
+        compileSdk = 35
     }
 
     buildTypes {
@@ -53,4 +54,6 @@ dependencies {
     implementation(libs.firebase.crashlytics)
     implementation(libs.play.services.ads)
     implementation(libs.kotlin.reflect)
+    implementation(libs.hilt.worker)
+    implementation(libs.androidx.work.runtime)
 }
