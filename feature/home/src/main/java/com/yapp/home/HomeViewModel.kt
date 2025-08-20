@@ -338,7 +338,7 @@ class HomeViewModel @Inject constructor(
         if (fortuneDate != todayDate) {
             processAction(HomeContract.Action.ShowNoDailyFortuneDialog)
         } else {
-            fortuneRepository.markFortuneAsChecked()
+            fortuneRepository.markFortuneTooltipShown()
             postSideEffect(HomeContract.SideEffect.NavigateToFortune)
         }
     }
@@ -349,12 +349,12 @@ class HomeViewModel @Inject constructor(
         combine(
             fortuneRepository.fortuneDateFlow,
             fortuneRepository.fortuneScoreFlow,
-            fortuneRepository.hasNewFortuneFlow,
-        ) { fortuneDate, fortuneScore, hasNewFortune ->
+            fortuneRepository.shouldShowFortuneToolTipFlow,
+        ) { fortuneDate, fortuneScore, shouldShowTooltip ->
             val isTodayFortuneAvailable = fortuneDate == todayDate
             val finalFortuneScore = if (isTodayFortuneAvailable) fortuneScore ?: -1 else -1
 
-            Pair(finalFortuneScore, hasNewFortune)
+            Pair(finalFortuneScore, shouldShowTooltip)
         }.collect { (finalFortuneScore, hasNewFortune) ->
             reduce {
                 state.copy(
