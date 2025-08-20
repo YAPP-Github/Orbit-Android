@@ -57,7 +57,7 @@ class AlarmActionViewModel @Inject constructor(
 
     private fun fetchShouldShowMissionStart() = intent {
         reduce {
-            state.copy(shouldShowMissionStart = alarm?.missionType != MissionType.NONE)
+            state.copy(shouldShowMissionStart = (alarm?.missionType ?: MissionType.NONE) != MissionType.NONE)
         }
     }
 
