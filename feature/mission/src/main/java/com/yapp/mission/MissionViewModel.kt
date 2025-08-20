@@ -1,7 +1,6 @@
 package com.yapp.mission
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
@@ -136,8 +135,6 @@ class MissionViewModel @Inject constructor(
         if (state.missionMode == MissionMode.REAL) {
             val hasUnseenFortune = fortuneRepository.hasUnseenFortuneFlow.first()
             val isFortuneCreating = fortuneRepository.isFortuneCreatingFlow.first()
-
-            Log.d("MissionViewModel", "hasUnseenFortune: $hasUnseenFortune, isFortuneCreating: $isFortuneCreating")
 
             if (hasUnseenFortune || isFortuneCreating) {
                 postSideEffect(MissionContract.SideEffect.NavigateToFortune)

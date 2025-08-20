@@ -1,6 +1,5 @@
 package com.yapp.datastore
 
-import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -156,7 +155,6 @@ class UserPreferences @Inject constructor(
     suspend fun markFortuneCreated(fortuneId: Long) {
         dataStore.edit { pref ->
             val isNewForToday = pref[Keys.FORTUNE_ID] != fortuneId || pref[Keys.FORTUNE_DATE] != today()
-            Log.d("UserPreferences", "markFortuneCreated: isNewForToday=$isNewForToday, fortuneId=$fortuneId")
 
             pref[Keys.FORTUNE_ID] = fortuneId
             pref[Keys.FORTUNE_DATE] = today()
