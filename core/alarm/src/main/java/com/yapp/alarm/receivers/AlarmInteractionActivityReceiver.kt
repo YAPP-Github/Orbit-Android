@@ -11,6 +11,7 @@ import com.yapp.domain.repository.FortuneRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -39,17 +40,31 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
                         missionCount != -1
                     )
 
-                if (!hasValidMissionData) return
-
                 CoroutineScope(Dispatchers.IO).launch {
-                    context?.let {
+                    if (!hasValidMissionData) {
+                        val hasUnseenFortune = fortuneRepository.hasUnseenFortuneFlow.first()
+
+                        if (hasUnseenFortune) {
+                            context?.let { ctx ->
+                                val uri = "orbitapp://fortune".toUri()
+                                val fortuneIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    setPackage(ctx.packageName)
+                                }
+                                ctx.startActivity(fortuneIntent)
+                            }
+                        }
+                        return@launch
+                    }
+
+                    context?.let { ctx ->
                         val uriString =
                             "orbitapp://mission?notificationId=$notificationId&missionType=${missionType.value}&missionCount=$missionCount"
                         val missionIntent = Intent(Intent.ACTION_VIEW, uriString.toUri()).apply {
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            setPackage(it.packageName)
+                            setPackage(ctx.packageName)
                         }
-                        it.startActivity(missionIntent)
+                        ctx.startActivity(missionIntent)
                     }
                 }
             }

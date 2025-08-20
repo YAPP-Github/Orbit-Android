@@ -46,9 +46,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="orbitapp"
-                    android:host="mission"/>
+                <data android:scheme="orbitapp" />
             </intent-filter>
         </activity>
 
