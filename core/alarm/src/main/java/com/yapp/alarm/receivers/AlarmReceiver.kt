@@ -130,7 +130,7 @@ class AlarmReceiver : BroadcastReceiver() {
 
                     if (isEarliestAlarmDismissedToday) fortuneRepository.markFirstAlarmDismissedToday()
 
-                    val isFirstAlarm = alarms.firstOrNull()?.id == notificationId
+                    val isFirstAlarm = earliestIdToday == notificationId
                     analyticsHelper.logEvent(
                         AnalyticsEvent(
                             type = "alarm_dismiss",
