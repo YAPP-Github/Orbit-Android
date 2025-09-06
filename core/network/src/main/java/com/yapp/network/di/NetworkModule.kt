@@ -6,7 +6,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
-import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -39,21 +38,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    @Auth
-    fun provideAuthOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor,
-        authInterceptor: Interceptor,
-    ): OkHttpClient =
-        OkHttpClient.Builder()
-            .retryOnConnectionFailure(true)
-            .addInterceptor(loggingInterceptor)
-            .addInterceptor(authInterceptor)
-            .build()
-
-    @Provides
-    @Singleton
-    @NoneAuth
-    fun provideNoneAuthOkHttpClient(
+    fun provideHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient =
         OkHttpClient.Builder()
@@ -66,33 +51,13 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    @Auth
-    fun provideAuthRetrofit(@Auth okHttpClient: OkHttpClient, buildConfigFieldProvider: BuildConfigFieldProvider): Retrofit = Retrofit.Builder()
-        .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
-        .baseUrl(buildConfigFieldProvider.get().baseUrl)
-        .client(okHttpClient)
-        .build()
-
-    @Provides
-    @Singleton
-    @NoneAuth
-    fun provideNoneAuthRetrofit(
-        @NoneAuth okHttpClient: OkHttpClient,
+    fun provideRetrofit(
+        okHttpClient: OkHttpClient,
         buildConfigFieldProvider: BuildConfigFieldProvider,
         json: Json,
     ): Retrofit =
         Retrofit.Builder()
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-            .baseUrl(buildConfigFieldProvider.get().baseUrl)
-            .client(okHttpClient)
-            .build()
-
-    @Provides
-    @Singleton
-    @S3
-    fun provideS3Retrofit(@NoneAuth okHttpClient: OkHttpClient, buildConfigFieldProvider: BuildConfigFieldProvider): Retrofit =
-        Retrofit.Builder()
-            .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
             .baseUrl(buildConfigFieldProvider.get().baseUrl)
             .client(okHttpClient)
             .build()

@@ -1,7 +1,6 @@
 package com.yapp.data.remote.di
 
 import com.yapp.data.remote.service.ApiService
-import com.yapp.network.di.NoneAuth
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,6 +13,6 @@ import javax.inject.Singleton
 object ServiceModule {
     @Provides
     @Singleton
-    fun providesApiService(@NoneAuth retrofit: Retrofit): ApiService =
+    fun providesApiService(retrofit: Retrofit): ApiService =
         retrofit.create(ApiService::class.java)
 }
