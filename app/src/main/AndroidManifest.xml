@@ -46,9 +46,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="orbitapp"
-                    android:host="mission"/>
+                <data android:scheme="orbitapp" />
             </intent-filter>
         </activity>
 
@@ -80,5 +78,15 @@
         <service
             android:name="com.yapp.alarm.services.AlarmService"
             android:foregroundServiceType="mediaPlayback" />
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                tools:node="remove" />
+        </provider>
     </application>
 </manifest>

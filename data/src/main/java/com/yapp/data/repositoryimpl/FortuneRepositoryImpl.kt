@@ -12,32 +12,36 @@ class FortuneRepositoryImpl @Inject constructor(
     private val fortuneLocalDataSource: FortuneLocalDataSource,
     private val fortuneRemoteDataSource: FortuneDataSource,
 ) : FortuneRepository {
+
     override val fortuneIdFlow: Flow<Long?> = fortuneLocalDataSource.fortuneIdFlow
     override val fortuneDateFlow: Flow<String?> = fortuneLocalDataSource.fortuneDateFlow
     override val fortuneImageIdFlow: Flow<Int?> = fortuneLocalDataSource.fortuneImageIdFlow
     override val fortuneScoreFlow: Flow<Int?> = fortuneLocalDataSource.fortuneScoreFlow
-    override val hasNewFortuneFlow: Flow<Boolean> = fortuneLocalDataSource.hasNewFortuneFlow
-    override val firstDismissedAlarmIdFlow: Flow<Long?> = fortuneLocalDataSource.firstDismissedAlarmIdFlow
+    override val hasUnseenFortuneFlow: Flow<Boolean> = fortuneLocalDataSource.hasUnseenFortuneFlow
+    override val shouldShowFortuneToolTipFlow: Flow<Boolean> = fortuneLocalDataSource.shouldShowFortuneToolTipFlow
+    override val isFortuneCreatingFlow: Flow<Boolean> = fortuneLocalDataSource.isFortuneCreatingFlow
+    override val isFortuneFailedFlow: Flow<Boolean> = fortuneLocalDataSource.isFortuneFailedFlow
+    override val isFirstAlarmDismissedTodayFlow: Flow<Boolean> = fortuneLocalDataSource.isFirstAlarmDismissedTodayFlow
 
-    override suspend fun saveFortuneId(fortuneId: Long) = fortuneLocalDataSource.saveFortuneId(fortuneId)
-    override suspend fun markFortuneAsChecked() = fortuneLocalDataSource.markFortuneAsChecked()
+    override suspend fun tryMarkFortuneCreating() = fortuneLocalDataSource.tryMarkFortuneCreating()
+    override suspend fun markFortuneAsCreating() = fortuneLocalDataSource.markFortuneCreating()
+    override suspend fun markFortuneAsCreated(fortuneId: Long) = fortuneLocalDataSource.markFortuneCreated(fortuneId)
+    override suspend fun markFortuneAsFailed() = fortuneLocalDataSource.markFortuneFailed()
+    override suspend fun markFortuneSeen() = fortuneLocalDataSource.markFortuneSeen()
+    override suspend fun markFortuneTooltipShown() = fortuneLocalDataSource.markFortuneTooltipShown()
     override suspend fun saveFortuneImageId(imageResId: Int) = fortuneLocalDataSource.saveFortuneImageId(imageResId)
     override suspend fun saveFortuneScore(score: Int) = fortuneLocalDataSource.saveFortuneScore(score)
-    override suspend fun saveFirstDismissedAlarmId(alarmId: Long) = fortuneLocalDataSource.saveFirstDismissedAlarmId(alarmId)
-    override suspend fun clearDismissedAlarmId() = fortuneLocalDataSource.clearDismissedAlarmId()
-    override suspend fun clearFortuneId() = fortuneLocalDataSource.clearFortuneId()
+    override suspend fun markFirstAlarmDismissedToday() = fortuneLocalDataSource.markFirstAlarmDismissedToday()
+
+    override suspend fun clearFortuneData() = fortuneLocalDataSource.clearFortuneData()
 
     override suspend fun postFortune(userId: Long): Result<Fortune> {
         return fortuneRemoteDataSource.postFortune(userId)
-            .mapCatching { fortuneResponse ->
-                fortuneResponse.toDomain()
-            }
+            .mapCatching { it.toDomain() }
     }
 
     override suspend fun getFortune(fortuneId: Long): Result<Fortune> {
         return fortuneRemoteDataSource.getFortune(fortuneId)
-            .mapCatching { fortuneResponse ->
-                fortuneResponse.toDomain()
-            }
+            .mapCatching { it.toDomain() }
     }
 }

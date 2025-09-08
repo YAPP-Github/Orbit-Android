@@ -29,6 +29,7 @@ androidx-app-compat = "1.7.0"
 androidx-core = "1.15.0"
 androidx-datastore = "1.1.1"
 androidx-room = "2.7.2"
+androidx-work = "2.10.3"
 
 androidx-lifecycle = "2.8.7"
 
@@ -44,6 +45,7 @@ activity-compose = "1.9.3"
 ## Hilt
 hilt = "2.51.1"
 hilt-navigation-compose = "1.2.0"
+hilt-work = "1.2.0"
 
 ## Third Party
 okhttp = "4.12.0"
@@ -102,6 +104,9 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "androidx-room" }
 androidx-room-paging = { group = "androidx.room", name = "room-paging", version.ref = "androidx-room" }
 androidx-annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
+androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hilt-work" }
+androidx-work-runtime = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "androidx-work" }
+androidx-work-testing = { group = "androidx.work", name = "work-testing", version.ref = "androidx-work" }
 
 ## Compose Libraries
 activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
@@ -129,6 +134,7 @@ hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref
 hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
 hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt-navigation-compose" }
+hilt-worker = { group = "androidx.hilt", name = "hilt-work", version.ref = "hilt-work" }
 
 # Orbit
 orbit-core = { group = "org.orbit-mvi", name = "orbit-core", version.ref = "orbit" }

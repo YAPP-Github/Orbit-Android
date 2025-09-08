@@ -11,15 +11,34 @@ class FortuneLocalDataSourceImpl @Inject constructor(
     override val fortuneDateFlow = userPreferences.fortuneDateFlow
     override val fortuneImageIdFlow = userPreferences.fortuneImageIdFlow
     override val fortuneScoreFlow = userPreferences.fortuneScoreFlow
-    override val hasNewFortuneFlow = userPreferences.hasNewFortuneFlow
-    override val firstDismissedAlarmIdFlow = userPreferences.firstDismissedAlarmIdFlow
+    override val hasUnseenFortuneFlow = userPreferences.hasUnseenFortuneFlow
+    override val shouldShowFortuneToolTipFlow = userPreferences.shouldShowFortuneToolTipFlow
+    override val isFortuneCreatingFlow = userPreferences.isFortuneCreatingFlow
+    override val isFortuneFailedFlow = userPreferences.isFortuneFailedFlow
+    override val isFirstAlarmDismissedTodayFlow = userPreferences.isFirstAlarmDismissedTodayFlow
 
-    override suspend fun saveFortuneId(fortuneId: Long) {
-        userPreferences.saveFortuneId(fortuneId)
+    override suspend fun tryMarkFortuneCreating(): Boolean {
+        return userPreferences.tryMarkFortuneCreating()
     }
 
-    override suspend fun markFortuneAsChecked() {
-        userPreferences.markFortuneAsChecked()
+    override suspend fun markFortuneCreating() {
+        userPreferences.markFortuneCreating()
+    }
+
+    override suspend fun markFortuneCreated(fortuneId: Long) {
+        userPreferences.markFortuneCreated(fortuneId)
+    }
+
+    override suspend fun markFortuneFailed() {
+        userPreferences.markFortuneFailed()
+    }
+
+    override suspend fun markFortuneSeen() {
+        userPreferences.markFortuneSeen()
+    }
+
+    override suspend fun markFortuneTooltipShown() {
+        userPreferences.markFortuneTooltipShown()
     }
 
     override suspend fun saveFortuneImageId(imageResId: Int) {
@@ -30,15 +49,11 @@ class FortuneLocalDataSourceImpl @Inject constructor(
         userPreferences.saveFortuneScore(score)
     }
 
-    override suspend fun saveFirstDismissedAlarmId(alarmId: Long) {
-        userPreferences.saveFirstDismissedAlarmId(alarmId)
+    override suspend fun markFirstAlarmDismissedToday() {
+        userPreferences.markFirstAlarmDismissedToday()
     }
 
-    override suspend fun clearDismissedAlarmId() {
-        userPreferences.clearDismissedAlarmId()
-    }
-
-    override suspend fun clearFortuneId() {
-        userPreferences.clearFortuneId()
+    override suspend fun clearFortuneData() {
+        userPreferences.clearFortuneData()
     }
 }

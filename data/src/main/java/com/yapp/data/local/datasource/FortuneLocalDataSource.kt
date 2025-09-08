@@ -7,14 +7,21 @@ interface FortuneLocalDataSource {
     val fortuneDateFlow: Flow<String?>
     val fortuneImageIdFlow: Flow<Int?>
     val fortuneScoreFlow: Flow<Int?>
-    val hasNewFortuneFlow: Flow<Boolean>
-    val firstDismissedAlarmIdFlow: Flow<Long?>
+    val hasUnseenFortuneFlow: Flow<Boolean>
+    val shouldShowFortuneToolTipFlow: Flow<Boolean>
+    val isFortuneCreatingFlow: Flow<Boolean>
+    val isFortuneFailedFlow: Flow<Boolean>
+    val isFirstAlarmDismissedTodayFlow: Flow<Boolean>
 
-    suspend fun saveFortuneId(fortuneId: Long)
-    suspend fun markFortuneAsChecked()
+    suspend fun tryMarkFortuneCreating(): Boolean
+    suspend fun markFortuneCreating()
+    suspend fun markFortuneCreated(fortuneId: Long)
+    suspend fun markFortuneFailed()
+    suspend fun markFortuneSeen()
+    suspend fun markFortuneTooltipShown()
     suspend fun saveFortuneImageId(imageResId: Int)
     suspend fun saveFortuneScore(score: Int)
-    suspend fun saveFirstDismissedAlarmId(alarmId: Long)
-    suspend fun clearDismissedAlarmId()
-    suspend fun clearFortuneId()
+    suspend fun markFirstAlarmDismissedToday()
+
+    suspend fun clearFortuneData()
 }

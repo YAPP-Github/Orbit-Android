@@ -27,7 +27,6 @@ sealed class MissionContract {
         data object ClickCard : Action()
         data object ShowExitDialog : Action()
         data object HideExitDialog : Action()
-        data object RetryPostFortune : Action()
     }
 
     sealed class SideEffect : com.yapp.ui.base.SideEffect {

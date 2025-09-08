@@ -143,12 +143,6 @@ fun MissionScreen(
             MissionSuccessOverlay()
         }
 
-        state.errorMessage?.let {
-            ErrorDialog(message = it) {
-                eventDispatcher(MissionContract.Action.RetryPostFortune)
-            }
-        }
-
         if (state.missionMode == MissionMode.PREVIEW) {
             val insets = WindowInsets.navigationBars.asPaddingValues()
 
@@ -403,16 +397,6 @@ fun MissionSuccessOverlay() {
             )
         }
     }
-}
-
-@Composable
-fun ErrorDialog(message: String, onConfirm: () -> Unit) {
-    OrbitDialog(
-        title = stringResource(id = R.string.error),
-        message = message,
-        confirmText = stringResource(id = R.string.confirm),
-        onConfirm = onConfirm,
-    )
 }
 
 @Composable

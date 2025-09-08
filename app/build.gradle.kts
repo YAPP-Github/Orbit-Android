@@ -8,6 +8,7 @@ plugins {
 
 android {
     namespace = "com.yapp.orbit"
+    compileSdk = 35
 
     defaultConfig {
         versionCode = 6
@@ -53,4 +54,6 @@ dependencies {
     implementation(libs.firebase.crashlytics)
     implementation(libs.play.services.ads)
     implementation(libs.kotlin.reflect)
+    implementation(libs.hilt.worker)
+    implementation(libs.androidx.work.runtime)
 }

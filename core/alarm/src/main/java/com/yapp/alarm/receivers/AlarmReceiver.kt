@@ -12,6 +12,7 @@ import com.yapp.alarm.services.AlarmService
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
 import com.yapp.domain.model.Alarm
+import com.yapp.domain.model.toAlarmDay
 import com.yapp.domain.model.toTimeString
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.usecase.AlarmUseCase
@@ -19,8 +20,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -105,17 +106,31 @@ class AlarmReceiver : BroadcastReceiver() {
                 androidAlarmScheduler.cancelSnoozedAlarm(notificationId)
                 context.stopService(alarmServiceIntent)
 
-                sendBroadCastToCloseAlarmInteractionActivity(
-                    context = context,
-                    notificationId = notificationId,
-                    missionType = missionType,
-                    missionCount = missionCount,
-                )
-
                 CoroutineScope(Dispatchers.IO).launch {
-                    val alarms = alarmUseCase.getAllAlarms().first().sortedBy { it.isAlarmActive }
-                    val isFirstAlarm = alarms.firstOrNull()?.id == notificationId
+                    val alarms = alarmUseCase.getAllAlarms().first()
 
+                    val isSnoozeId = notificationId >= AlarmConstants.SNOOZE_ID_OFFSET
+
+                    fun Alarm.ringsToday(): Boolean {
+                        if (repeatDays == 0) return true
+
+                        val todayAlarmDay = LocalDate.now().dayOfWeek.toAlarmDay()
+                        return (repeatDays and todayAlarmDay.bitValue) != 0
+                    }
+
+                    val earliestIdToday: Long? = alarms
+                        .asSequence()
+                        .filter { (it.isAlarmActive || it.id == notificationId) && it.ringsToday() }
+                        .sortedWith(compareBy({ it.hour }, { it.minute }, { it.second }))
+                        .firstOrNull()
+                        ?.id
+
+                    val isEarliestAlarmDismissedToday =
+                        !isSnoozeId && (earliestIdToday == notificationId)
+
+                    if (isEarliestAlarmDismissedToday) fortuneRepository.markFirstAlarmDismissedToday()
+
+                    val isFirstAlarm = earliestIdToday == notificationId
                     analyticsHelper.logEvent(
                         AnalyticsEvent(
                             type = "alarm_dismiss",
@@ -126,12 +141,12 @@ class AlarmReceiver : BroadcastReceiver() {
                         ),
                     )
 
-                    val existingId = fortuneRepository.firstDismissedAlarmIdFlow.firstOrNull()
-                    if (existingId == null) {
-                        fortuneRepository.saveFirstDismissedAlarmId(notificationId)
-                    } else if (existingId != notificationId) {
-                        fortuneRepository.clearDismissedAlarmId()
-                    }
+                    sendBroadCastToCloseAlarmInteractionActivity(
+                        context = context,
+                        notificationId = notificationId,
+                        missionType = missionType,
+                        missionCount = missionCount,
+                    )
                 }
 
                 Toast.makeText(context, "알람이 해제되었어요", Toast.LENGTH_SHORT).show()
