@@ -8,6 +8,7 @@ import com.yapp.domain.usecase.AlarmUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -31,11 +32,10 @@ class RescheduleAlarmReceiver : BroadcastReceiver() {
 
     private fun rescheduleAlarm() {
         CoroutineScope(Dispatchers.IO).launch {
-            alarmUseCase.getAllAlarms().collect { alarms ->
-                alarms.forEach { alarm ->
-                    androidAlarmScheduler.scheduleAlarm(alarm)
-                }
-            }
+            val alarms = alarmUseCase.getAllAlarms().first()
+            alarms
+                .filter { it.isAlarmActive }
+                .forEach { alarm -> androidAlarmScheduler.scheduleAlarm(alarm) }
         }
     }
 }
