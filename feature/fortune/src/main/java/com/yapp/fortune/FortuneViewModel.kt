@@ -64,12 +64,8 @@ class FortuneViewModel @Inject constructor(
                     )
                 }
 
-                is FortuneCreateStatus.Failure -> {
-                    reduce { state.copy(isLoading = false) }
-                }
-
-                is FortuneCreateStatus.Idle -> {
-                    reduce { state.copy(isLoading = false) }
+                is FortuneCreateStatus.Failure, FortuneCreateStatus.Idle -> {
+                    postSideEffect(FortuneContract.SideEffect.NavigateToHome)
                 }
             }
         }
