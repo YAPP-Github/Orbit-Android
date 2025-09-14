@@ -46,12 +46,14 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
                 CoroutineScope(Dispatchers.Main).launch {
                     try {
                         if (!hasValidMissionData) {
-                            val fortuneCreateStaus = withContext(Dispatchers.IO) {
-                                fortuneRepository.fortuneCreateStatusFlow.first()
+                            val (fortuneCreateStatus, hasUnseenFortune) = withContext(Dispatchers.IO) {
+                                val status = fortuneRepository.fortuneCreateStatusFlow.first()
+                                val unseen = fortuneRepository.hasUnseenFortuneFlow.first()
+                                status to unseen
                             }
 
-                            when (fortuneCreateStaus) {
-                                is FortuneCreateStatus.Creating, is FortuneCreateStatus.Success -> {
+                            when (fortuneCreateStatus) {
+                                is FortuneCreateStatus.Creating -> {
                                     context?.let { ctx ->
                                         val uri = "orbitapp://fortune".toUri()
                                         val fortuneIntent = Intent(Intent.ACTION_VIEW, uri).apply {
@@ -62,8 +64,21 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
                                     }
                                 }
 
-                                FortuneCreateStatus.Failure, FortuneCreateStatus.Idle -> {
+                                is FortuneCreateStatus.Success -> {
+                                    if (hasUnseenFortune) {
+                                        context?.let { ctx ->
+                                            val uri = "orbitapp://fortune".toUri()
+                                            val fortuneIntent =
+                                                Intent(Intent.ACTION_VIEW, uri).apply {
+                                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                    setPackage(ctx.packageName)
+                                                }
+                                            ctx.startActivity(fortuneIntent)
+                                        }
+                                    }
                                 }
+
+                                FortuneCreateStatus.Failure, FortuneCreateStatus.Idle -> { }
                             }
                         } else {
                             context?.let { ctx ->
