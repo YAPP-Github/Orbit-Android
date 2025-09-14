@@ -1,6 +1,9 @@
 package com.yapp.data.local.datasource
 
 import com.yapp.datastore.UserPreferences
+import com.yapp.domain.model.FortuneCreateStatus
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import javax.inject.Inject
 
 class FortuneLocalDataSourceImpl @Inject constructor(
@@ -13,13 +16,20 @@ class FortuneLocalDataSourceImpl @Inject constructor(
     override val fortuneScoreFlow = userPreferences.fortuneScoreFlow
     override val hasUnseenFortuneFlow = userPreferences.hasUnseenFortuneFlow
     override val shouldShowFortuneToolTipFlow = userPreferences.shouldShowFortuneToolTipFlow
-    override val isFortuneCreatingFlow = userPreferences.isFortuneCreatingFlow
-    override val isFortuneFailedFlow = userPreferences.isFortuneFailedFlow
     override val isFirstAlarmDismissedTodayFlow = userPreferences.isFirstAlarmDismissedTodayFlow
 
-    override suspend fun tryMarkFortuneCreating(): Boolean {
-        return userPreferences.tryMarkFortuneCreating()
-    }
+    override val fortuneCreateStatusFlow = combine(
+        userPreferences.fortuneIdFlow,
+        userPreferences.isFortuneCreatingFlow,
+        userPreferences.isFortuneFailedFlow,
+    ) { fortuneId, isCreating, isFailed ->
+        when {
+            isCreating -> FortuneCreateStatus.Creating
+            isFailed -> FortuneCreateStatus.Failure
+            fortuneId != null -> FortuneCreateStatus.Success(fortuneId)
+            else -> FortuneCreateStatus.Idle
+        }
+    }.distinctUntilChanged()
 
     override suspend fun markFortuneCreating() {
         userPreferences.markFortuneCreating()

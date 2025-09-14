@@ -4,6 +4,7 @@ import com.yapp.data.local.datasource.FortuneLocalDataSource
 import com.yapp.data.remote.datasource.FortuneDataSource
 import com.yapp.data.remote.dto.response.toDomain
 import com.yapp.domain.model.Fortune
+import com.yapp.domain.model.FortuneCreateStatus
 import com.yapp.domain.repository.FortuneRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -19,11 +20,10 @@ class FortuneRepositoryImpl @Inject constructor(
     override val fortuneScoreFlow: Flow<Int?> = fortuneLocalDataSource.fortuneScoreFlow
     override val hasUnseenFortuneFlow: Flow<Boolean> = fortuneLocalDataSource.hasUnseenFortuneFlow
     override val shouldShowFortuneToolTipFlow: Flow<Boolean> = fortuneLocalDataSource.shouldShowFortuneToolTipFlow
-    override val isFortuneCreatingFlow: Flow<Boolean> = fortuneLocalDataSource.isFortuneCreatingFlow
-    override val isFortuneFailedFlow: Flow<Boolean> = fortuneLocalDataSource.isFortuneFailedFlow
     override val isFirstAlarmDismissedTodayFlow: Flow<Boolean> = fortuneLocalDataSource.isFirstAlarmDismissedTodayFlow
 
-    override suspend fun tryMarkFortuneCreating() = fortuneLocalDataSource.tryMarkFortuneCreating()
+    override val fortuneCreateStatusFlow: Flow<FortuneCreateStatus> = fortuneLocalDataSource.fortuneCreateStatusFlow
+
     override suspend fun markFortuneAsCreating() = fortuneLocalDataSource.markFortuneCreating()
     override suspend fun markFortuneAsCreated(fortuneId: Long) = fortuneLocalDataSource.markFortuneCreated(fortuneId)
     override suspend fun markFortuneAsFailed() = fortuneLocalDataSource.markFortuneFailed()
