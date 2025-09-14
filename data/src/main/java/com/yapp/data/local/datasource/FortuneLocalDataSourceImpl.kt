@@ -4,6 +4,8 @@ import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.FortuneCreateStatus
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 class FortuneLocalDataSourceImpl @Inject constructor(
@@ -20,16 +22,19 @@ class FortuneLocalDataSourceImpl @Inject constructor(
 
     override val fortuneCreateStatusFlow = combine(
         userPreferences.fortuneIdFlow,
+        userPreferences.fortuneDateFlow,
         userPreferences.isFortuneCreatingFlow,
         userPreferences.isFortuneFailedFlow,
-    ) { fortuneId, isCreating, isFailed ->
+    ) { fortuneId, fortuneDate, isCreating, isFailed ->
         when {
             isCreating -> FortuneCreateStatus.Creating
             isFailed -> FortuneCreateStatus.Failure
-            fortuneId != null -> FortuneCreateStatus.Success(fortuneId)
+            fortuneId != null && fortuneDate == today() -> FortuneCreateStatus.Success(fortuneId)
             else -> FortuneCreateStatus.Idle
         }
     }.distinctUntilChanged()
+
+    private fun today(): String = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
 
     override suspend fun markFortuneCreating() {
         userPreferences.markFortuneCreating()
