@@ -1,6 +1,7 @@
 package com.yapp.domain.repository
 
 import com.yapp.domain.model.Fortune
+import com.yapp.domain.model.FortuneCreateStatus
 import kotlinx.coroutines.flow.Flow
 
 interface FortuneRepository {
@@ -10,11 +11,10 @@ interface FortuneRepository {
     val fortuneScoreFlow: Flow<Int?>
     val hasUnseenFortuneFlow: Flow<Boolean>
     val shouldShowFortuneToolTipFlow: Flow<Boolean>
-    val isFortuneCreatingFlow: Flow<Boolean>
-    val isFortuneFailedFlow: Flow<Boolean>
     val isFirstAlarmDismissedTodayFlow: Flow<Boolean>
 
-    suspend fun tryMarkFortuneCreating(): Boolean
+    val fortuneCreateStatusFlow: Flow<FortuneCreateStatus>
+
     suspend fun markFortuneAsCreating()
     suspend fun markFortuneAsCreated(fortuneId: Long)
     suspend fun markFortuneAsFailed()

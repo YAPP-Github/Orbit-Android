@@ -131,20 +131,6 @@ class UserPreferences @Inject constructor(
         }
     }
 
-    suspend fun tryMarkFortuneCreating(): Boolean {
-        var canStart = false
-        dataStore.edit { pref ->
-            val hasTodayFortune = pref[Keys.FORTUNE_DATE] == today() && pref[Keys.FORTUNE_ID] != null
-            val creating = pref[Keys.FORTUNE_CREATING] ?: false
-            if (!hasTodayFortune && !creating) {
-                pref[Keys.FORTUNE_CREATING] = true
-                pref[Keys.FORTUNE_FAILED] = false
-                canStart = true
-            }
-        }
-        return canStart
-    }
-
     suspend fun markFortuneCreating() {
         dataStore.edit { pref ->
             pref[Keys.FORTUNE_CREATING] = true
