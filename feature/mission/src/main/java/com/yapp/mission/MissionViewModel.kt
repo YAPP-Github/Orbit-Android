@@ -7,6 +7,7 @@ import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
 import com.yapp.domain.MissionMode
+import com.yapp.domain.model.FortuneCreateStatus
 import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.media.haptic.HapticFeedbackManager
@@ -133,13 +134,15 @@ class MissionViewModel @Inject constructor(
         performHapticSuccess()
         logMissionSuccess(type)
         if (state.missionMode == MissionMode.REAL) {
-            val hasUnseenFortune = fortuneRepository.hasUnseenFortuneFlow.first()
-            val isFortuneCreating = fortuneRepository.isFortuneCreatingFlow.first()
+            val fortuneCreateStaus = fortuneRepository.fortuneCreateStatusFlow.first()
 
-            if (hasUnseenFortune || isFortuneCreating) {
-                postSideEffect(MissionContract.SideEffect.NavigateToFortune)
-            } else {
-                postSideEffect(MissionContract.SideEffect.NavigateBack)
+            when (fortuneCreateStaus) {
+                is FortuneCreateStatus.Creating, is FortuneCreateStatus.Success -> {
+                    postSideEffect(MissionContract.SideEffect.NavigateToFortune)
+                }
+                FortuneCreateStatus.Failure, FortuneCreateStatus.Idle -> {
+                    postSideEffect(MissionContract.SideEffect.NavigateBack)
+                }
             }
         } else {
             postSideEffect(MissionContract.SideEffect.NavigateBack)

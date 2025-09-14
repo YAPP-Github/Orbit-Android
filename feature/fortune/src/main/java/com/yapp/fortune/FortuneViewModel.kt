@@ -4,12 +4,13 @@ import android.app.Application
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
+import com.yapp.domain.model.FortuneCreateStatus
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.fortune.page.toFortunePages
 import com.yapp.media.decoder.ImageUtils
 import com.yapp.media.storage.ImageSaver
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -50,21 +51,24 @@ class FortuneViewModel @Inject constructor(
     }
 
     private fun observeFortune() = intent {
-        combine(
-            fortuneRepository.fortuneIdFlow,
-            fortuneRepository.isFirstAlarmDismissedTodayFlow,
-            fortuneRepository.isFortuneCreatingFlow,
-        ) { fortuneId: Long?, isFirstAlarmDismissedToday: Boolean, isCreating: Boolean ->
-            Triple(fortuneId, isFirstAlarmDismissedToday, isCreating)
-        }.collect { (fortuneId, isFirstAlarmDismissedToday, isCreating) ->
-            when {
-                isCreating -> {
+        fortuneRepository.fortuneCreateStatusFlow.collect { status ->
+            when (status) {
+                is FortuneCreateStatus.Creating -> {
                     reduce { state.copy(isLoading = true) }
                 }
-                fortuneId != null -> {
-                    fetchAndUpdateFortune(fortuneId, isFirstAlarmDismissedToday)
+
+                is FortuneCreateStatus.Success -> {
+                    fetchAndUpdateFortune(
+                        fortuneId = status.fortuneId,
+                        isFirstAlarmDismissedToday = fortuneRepository.isFirstAlarmDismissedTodayFlow.first(),
+                    )
                 }
-                else -> {
+
+                is FortuneCreateStatus.Failure -> {
+                    reduce { state.copy(isLoading = false) }
+                }
+
+                is FortuneCreateStatus.Idle -> {
                     reduce { state.copy(isLoading = false) }
                 }
             }
