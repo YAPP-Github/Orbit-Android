@@ -27,8 +27,8 @@ class FortuneLocalDataSourceImpl @Inject constructor(
         userPreferences.isFortuneFailedFlow,
     ) { fortuneId, fortuneDate, isCreating, isFailed ->
         when {
-            isCreating -> FortuneCreateStatus.Creating
             isFailed -> FortuneCreateStatus.Failure
+            isCreating -> FortuneCreateStatus.Creating
             fortuneId != null && fortuneDate == today() -> FortuneCreateStatus.Success(fortuneId)
             else -> FortuneCreateStatus.Idle
         }
