@@ -75,6 +75,7 @@ import com.yapp.domain.model.Alarm
 import com.yapp.home.alarm.component.AlarmListItem
 import com.yapp.home.alarm.component.AlarmListItemMenu
 import com.yapp.home.component.bottomsheet.AlarmListBottomSheet
+import com.yapp.home.component.bottomsheet.UpdateNoticeBottomSheet
 import com.yapp.ui.component.dialog.OrbitDialog
 import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.component.snackbar.showCustomSnackBar
@@ -242,6 +243,17 @@ fun HomeScreen(
             confirmText = stringResource(id = R.string.no_daily_fortune_dialog_btn_confirm),
             onConfirm = {
                 processAction(HomeContract.Action.HideNoDailyFortuneDialog)
+            },
+        )
+    }
+
+    if (state.isUpdateNoticeVisible) {
+        UpdateNoticeBottomSheet(
+            onDontShowAgain = {
+                processAction(HomeContract.Action.OnClickDontShowAgain)
+            },
+            onClose = {
+                processAction(HomeContract.Action.HideUpdateNotice)
             },
         )
     }

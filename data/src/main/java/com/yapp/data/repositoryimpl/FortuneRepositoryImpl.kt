@@ -15,7 +15,7 @@ class FortuneRepositoryImpl @Inject constructor(
 ) : FortuneRepository {
 
     override val fortuneIdFlow: Flow<Long?> = fortuneLocalDataSource.fortuneIdFlow
-    override val fortuneDateFlow: Flow<String?> = fortuneLocalDataSource.fortuneDateFlow
+    override val fortuneDateEpochFlow: Flow<Long?> = fortuneLocalDataSource.fortuneDateEpochFlow
     override val fortuneImageIdFlow: Flow<Int?> = fortuneLocalDataSource.fortuneImageIdFlow
     override val fortuneScoreFlow: Flow<Int?> = fortuneLocalDataSource.fortuneScoreFlow
     override val hasUnseenFortuneFlow: Flow<Boolean> = fortuneLocalDataSource.hasUnseenFortuneFlow

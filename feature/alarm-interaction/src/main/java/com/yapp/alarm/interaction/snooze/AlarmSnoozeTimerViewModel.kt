@@ -17,7 +17,6 @@ import org.orbitmvi.orbit.viewmodel.container
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import kotlin.math.max
 
@@ -45,8 +44,8 @@ class AlarmSnoozeTimerViewModel @Inject constructor(
     }
 
     private fun fetchIsFirstMission() = intent {
-        val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
-        val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+        val fortuneDate = fortuneRepository.fortuneDateEpochFlow.firstOrNull()
+        val todayDate = LocalDate.now().toEpochDay()
         val isFirstMission = fortuneDate != todayDate
 
         reduce {

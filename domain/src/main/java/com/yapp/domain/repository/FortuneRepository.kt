@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface FortuneRepository {
     val fortuneIdFlow: Flow<Long?>
-    val fortuneDateFlow: Flow<String?>
+    val fortuneDateEpochFlow: Flow<Long?>
     val fortuneImageIdFlow: Flow<Int?>
     val fortuneScoreFlow: Flow<Int?>
     val hasUnseenFortuneFlow: Flow<Boolean>
