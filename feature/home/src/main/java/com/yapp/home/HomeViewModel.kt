@@ -1,5 +1,8 @@
 package com.yapp.home
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.yapp.common.util.ResourceProvider
@@ -9,6 +12,7 @@ import com.yapp.domain.repository.UserInfoRepository
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.home.util.AlarmDateTimeFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import feature.home.R
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -32,6 +36,7 @@ class HomeViewModel @Inject constructor(
     private val fortuneRepository: FortuneRepository,
     private val userInfoRepository: UserInfoRepository,
     @Named("appVersion") private val appVersion: String,
+    @ApplicationContext private val context: Context,
 ) : ViewModel(), ContainerHost<HomeContract.State, HomeContract.SideEffect> {
 
     override val container: Container<HomeContract.State, HomeContract.SideEffect> = container(
@@ -371,6 +376,11 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun loadUpdateNoticeVisibility() = intent {
+        if (!isOnlineNow()) {
+            reduce { state.copy(isUpdateNoticeVisible = false) }
+            return@intent
+        }
+
         val dontShowVersion =
             userInfoRepository.updateNoticeDontShowVersionFlow.firstOrNull()
         val lastShownDate =
@@ -442,5 +452,14 @@ class HomeViewModel @Inject constructor(
     private fun setSortOrder(sortOrder: HomeContract.AlarmSortOrder) = intent {
         reduce { state.copy(sortOrder = sortOrder) }
         hideDropDownMenu()
+    }
+
+    private fun isOnlineNow(): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 }
