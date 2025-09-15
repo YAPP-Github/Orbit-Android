@@ -133,20 +133,27 @@ class MissionViewModel @Inject constructor(
     private fun completeMission(type: String) = intent {
         performHapticSuccess()
         logMissionSuccess(type)
-        if (state.missionMode == MissionMode.REAL) {
-            val fortuneCreateStaus = fortuneRepository.fortuneCreateStatusFlow.first()
 
-            when (fortuneCreateStaus) {
-                is FortuneCreateStatus.Creating, is FortuneCreateStatus.Success -> {
-                    postSideEffect(MissionContract.SideEffect.NavigateToFortune)
-                }
-                FortuneCreateStatus.Failure, FortuneCreateStatus.Idle -> {
-                    postSideEffect(MissionContract.SideEffect.NavigateBack)
-                }
-            }
-        } else {
+        if (state.missionMode != MissionMode.REAL) {
             postSideEffect(MissionContract.SideEffect.NavigateBack)
+            return@intent
         }
+
+        val fortuneCreateStatus = fortuneRepository.fortuneCreateStatusFlow.first()
+        val hasUnseenFortune = fortuneRepository.hasUnseenFortuneFlow.first()
+
+        val shouldOpenFortune = (
+            fortuneCreateStatus is FortuneCreateStatus.Creating ||
+                fortuneCreateStatus is FortuneCreateStatus.Success && hasUnseenFortune
+            )
+
+        postSideEffect(
+            if (shouldOpenFortune) {
+                MissionContract.SideEffect.NavigateToFortune
+            } else {
+                MissionContract.SideEffect.NavigateBack
+            },
+        )
     }
 
     private fun logMissionSuccess(type: String) {
