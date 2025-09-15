@@ -23,6 +23,7 @@ import org.orbitmvi.orbit.viewmodel.container
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import javax.inject.Named
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -31,6 +32,7 @@ class HomeViewModel @Inject constructor(
     private val alarmDateTimeFormatter: AlarmDateTimeFormatter,
     private val fortuneRepository: FortuneRepository,
     private val userInfoRepository: UserInfoRepository,
+    @Named("appVersion") private val appVersion: String,
 ) : ViewModel(), ContainerHost<HomeContract.State, HomeContract.SideEffect> {
 
     override val container: Container<HomeContract.State, HomeContract.SideEffect> = container(
@@ -41,6 +43,7 @@ class HomeViewModel @Inject constructor(
                 loadAllAlarms()
                 loadDailyFortuneState()
                 loadUserName()
+                loadUpdateNoticeVisibility()
             }
         }
     }
@@ -63,6 +66,8 @@ class HomeViewModel @Inject constructor(
             HomeContract.Action.ShowNoDailyFortuneDialog -> showNoDailyFortuneDialog()
             HomeContract.Action.HideNoDailyFortuneDialog -> hideNoDailyFortuneDialog()
             HomeContract.Action.HideToolTip -> hideToolTip()
+            HomeContract.Action.HideUpdateNotice -> hideUpdateNotice()
+            HomeContract.Action.OnClickDontShowAgain -> setUpdateNoticeDontShowVersion()
             HomeContract.Action.RollbackPendingAlarmToggle -> rollbackAlarmActivation()
             HomeContract.Action.ConfirmDeletion -> confirmDeletion()
             is HomeContract.Action.DeleteSingleAlarm -> deleteSingleAlarm(action.alarmId)
@@ -364,6 +369,36 @@ class HomeViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun loadUpdateNoticeVisibility() = intent {
+        val dontShowVersion =
+            userInfoRepository.updateBottomSheetDontShowVersionFlow.firstOrNull()
+        val lastShownDate =
+            userInfoRepository.updateBottomSheetLastShownDateFlow.firstOrNull()
+
+        val today = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+
+        Log.d("HomeViewModel", "App Version: $appVersion, Don't Show Version: $dontShowVersion, Last Shown Date: $lastShownDate, Today: $today")
+
+        val shouldShow = when {
+            dontShowVersion != null && dontShowVersion == appVersion -> false
+            lastShownDate != null && lastShownDate == today -> false
+            else -> true
+        }
+
+        if (shouldShow) userInfoRepository.markUpdateBottomSheetShownToday()
+
+        reduce { state.copy(isUpdateNoticeVisible = shouldShow) }
+    }
+
+    private fun setUpdateNoticeDontShowVersion() = intent {
+        userInfoRepository.markUpdateBottomSheetDontShow(appVersion)
+        reduce { state.copy(isUpdateNoticeVisible = false) }
+    }
+
+    private fun hideUpdateNotice() = intent {
+        reduce { state.copy(isUpdateNoticeVisible = false) }
     }
 
     private fun loadUserName() = intent {

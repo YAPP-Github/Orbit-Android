@@ -34,7 +34,7 @@ internal fun UpdateNoticeBottomSheet(
 ) {
     Box(
         modifier = Modifier.fillMaxSize()
-            .clickable { onClose },
+            .clickable(onClick = onClose),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Column(
@@ -68,8 +68,8 @@ internal fun UpdateNoticeBottomSheet(
                 AsyncImage(
                     model = BANNER_IMAGE_URL,
                     contentDescription = null,
-                    contentScale = ContentScale.FillWidth,
-                    modifier = Modifier.fillMaxWidth(),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxWidth().aspectRatio(1.0f),
                 )
             }
 
@@ -88,9 +88,7 @@ internal fun UpdateNoticeBottomSheet(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable {
-                            onDontShowAgain
-                        }
+                        .clickable(onClick = onDontShowAgain)
                         .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -104,9 +102,7 @@ internal fun UpdateNoticeBottomSheet(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable {
-                            onClose
-                        }
+                        .clickable(onClick = onClose)
                         .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center,
                 ) {
