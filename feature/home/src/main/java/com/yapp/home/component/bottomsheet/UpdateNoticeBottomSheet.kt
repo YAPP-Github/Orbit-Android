@@ -4,6 +4,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -74,7 +75,11 @@ internal fun UpdateNoticeBottomSheet(
                     color = OrbitTheme.colors.gray_900,
                     shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
                 )
-                .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)),
+                .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+                ) { },
         ) {
             if (isPreview) {
                 // 프리뷰용 박스
