@@ -124,4 +124,7 @@
     <string name="alarm_remaining_time_hours_minutes">%1$d시간 %2$d분 후에 울려요</string>
     <string name="alarm_remaining_time_minutes_only">%d분 후에 울려요</string>
     <string name="alarm_remaining_time_soon">곧 울려요</string>
+
+    <string name="update_notice_bottom_sheet_dont_show_again">다시 보지 않기</string>
+    <string name="update_notice_bottom_sheet_close">닫기</string>
 </resources>
