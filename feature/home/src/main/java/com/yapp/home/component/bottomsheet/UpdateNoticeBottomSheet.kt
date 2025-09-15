@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
@@ -34,6 +35,9 @@ internal fun UpdateNoticeBottomSheet(
 ) {
     Box(
         modifier = Modifier.fillMaxSize()
+            .background(
+                color = Color(0xFF17191F).copy(alpha = 0.85f),
+            )
             .clickable(onClick = onClose),
         contentAlignment = Alignment.BottomCenter,
     ) {
