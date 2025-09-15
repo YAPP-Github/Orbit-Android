@@ -5,7 +5,6 @@ import com.yapp.domain.model.FortuneCreateStatus
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 class FortuneLocalDataSourceImpl @Inject constructor(
@@ -13,7 +12,7 @@ class FortuneLocalDataSourceImpl @Inject constructor(
 ) : FortuneLocalDataSource {
 
     override val fortuneIdFlow = userPreferences.fortuneIdFlow
-    override val fortuneDateFlow = userPreferences.fortuneDateFlow
+    override val fortuneDateEpochFlow = userPreferences.fortuneDateEpochFlow
     override val fortuneImageIdFlow = userPreferences.fortuneImageIdFlow
     override val fortuneScoreFlow = userPreferences.fortuneScoreFlow
     override val hasUnseenFortuneFlow = userPreferences.hasUnseenFortuneFlow
@@ -22,19 +21,19 @@ class FortuneLocalDataSourceImpl @Inject constructor(
 
     override val fortuneCreateStatusFlow = combine(
         userPreferences.fortuneIdFlow,
-        userPreferences.fortuneDateFlow,
+        userPreferences.fortuneDateEpochFlow,
         userPreferences.isFortuneCreatingFlow,
         userPreferences.isFortuneFailedFlow,
     ) { fortuneId, fortuneDate, isCreating, isFailed ->
         when {
             isFailed -> FortuneCreateStatus.Failure
             isCreating -> FortuneCreateStatus.Creating
-            fortuneId != null && fortuneDate == today() -> FortuneCreateStatus.Success(fortuneId)
+            fortuneId != null && fortuneDate == todayEpoch() -> FortuneCreateStatus.Success(fortuneId)
             else -> FortuneCreateStatus.Idle
         }
     }.distinctUntilChanged()
 
-    private fun today(): String = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+    private fun todayEpoch(): Long = LocalDate.now().toEpochDay()
 
     override suspend fun markFortuneCreating() {
         userPreferences.markFortuneCreating()

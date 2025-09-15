@@ -21,7 +21,6 @@ import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.syntax.simple.repeatOnSubscription
 import org.orbitmvi.orbit.viewmodel.container
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -337,8 +336,8 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun loadDailyFortune() = intent {
-        val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
-        val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+        val fortuneDate = fortuneRepository.fortuneDateEpochFlow.firstOrNull()
+        val todayDate = LocalDate.now().toEpochDay()
 
         if (fortuneDate != todayDate) {
             processAction(HomeContract.Action.ShowNoDailyFortuneDialog)
@@ -349,10 +348,10 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun loadDailyFortuneState() = intent {
-        val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+        val todayDate = LocalDate.now().toEpochDay()
 
         combine(
-            fortuneRepository.fortuneDateFlow,
+            fortuneRepository.fortuneDateEpochFlow,
             fortuneRepository.fortuneScoreFlow,
             fortuneRepository.shouldShowFortuneToolTipFlow,
         ) { fortuneDate, fortuneScore, shouldShowTooltip ->
@@ -375,11 +374,9 @@ class HomeViewModel @Inject constructor(
         val dontShowVersion =
             userInfoRepository.updateNoticeDontShowVersionFlow.firstOrNull()
         val lastShownDate =
-            userInfoRepository.updateNoticeLastShownDateFlow.firstOrNull()
+            userInfoRepository.updateNoticeLastShownDateEpochFlow.firstOrNull()
 
-        val today = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-
-        Log.d("HomeViewModel", "App Version: $appVersion, Don't Show Version: $dontShowVersion, Last Shown Date: $lastShownDate, Today: $today")
+        val today = LocalDate.now().toEpochDay()
 
         val shouldShow = when {
             dontShowVersion != null && dontShowVersion == appVersion -> false

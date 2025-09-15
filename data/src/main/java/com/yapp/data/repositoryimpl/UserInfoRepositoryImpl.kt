@@ -18,7 +18,7 @@ class UserInfoRepositoryImpl @Inject constructor(
     override val userNameFlow: Flow<String?> = userLocalDataSource.userNameFlow
     override val onboardingCompletedFlow: Flow<Boolean> = userLocalDataSource.onboardingCompletedFlow
     override val updateNoticeDontShowVersionFlow: Flow<String?> = userLocalDataSource.updateNoticeDontShowVersionFlow
-    override val updateNoticeLastShownDateFlow: Flow<String?> = userLocalDataSource.updateNoticeLastShownDateFlow
+    override val updateNoticeLastShownDateEpochFlow: Flow<Long?> = userLocalDataSource.updateNoticeLastShownDateEpochFlow
 
     override suspend fun saveUserId(userId: Long) = userLocalDataSource.saveUserId(userId)
     override suspend fun saveUserName(userName: String) = userLocalDataSource.saveUserName(userName)

@@ -7,7 +7,7 @@ interface UserLocalDataSource {
     val userNameFlow: Flow<String?>
     val onboardingCompletedFlow: Flow<Boolean>
     val updateNoticeDontShowVersionFlow: Flow<String?>
-    val updateNoticeLastShownDateFlow: Flow<String?>
+    val updateNoticeLastShownDateEpochFlow: Flow<Long?>
 
     suspend fun saveUserId(userId: Long)
     suspend fun saveUserName(userName: String)
