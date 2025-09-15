@@ -7,12 +7,12 @@ interface UserLocalDataSource {
     val userNameFlow: Flow<String?>
     val onboardingCompletedFlow: Flow<Boolean>
     val updateBottomSheetDontShowVersionFlow: Flow<String?>
-    val updateBottomSheetLastClosedDateFlow: Flow<String?>
+    val updateBottomSheetLastShownDateFlow: Flow<String?>
 
     suspend fun saveUserId(userId: Long)
     suspend fun saveUserName(userName: String)
     suspend fun setOnboardingCompleted()
     suspend fun markUpdateBottomSheetDontShow(version: String)
-    suspend fun markUpdateBottomSheetClosedToday()
+    suspend fun markUpdateBottomSheetShownToday()
     suspend fun clearUserData()
 }
