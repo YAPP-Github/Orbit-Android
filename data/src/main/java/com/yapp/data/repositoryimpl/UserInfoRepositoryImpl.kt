@@ -21,6 +21,8 @@ class UserInfoRepositoryImpl @Inject constructor(
     override suspend fun saveUserId(userId: Long) = userLocalDataSource.saveUserId(userId)
     override suspend fun saveUserName(userName: String) = userLocalDataSource.saveUserName(userName)
     override suspend fun setOnboardingCompleted() = userLocalDataSource.setOnboardingCompleted()
+    override suspend fun markUpdateBottomSheetDontShow(version: String) = userLocalDataSource.markUpdateBottomSheetDontShow(version)
+    override suspend fun markUpdateBottomSheetClosedToday() = userLocalDataSource.markUpdateBottomSheetClosedToday()
     override suspend fun clearUserData() = userLocalDataSource.clearUserData()
 
     override suspend fun getUserInfo(userId: Long): Result<User> {

@@ -24,6 +24,14 @@ class UserLocalDataSourceImpl @Inject constructor(
         userPreferences.setOnboardingCompleted()
     }
 
+    override suspend fun markUpdateBottomSheetDontShow(version: String) {
+        userPreferences.markUpdateBottomSheetDontShow(version)
+    }
+
+    override suspend fun markUpdateBottomSheetClosedToday() {
+        userPreferences.markUpdateBottomSheetClosedToday()
+    }
+
     override suspend fun clearUserData() {
         userPreferences.clearUserData()
     }

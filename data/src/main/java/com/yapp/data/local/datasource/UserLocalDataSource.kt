@@ -10,5 +10,7 @@ interface UserLocalDataSource {
     suspend fun saveUserId(userId: Long)
     suspend fun saveUserName(userName: String)
     suspend fun setOnboardingCompleted()
+    suspend fun markUpdateBottomSheetDontShow(version: String)
+    suspend fun markUpdateBottomSheetClosedToday()
     suspend fun clearUserData()
 }
