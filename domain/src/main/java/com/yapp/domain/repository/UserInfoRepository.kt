@@ -8,6 +8,8 @@ interface UserInfoRepository {
     val userIdFlow: Flow<Long?>
     val userNameFlow: Flow<String?>
     val onboardingCompletedFlow: Flow<Boolean>
+    val updateBottomSheetDontShowVersionFlow: Flow<String?>
+    val updateBottomSheetLastClosedDateFlow: Flow<String?>
 
     suspend fun saveUserId(userId: Long)
     suspend fun saveUserName(userName: String)

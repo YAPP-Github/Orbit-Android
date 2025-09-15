@@ -11,6 +11,8 @@ class UserLocalDataSourceImpl @Inject constructor(
     override val userIdFlow: Flow<Long?> = userPreferences.userIdFlow
     override val userNameFlow: Flow<String?> = userPreferences.userNameFlow
     override val onboardingCompletedFlow: Flow<Boolean> = userPreferences.onboardingCompletedFlow
+    override val updateBottomSheetDontShowVersionFlow: Flow<String?> = userPreferences.updateBottomSheetDontShowVersionFlow
+    override val updateBottomSheetLastClosedDateFlow: Flow<String?> = userPreferences.updateBottomSheetLastClosedDateFlow
 
     override suspend fun saveUserId(userId: Long) {
         userPreferences.saveUserId(userId)
