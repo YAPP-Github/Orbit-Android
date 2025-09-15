@@ -17,14 +17,14 @@ class UserInfoRepositoryImpl @Inject constructor(
     override val userIdFlow: Flow<Long?> = userLocalDataSource.userIdFlow
     override val userNameFlow: Flow<String?> = userLocalDataSource.userNameFlow
     override val onboardingCompletedFlow: Flow<Boolean> = userLocalDataSource.onboardingCompletedFlow
-    override val updateBottomSheetDontShowVersionFlow: Flow<String?> = userLocalDataSource.updateBottomSheetDontShowVersionFlow
-    override val updateBottomSheetLastShownDateFlow: Flow<String?> = userLocalDataSource.updateBottomSheetLastShownDateFlow
+    override val updateNoticeDontShowVersionFlow: Flow<String?> = userLocalDataSource.updateNoticeDontShowVersionFlow
+    override val updateNoticeLastShownDateFlow: Flow<String?> = userLocalDataSource.updateNoticeLastShownDateFlow
 
     override suspend fun saveUserId(userId: Long) = userLocalDataSource.saveUserId(userId)
     override suspend fun saveUserName(userName: String) = userLocalDataSource.saveUserName(userName)
     override suspend fun setOnboardingCompleted() = userLocalDataSource.setOnboardingCompleted()
-    override suspend fun markUpdateBottomSheetDontShow(version: String) = userLocalDataSource.markUpdateBottomSheetDontShow(version)
-    override suspend fun markUpdateBottomSheetShownToday() = userLocalDataSource.markUpdateBottomSheetShownToday()
+    override suspend fun markUpdateNoticeDontShow(version: String) = userLocalDataSource.markUpdateNoticeDontShow(version)
+    override suspend fun markUpdateNoticeShownToday() = userLocalDataSource.markUpdateNoticeShownToday()
     override suspend fun clearUserData() = userLocalDataSource.clearUserData()
 
     override suspend fun getUserInfo(userId: Long): Result<User> {

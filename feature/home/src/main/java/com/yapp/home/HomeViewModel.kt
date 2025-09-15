@@ -373,9 +373,9 @@ class HomeViewModel @Inject constructor(
 
     private fun loadUpdateNoticeVisibility() = intent {
         val dontShowVersion =
-            userInfoRepository.updateBottomSheetDontShowVersionFlow.firstOrNull()
+            userInfoRepository.updateNoticeDontShowVersionFlow.firstOrNull()
         val lastShownDate =
-            userInfoRepository.updateBottomSheetLastShownDateFlow.firstOrNull()
+            userInfoRepository.updateNoticeLastShownDateFlow.firstOrNull()
 
         val today = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
 
@@ -387,13 +387,13 @@ class HomeViewModel @Inject constructor(
             else -> true
         }
 
-        if (shouldShow) userInfoRepository.markUpdateBottomSheetShownToday()
+        if (shouldShow) userInfoRepository.markUpdateNoticeShownToday()
 
         reduce { state.copy(isUpdateNoticeVisible = shouldShow) }
     }
 
     private fun setUpdateNoticeDontShowVersion() = intent {
-        userInfoRepository.markUpdateBottomSheetDontShow(appVersion)
+        userInfoRepository.markUpdateNoticeDontShow(appVersion)
         reduce { state.copy(isUpdateNoticeVisible = false) }
     }
 

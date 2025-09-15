@@ -11,8 +11,8 @@ class UserLocalDataSourceImpl @Inject constructor(
     override val userIdFlow: Flow<Long?> = userPreferences.userIdFlow
     override val userNameFlow: Flow<String?> = userPreferences.userNameFlow
     override val onboardingCompletedFlow: Flow<Boolean> = userPreferences.onboardingCompletedFlow
-    override val updateBottomSheetDontShowVersionFlow: Flow<String?> = userPreferences.updateBottomSheetDontShowVersionFlow
-    override val updateBottomSheetLastShownDateFlow: Flow<String?> = userPreferences.updateBottomSheetLastShownDateFlow
+    override val updateNoticeDontShowVersionFlow: Flow<String?> = userPreferences.updateNoticeDontShowVersionFlow
+    override val updateNoticeLastShownDateFlow: Flow<String?> = userPreferences.updateNoticeLastShownDateFlow
 
     override suspend fun saveUserId(userId: Long) {
         userPreferences.saveUserId(userId)
@@ -26,12 +26,12 @@ class UserLocalDataSourceImpl @Inject constructor(
         userPreferences.setOnboardingCompleted()
     }
 
-    override suspend fun markUpdateBottomSheetDontShow(version: String) {
-        userPreferences.markUpdateBottomSheetDontShow(version)
+    override suspend fun markUpdateNoticeDontShow(version: String) {
+        userPreferences.markUpdateNoticeDontShow(version)
     }
 
-    override suspend fun markUpdateBottomSheetShownToday() {
-        userPreferences.markUpdateBottomSheetShownToday()
+    override suspend fun markUpdateNoticeShownToday() {
+        userPreferences.markUpdateNoticeShownToday()
     }
 
     override suspend fun clearUserData() {

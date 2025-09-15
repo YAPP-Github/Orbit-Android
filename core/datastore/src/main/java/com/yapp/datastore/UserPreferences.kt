@@ -38,8 +38,8 @@ class UserPreferences @Inject constructor(
         val FIRST_ALARM_DISMISSED_TODAY = booleanPreferencesKey("first_alarm_dismissed_today")
         val FIRST_ALARM_DISMISSED_DATE = stringPreferencesKey("first_alarm_dismissed_date")
 
-        val UPDATE_BOTTOM_SHEET_DONT_SHOW_VERSION = stringPreferencesKey("update_bottom_sheet_dont_show_version")
-        val UPDATE_BOTTOM_SHEET_LAST_SHOWN_DATE = stringPreferencesKey("update_bottom_sheet_last_shown_date")
+        val UPDATE_NOTICE_DONT_SHOW_VERSION = stringPreferencesKey("update_notice_dont_show_version")
+        val UPDATE_NOTICE_LAST_SHOWN_DATE = stringPreferencesKey("update_notice_last_shown_date")
     }
 
     private fun today(): String = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
@@ -116,14 +116,14 @@ class UserPreferences @Inject constructor(
         }
         .distinctUntilChanged()
 
-    val updateBottomSheetDontShowVersionFlow: Flow<String?> = dataStore.data
+    val updateNoticeDontShowVersionFlow: Flow<String?> = dataStore.data
         .catch { emit(emptyPreferences()) }
-        .map { it[Keys.UPDATE_BOTTOM_SHEET_DONT_SHOW_VERSION] }
+        .map { it[Keys.UPDATE_NOTICE_DONT_SHOW_VERSION] }
         .distinctUntilChanged()
 
-    val updateBottomSheetLastShownDateFlow: Flow<String?> = dataStore.data
+    val updateNoticeLastShownDateFlow: Flow<String?> = dataStore.data
         .catch { emit(emptyPreferences()) }
-        .map { it[Keys.UPDATE_BOTTOM_SHEET_LAST_SHOWN_DATE] }
+        .map { it[Keys.UPDATE_NOTICE_LAST_SHOWN_DATE] }
         .distinctUntilChanged()
 
     suspend fun saveUserId(userId: Long) {
@@ -205,15 +205,15 @@ class UserPreferences @Inject constructor(
         }
     }
 
-    suspend fun markUpdateBottomSheetDontShow(version: String) {
+    suspend fun markUpdateNoticeDontShow(version: String) {
         dataStore.edit { pref ->
-            pref[Keys.UPDATE_BOTTOM_SHEET_DONT_SHOW_VERSION] = version
+            pref[Keys.UPDATE_NOTICE_DONT_SHOW_VERSION] = version
         }
     }
 
-    suspend fun markUpdateBottomSheetShownToday() {
+    suspend fun markUpdateNoticeShownToday() {
         dataStore.edit { pref ->
-            pref[Keys.UPDATE_BOTTOM_SHEET_LAST_SHOWN_DATE] = today()
+            pref[Keys.UPDATE_NOTICE_LAST_SHOWN_DATE] = today()
         }
     }
 
