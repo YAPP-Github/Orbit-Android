@@ -6,24 +6,16 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.navigation.compose.NavHost
 import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.common.navigation.rememberOrbitNavigator
@@ -34,9 +26,9 @@ import com.yapp.mission.missionScreen
 import com.yapp.onboarding.onboardingNavGraph
 import com.yapp.setting.settingNavGraph
 import com.yapp.splash.splashScreen
-import com.yapp.ui.component.bottomsheet.OrbitBottomSheetLayout
 import com.yapp.ui.component.bottomsheet.OrbitBottomSheetState
 import com.yapp.ui.component.bottomsheet.rememberOrbitBottomSheetState
+import com.yapp.ui.component.navigation.NavigationBarScrim
 import com.yapp.ui.component.snackbar.CustomSnackBarVisuals
 import com.yapp.ui.component.snackbar.OrbitSnackBar
 import com.yapp.webview.webViewScreen
@@ -51,18 +43,16 @@ internal fun OrbitNavHost(
     val snackBarHostState = remember { SnackbarHostState() }
 
     Box {
-        OrbitBottomSheetLayout(sheetState = bottomSheetState) {
-            Scaffold(
-                modifier = modifier,
-                snackbarHost = { OrbitSnackBarHost(snackBarHostState) },
-                containerColor = OrbitTheme.colors.gray_900,
-            ) {
-                OrbitNavigationGraph(
-                    navigator = navigator,
-                    bottomSheetState = bottomSheetState,
-                    snackBarHostState = snackBarHostState,
-                )
-            }
+        Scaffold(
+            modifier = modifier,
+            snackbarHost = { OrbitSnackBarHost(snackBarHostState) },
+            containerColor = OrbitTheme.colors.gray_900,
+        ) {
+            OrbitNavigationGraph(
+                navigator = navigator,
+                bottomSheetState = bottomSheetState,
+                snackBarHostState = snackBarHostState,
+            )
         }
 
         NavigationBarScrim()
@@ -76,6 +66,7 @@ private fun OrbitNavigationGraph(
     snackBarHostState: SnackbarHostState,
 ) {
     NavHost(
+        modifier = Modifier.navigationBarsPadding(),
         navController = navigator.navController,
         startDestination = navigator.startDestination,
     ) {
@@ -87,18 +78,6 @@ private fun OrbitNavigationGraph(
         settingNavGraph(navigator)
         webViewScreen(navigator)
     }
-}
-
-@Composable
-private fun BoxScope.NavigationBarScrim() {
-    Box(
-        modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .fillMaxWidth()
-            .windowInsetsBottomHeight(WindowInsets.navigationBars)
-            .background(Color.Black)
-            .zIndex(1f),
-    )
 }
 
 @Composable

@@ -147,9 +147,7 @@ class OnboardingViewModel @Inject constructor(
 
             alarmUseCase.insertAlarm(
                 alarm = newAlarm,
-            ).onSuccess {
-                postSideEffect(OnboardingContract.SideEffect.OnboardingCompleted)
-            }.onFailure {
+            ).onFailure {
                 Log.e("OnboardingViewModel", "Failed to create alarm", it)
             }
         }.onFailure {

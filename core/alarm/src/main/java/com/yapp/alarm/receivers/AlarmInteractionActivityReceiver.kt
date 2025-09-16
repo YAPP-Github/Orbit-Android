@@ -3,18 +3,18 @@ package com.yapp.alarm.receivers
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.core.net.toUri
 import com.yapp.alarm.AlarmConstants
+import com.yapp.domain.model.FortuneCreateStatus
+import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -31,29 +31,69 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
 
             if (!isSnoozed) {
                 val notificationId = intent.getLongExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, -1L)
-                val missionType = intent.getIntExtra(AlarmConstants.EXTRA_MISSION_TYPE, -1)
+                val missionTypeRaw = intent.getIntExtra(AlarmConstants.EXTRA_MISSION_TYPE, -1)
                 val missionCount = intent.getIntExtra(AlarmConstants.EXTRA_MISSION_COUNT, -1)
 
-                if (notificationId == -1L || missionType == -1 || missionCount == -1) {
-                    Log.e("AlarmInteraction", "필수 값 누락")
-                    return
-                }
+                val missionType = MissionType.fromInt(missionTypeRaw)
 
-                CoroutineScope(Dispatchers.IO).launch {
-                    val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
-                    val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+                val hasValidMissionData = (
+                    notificationId != -1L &&
+                        missionType != MissionType.NONE &&
+                        missionCount != -1
+                    )
 
-                    if (fortuneDate != todayDate) {
-                        context?.let {
-                            val uriString =
-                                "orbitapp://mission?notificationId=$notificationId&missionType=$missionType&missionCount=$missionCount"
-                            val missionIntent =
-                                Intent(Intent.ACTION_VIEW, uriString.toUri()).apply {
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    setPackage(context.packageName)
+                val pending = goAsync()
+                CoroutineScope(Dispatchers.Main).launch {
+                    try {
+                        if (!hasValidMissionData) {
+                            val (fortuneCreateStatus, hasUnseenFortune) = withContext(Dispatchers.IO) {
+                                val status = fortuneRepository.fortuneCreateStatusFlow.first()
+                                val unseen = fortuneRepository.hasUnseenFortuneFlow.first()
+                                status to unseen
+                            }
+
+                            when (fortuneCreateStatus) {
+                                is FortuneCreateStatus.Creating -> {
+                                    context?.let { ctx ->
+                                        val uri = "orbitapp://fortune".toUri()
+                                        val fortuneIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            setPackage(ctx.packageName)
+                                        }
+                                        ctx.startActivity(fortuneIntent)
+                                    }
                                 }
-                            it.startActivity(missionIntent)
+
+                                is FortuneCreateStatus.Success -> {
+                                    if (hasUnseenFortune) {
+                                        context?.let { ctx ->
+                                            val uri = "orbitapp://fortune".toUri()
+                                            val fortuneIntent =
+                                                Intent(Intent.ACTION_VIEW, uri).apply {
+                                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                    setPackage(ctx.packageName)
+                                                }
+                                            ctx.startActivity(fortuneIntent)
+                                        }
+                                    }
+                                }
+
+                                FortuneCreateStatus.Failure, FortuneCreateStatus.Idle -> { }
+                            }
+                        } else {
+                            context?.let { ctx ->
+                                val uriString =
+                                    "orbitapp://mission?notificationId=$notificationId&missionType=${missionType.value}&missionCount=$missionCount"
+                                val missionIntent =
+                                    Intent(Intent.ACTION_VIEW, uriString.toUri()).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        setPackage(ctx.packageName)
+                                    }
+                                ctx.startActivity(missionIntent)
+                            }
                         }
+                    } finally {
+                        pending.finish()
                     }
                 }
             }

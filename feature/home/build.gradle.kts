@@ -19,4 +19,5 @@ dependencies {
     implementation(libs.orbit.viewmodel)
     implementation(libs.androidx.material.android)
     implementation(libs.androidx.annotation)
+    implementation(libs.coil.compose)
 }

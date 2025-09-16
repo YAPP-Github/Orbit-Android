@@ -8,10 +8,11 @@ plugins {
 
 android {
     namespace = "com.yapp.orbit"
+    compileSdk = 35
 
     defaultConfig {
-        versionCode = 5
-        versionName = "1.0.3"
+        versionCode = 6
+        versionName = "1.1.3"
         targetSdk = 35
     }
 
@@ -53,4 +54,6 @@ dependencies {
     implementation(libs.firebase.crashlytics)
     implementation(libs.play.services.ads)
     implementation(libs.kotlin.reflect)
+    implementation(libs.hilt.worker)
+    implementation(libs.androidx.work.runtime)
 }

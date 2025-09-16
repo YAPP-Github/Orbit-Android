@@ -7,16 +7,14 @@ import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
 import com.yapp.domain.MissionMode
+import com.yapp.domain.model.FortuneCreateStatus
 import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
-import com.yapp.domain.repository.UserInfoRepository
 import com.yapp.media.haptic.HapticFeedbackManager
 import com.yapp.media.haptic.HapticType
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
@@ -30,7 +28,6 @@ class MissionViewModel @Inject constructor(
     private val analyticsHelper: AnalyticsHelper,
     private val hapticFeedbackManager: HapticFeedbackManager,
     private val fortuneRepository: FortuneRepository,
-    private val userInfoRepository: UserInfoRepository,
     private val app: Application,
     private val savedStateHandle: SavedStateHandle,
 ) : ViewModel(), ContainerHost<MissionContract.State, MissionContract.SideEffect> {
@@ -53,7 +50,6 @@ class MissionViewModel @Inject constructor(
             is MissionContract.Action.ClickCard -> handleMissionProgress(MissionType.TAP)
             is MissionContract.Action.ShowExitDialog -> showExitDialog()
             is MissionContract.Action.HideExitDialog -> hideExitDialog()
-            is MissionContract.Action.RetryPostFortune -> retryPostFortune()
         }
     }
 
@@ -137,36 +133,27 @@ class MissionViewModel @Inject constructor(
     private fun completeMission(type: String) = intent {
         performHapticSuccess()
         logMissionSuccess(type)
-        if (state.missionMode == MissionMode.REAL) {
-            postFortune()
-        } else {
+
+        if (state.missionMode != MissionMode.REAL) {
             postSideEffect(MissionContract.SideEffect.NavigateBack)
-        }
-    }
-
-    private fun postFortune(isRetry: Boolean = false) = intent {
-        val userId = userInfoRepository.userIdFlow.firstOrNull() ?: return@intent
-
-        val result = withContext(Dispatchers.IO) {
-            fortuneRepository.postFortune(userId)
+            return@intent
         }
 
-        result.onSuccess { data ->
-            fortuneRepository.saveFortuneId(data.id)
-            fortuneRepository.saveFortuneScore(data.avgFortuneScore)
+        val fortuneCreateStatus = fortuneRepository.fortuneCreateStatusFlow.first()
+        val hasUnseenFortune = fortuneRepository.hasUnseenFortuneFlow.first()
 
-            postSideEffect(MissionContract.SideEffect.NavigateToFortune)
-        }.onFailure { error ->
-            if (isRetry) {
-                navigateToHome()
+        val shouldOpenFortune = (
+            fortuneCreateStatus is FortuneCreateStatus.Creating ||
+                fortuneCreateStatus is FortuneCreateStatus.Success && hasUnseenFortune
+            )
+
+        postSideEffect(
+            if (shouldOpenFortune) {
+                MissionContract.SideEffect.NavigateToFortune
             } else {
-                reduce { state.copy(errorMessage = error.message) }
-            }
-        }
-    }
-
-    fun retryPostFortune() {
-        postFortune(isRetry = true)
+                MissionContract.SideEffect.NavigateBack
+            },
+        )
     }
 
     private fun logMissionSuccess(type: String) {
@@ -182,9 +169,5 @@ class MissionViewModel @Inject constructor(
 
     private fun performHapticSuccess() {
         hapticFeedbackManager.performHapticFeedback(HapticType.SUCCESS)
-    }
-
-    private fun navigateToHome() = intent {
-        postSideEffect(MissionContract.SideEffect.NavigateToHome)
     }
 }

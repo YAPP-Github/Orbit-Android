@@ -1,12 +1,9 @@
-import com.yapp.convention.configureHiltAndroid
 import com.yapp.convention.libs
 
 plugins {
     id("orbit.android.library")
     id("orbit.android.compose")
 }
-
-configureHiltAndroid()
 
 dependencies {
     implementation(project(":core:designsystem"))

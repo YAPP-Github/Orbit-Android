@@ -4,11 +4,13 @@ import android.app.Application
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
+import com.yapp.domain.model.FortuneCreateStatus
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.fortune.page.toFortunePages
 import com.yapp.media.decoder.ImageUtils
 import com.yapp.media.storage.ImageSaver
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -16,8 +18,6 @@ import org.orbitmvi.orbit.syntax.simple.intent
 import org.orbitmvi.orbit.syntax.simple.postSideEffect
 import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 @HiltViewModel
@@ -30,7 +30,7 @@ class FortuneViewModel @Inject constructor(
     override val container: Container<FortuneContract.State, FortuneContract.SideEffect> = container(
         initialState = FortuneContract.State(),
     ) {
-        loadFortune()
+        observeFortune()
     }
 
     fun processAction(action: FortuneContract.Action) {
@@ -50,14 +50,31 @@ class FortuneViewModel @Inject constructor(
         }
     }
 
-    private fun loadFortune() = intent {
-        val fortuneId = fortuneRepository.fortuneIdFlow.firstOrNull()
-        val firstDismissedAlarmId = fortuneRepository.firstDismissedAlarmIdFlow.firstOrNull()
-        val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
-        fortuneId?.let { fetchAndUpdateFortune(it, firstDismissedAlarmId, fortuneDate) }
+    private fun observeFortune() = intent {
+        fortuneRepository.fortuneCreateStatusFlow.collect { status ->
+            when (status) {
+                is FortuneCreateStatus.Creating -> {
+                    reduce { state.copy(isLoading = true) }
+                }
+
+                is FortuneCreateStatus.Success -> {
+                    fetchAndUpdateFortune(
+                        fortuneId = status.fortuneId,
+                        isFirstAlarmDismissedToday = fortuneRepository.isFirstAlarmDismissedTodayFlow.first(),
+                    )
+                }
+
+                is FortuneCreateStatus.Failure, FortuneCreateStatus.Idle -> {
+                    postSideEffect(FortuneContract.SideEffect.NavigateToHome)
+                }
+            }
+        }
     }
 
-    private fun fetchAndUpdateFortune(fortuneId: Long, firstDismissedAlarmId: Long?, fortuneDate: String?) = intent {
+    private fun fetchAndUpdateFortune(
+        fortuneId: Long,
+        isFirstAlarmDismissedToday: Boolean,
+    ) = intent {
         reduce { state.copy(isLoading = true) }
 
         fortuneRepository.getFortune(fortuneId).onSuccess { fortune ->
@@ -65,8 +82,9 @@ class FortuneViewModel @Inject constructor(
             val imageId = savedImageId ?: getRandomImage()
 
             val formattedTitle = fortune.dailyFortuneTitle.replace(",", ",\n").trim()
-            val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-            val hasReward = (fortuneDate == todayDate) && (firstDismissedAlarmId != null)
+
+            fortuneRepository.markFortuneSeen()
+
             reduce {
                 state.copy(
                     isLoading = false,
@@ -75,7 +93,7 @@ class FortuneViewModel @Inject constructor(
                     avgFortuneScore = fortune.avgFortuneScore,
                     fortunePages = fortune.toFortunePages(),
                     fortuneImageId = imageId,
-                    hasReward = hasReward,
+                    hasReward = isFirstAlarmDismissedToday,
                 )
             }
         }.onFailure { error ->

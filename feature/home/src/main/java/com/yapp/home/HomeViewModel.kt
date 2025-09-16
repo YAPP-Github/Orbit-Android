@@ -1,5 +1,8 @@
 package com.yapp.home
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.yapp.common.util.ResourceProvider
@@ -9,6 +12,7 @@ import com.yapp.domain.repository.UserInfoRepository
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.home.util.AlarmDateTimeFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import feature.home.R
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -21,8 +25,8 @@ import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.syntax.simple.repeatOnSubscription
 import org.orbitmvi.orbit.viewmodel.container
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import javax.inject.Named
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -31,6 +35,8 @@ class HomeViewModel @Inject constructor(
     private val alarmDateTimeFormatter: AlarmDateTimeFormatter,
     private val fortuneRepository: FortuneRepository,
     private val userInfoRepository: UserInfoRepository,
+    @Named("appVersion") private val appVersion: String,
+    @ApplicationContext private val context: Context,
 ) : ViewModel(), ContainerHost<HomeContract.State, HomeContract.SideEffect> {
 
     override val container: Container<HomeContract.State, HomeContract.SideEffect> = container(
@@ -41,6 +47,7 @@ class HomeViewModel @Inject constructor(
                 loadAllAlarms()
                 loadDailyFortuneState()
                 loadUserName()
+                loadUpdateNoticeVisibility()
             }
         }
     }
@@ -63,6 +70,8 @@ class HomeViewModel @Inject constructor(
             HomeContract.Action.ShowNoDailyFortuneDialog -> showNoDailyFortuneDialog()
             HomeContract.Action.HideNoDailyFortuneDialog -> hideNoDailyFortuneDialog()
             HomeContract.Action.HideToolTip -> hideToolTip()
+            HomeContract.Action.HideUpdateNotice -> hideUpdateNotice()
+            HomeContract.Action.OnClickDontShowAgain -> setUpdateNoticeDontShowVersion()
             HomeContract.Action.RollbackPendingAlarmToggle -> rollbackAlarmActivation()
             HomeContract.Action.ConfirmDeletion -> confirmDeletion()
             is HomeContract.Action.DeleteSingleAlarm -> deleteSingleAlarm(action.alarmId)
@@ -332,29 +341,29 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun loadDailyFortune() = intent {
-        val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
-        val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+        val fortuneDate = fortuneRepository.fortuneDateEpochFlow.firstOrNull()
+        val todayDate = LocalDate.now().toEpochDay()
 
         if (fortuneDate != todayDate) {
             processAction(HomeContract.Action.ShowNoDailyFortuneDialog)
         } else {
-            fortuneRepository.markFortuneAsChecked()
+            fortuneRepository.markFortuneTooltipShown()
             postSideEffect(HomeContract.SideEffect.NavigateToFortune)
         }
     }
 
     private fun loadDailyFortuneState() = intent {
-        val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+        val todayDate = LocalDate.now().toEpochDay()
 
         combine(
-            fortuneRepository.fortuneDateFlow,
+            fortuneRepository.fortuneDateEpochFlow,
             fortuneRepository.fortuneScoreFlow,
-            fortuneRepository.hasNewFortuneFlow,
-        ) { fortuneDate, fortuneScore, hasNewFortune ->
+            fortuneRepository.shouldShowFortuneToolTipFlow,
+        ) { fortuneDate, fortuneScore, shouldShowTooltip ->
             val isTodayFortuneAvailable = fortuneDate == todayDate
             val finalFortuneScore = if (isTodayFortuneAvailable) fortuneScore ?: -1 else -1
 
-            Pair(finalFortuneScore, hasNewFortune)
+            Pair(finalFortuneScore, shouldShowTooltip)
         }.collect { (finalFortuneScore, hasNewFortune) ->
             reduce {
                 state.copy(
@@ -364,6 +373,39 @@ class HomeViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun loadUpdateNoticeVisibility() = intent {
+        if (!isOnlineNow()) {
+            reduce { state.copy(isUpdateNoticeVisible = false) }
+            return@intent
+        }
+
+        val dontShowVersion =
+            userInfoRepository.updateNoticeDontShowVersionFlow.firstOrNull()
+        val lastShownDate =
+            userInfoRepository.updateNoticeLastShownDateEpochFlow.firstOrNull()
+
+        val today = LocalDate.now().toEpochDay()
+
+        val shouldShow = when {
+            dontShowVersion != null && dontShowVersion == appVersion -> false
+            lastShownDate != null && lastShownDate == today -> false
+            else -> true
+        }
+
+        if (shouldShow) userInfoRepository.markUpdateNoticeShownToday()
+
+        reduce { state.copy(isUpdateNoticeVisible = shouldShow) }
+    }
+
+    private fun setUpdateNoticeDontShowVersion() = intent {
+        userInfoRepository.markUpdateNoticeDontShow(appVersion)
+        reduce { state.copy(isUpdateNoticeVisible = false) }
+    }
+
+    private fun hideUpdateNotice() = intent {
+        reduce { state.copy(isUpdateNoticeVisible = false) }
     }
 
     private fun loadUserName() = intent {
@@ -410,5 +452,14 @@ class HomeViewModel @Inject constructor(
     private fun setSortOrder(sortOrder: HomeContract.AlarmSortOrder) = intent {
         reduce { state.copy(sortOrder = sortOrder) }
         hideDropDownMenu()
+    }
+
+    private fun isOnlineNow(): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 }

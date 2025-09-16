@@ -14,7 +14,7 @@ class AlarmActionContract {
         val snoozeEnabled: Boolean = true,
         val snoozeInterval: Int = 5,
         val snoozeCount: Int = 5,
-        val isFirstMission: Boolean? = null,
+        val shouldShowMissionStart: Boolean? = null,
     ) : UiState
 
     sealed class Action {

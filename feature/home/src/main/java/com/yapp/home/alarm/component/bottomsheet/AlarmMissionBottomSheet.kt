@@ -21,10 +21,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,6 +60,12 @@ private fun MissionType.displayData(): Pair<Int, Int> = when (this) {
     else -> throw IllegalStateException("Invalid mission type")
 }
 
+val StepStackSaver: Saver<MutableState<List<AlarmMissionSelectBottomSheetType>>, out Any> =
+    listSaver(
+        save = { state -> state.value.map { it.name } },
+        restore = { restored -> mutableStateOf(restored.map { AlarmMissionSelectBottomSheetType.valueOf(it) }) },
+    )
+
 @Composable
 internal fun AlarmMissionBottomSheet(
     missionState: AlarmAddEditContract.AlarmMissionState,
@@ -64,9 +73,15 @@ internal fun AlarmMissionBottomSheet(
     onSaveMission: (MissionType, Int) -> Unit,
     onPreviewMission: (MissionType, Int) -> Unit,
 ) {
-    var stepStack by remember { mutableStateOf(listOf(AlarmMissionSelectBottomSheetType.MISSION_SETTING)) }
-    var selectedMissionType by remember { mutableStateOf(missionState.missionType) }
-    var selectedMissionCount by remember { mutableIntStateOf(missionState.missionCount) }
+    val initialMissionType = missionState.missionType
+    val initialMissionCount = missionState.missionCount
+
+    var stepStack by rememberSaveable(saver = StepStackSaver) {
+        mutableStateOf(listOf(AlarmMissionSelectBottomSheetType.MISSION_SETTING))
+    }
+
+    var currentSelectedMissionType by rememberSaveable { mutableStateOf(initialMissionType) }
+    var currentSelectedMissionCount by rememberSaveable { mutableIntStateOf(initialMissionCount) }
 
     fun push(step: AlarmMissionSelectBottomSheetType) {
         stepStack = stepStack + step
@@ -82,22 +97,22 @@ internal fun AlarmMissionBottomSheet(
 
     when (currentStep) {
         AlarmMissionSelectBottomSheetType.MISSION_SETTING -> {
-            if (selectedMissionType == MissionType.NONE) {
+            if (currentSelectedMissionType == MissionType.NONE) {
                 MissionAddContent {
                     push(AlarmMissionSelectBottomSheetType.MISSION_SELECT)
                 }
             } else {
                 MissionSettingContent(
-                    missionType = selectedMissionType,
-                    missionCount = selectedMissionCount,
+                    missionType = currentSelectedMissionType,
+                    missionCount = currentSelectedMissionCount,
                     onDetail = { push(AlarmMissionSelectBottomSheetType.MISSION_DETAIL) },
                     onDelete = {
-                        selectedMissionType = MissionType.NONE
-                        onSaveMission(selectedMissionType, selectedMissionCount)
+                        currentSelectedMissionType = MissionType.NONE
+                        onSaveMission(currentSelectedMissionType, currentSelectedMissionCount)
                     },
                     onChange = { push(AlarmMissionSelectBottomSheetType.MISSION_SELECT) },
                     onDone = {
-                        onSaveMission(selectedMissionType, selectedMissionCount)
+                        onSaveMission(currentSelectedMissionType, currentSelectedMissionCount)
                         onDismiss()
                     },
                 )
@@ -107,11 +122,10 @@ internal fun AlarmMissionBottomSheet(
         AlarmMissionSelectBottomSheetType.MISSION_SELECT -> {
             MissionSelectContent(
                 onBack = { pop() },
-                onClose = {
-                    onDismiss()
-                },
-                onSelect = { mission ->
-                    selectedMissionType = mission
+                onClose = { onDismiss() },
+                initialMission = currentSelectedMissionType,
+                onSelect = { selected ->
+                    currentSelectedMissionType = selected
                     push(AlarmMissionSelectBottomSheetType.MISSION_DETAIL)
                 },
             )
@@ -119,19 +133,17 @@ internal fun AlarmMissionBottomSheet(
 
         AlarmMissionSelectBottomSheetType.MISSION_DETAIL -> {
             MissionDetailContent(
-                missionType = selectedMissionType,
-                selectedMissionCount = selectedMissionCount,
-                onCountChange = { selectedMissionCount = it },
+                missionType = currentSelectedMissionType,
+                selectedMissionCount = currentSelectedMissionCount,
+                onCountChange = { currentSelectedMissionCount = it },
                 onBack = { pop() },
-                onClose = {
-                    onDismiss()
-                },
+                onClose = { onDismiss() },
                 onSave = {
-                    onSaveMission(selectedMissionType, selectedMissionCount)
+                    onSaveMission(currentSelectedMissionType, currentSelectedMissionCount)
                     onDismiss()
                 },
                 onPreview = {
-                    onPreviewMission(selectedMissionType, selectedMissionCount)
+                    onPreviewMission(currentSelectedMissionType, currentSelectedMissionCount)
                 },
             )
         }
@@ -379,6 +391,7 @@ private fun MissionCountChip(
 private fun MissionSelectContent(
     onBack: () -> Unit,
     onClose: () -> Unit,
+    initialMission: MissionType,
     onSelect: (MissionType) -> Unit,
 ) {
     Column(
@@ -390,7 +403,7 @@ private fun MissionSelectContent(
         Spacer(modifier = Modifier.height(14.dp))
 
         MissionSelectTopAppBar(
-            title = stringResource(id = feature.home.R.string.mission_bottom_sheet_title),
+            title = stringResource(id = feature.home.R.string.mission_select_content_title),
             onBack = onBack,
             onClose = onClose,
         )
@@ -400,12 +413,14 @@ private fun MissionSelectContent(
         ) {
             MissionTypeItem(
                 missionType = MissionType.SHAKE,
+                selected = initialMission == MissionType.SHAKE,
                 onClick = {
                     onSelect(MissionType.SHAKE)
                 },
             )
             MissionTypeItem(
                 missionType = MissionType.TAP,
+                selected = initialMission == MissionType.TAP,
                 onClick = {
                     onSelect(MissionType.TAP)
                 },
@@ -417,6 +432,7 @@ private fun MissionSelectContent(
 @Composable
 private fun MissionTypeItem(
     missionType: MissionType,
+    selected: Boolean,
     onClick: () -> Unit,
 ) {
     val (iconRes, titleRes) = missionType.displayData()
@@ -425,6 +441,7 @@ private fun MissionTypeItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
             .clickable(
                 onClick = onClick,
             )
@@ -447,6 +464,28 @@ private fun MissionTypeItem(
             style = OrbitTheme.typography.headline2SemiBold,
             color = OrbitTheme.colors.white,
         )
+
+        if (selected) {
+            Spacer(modifier = Modifier.weight(1f))
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    modifier = Modifier.size(16.dp),
+                    painter = painterResource(id = R.drawable.ic_check),
+                    tint = OrbitTheme.colors.white.copy(alpha = 0.5f),
+                    contentDescription = null,
+                )
+
+                Text(
+                    text = stringResource(id = feature.home.R.string.mission_select_content_selected),
+                    style = OrbitTheme.typography.body2Medium,
+                    color = OrbitTheme.colors.white.copy(alpha = 0.4f),
+                )
+            }
+        }
     }
 }
 

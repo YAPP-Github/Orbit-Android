@@ -1,20 +1,27 @@
 package com.yapp.data.local.datasource
 
+import com.yapp.domain.model.FortuneCreateStatus
 import kotlinx.coroutines.flow.Flow
 
 interface FortuneLocalDataSource {
     val fortuneIdFlow: Flow<Long?>
-    val fortuneDateFlow: Flow<String?>
+    val fortuneDateEpochFlow: Flow<Long?>
     val fortuneImageIdFlow: Flow<Int?>
     val fortuneScoreFlow: Flow<Int?>
-    val hasNewFortuneFlow: Flow<Boolean>
-    val firstDismissedAlarmIdFlow: Flow<Long?>
+    val hasUnseenFortuneFlow: Flow<Boolean>
+    val shouldShowFortuneToolTipFlow: Flow<Boolean>
+    val isFirstAlarmDismissedTodayFlow: Flow<Boolean>
 
-    suspend fun saveFortuneId(fortuneId: Long)
-    suspend fun markFortuneAsChecked()
+    val fortuneCreateStatusFlow: Flow<FortuneCreateStatus>
+
+    suspend fun markFortuneCreating()
+    suspend fun markFortuneCreated(fortuneId: Long)
+    suspend fun markFortuneFailed()
+    suspend fun markFortuneSeen()
+    suspend fun markFortuneTooltipShown()
     suspend fun saveFortuneImageId(imageResId: Int)
     suspend fun saveFortuneScore(score: Int)
-    suspend fun saveFirstDismissedAlarmId(alarmId: Long)
-    suspend fun clearDismissedAlarmId()
-    suspend fun clearFortuneId()
+    suspend fun markFirstAlarmDismissedToday()
+
+    suspend fun clearFortuneData()
 }

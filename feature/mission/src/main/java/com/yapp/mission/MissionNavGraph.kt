@@ -40,7 +40,7 @@ private fun handleSideEffect(
         MissionContract.SideEffect.NavigateToFortune -> {
             navigator.navigateToFortune(
                 navOptions = navOptions {
-                    popUpTo(MissionRoute.route) {
+                    popUpTo<MissionRoute> {
                         inclusive = true
                     }
                 },
@@ -50,7 +50,7 @@ private fun handleSideEffect(
         MissionContract.SideEffect.NavigateToHome -> {
             navigator.navigateToHome(
                 navOptions = navOptions {
-                    popUpTo(MissionRoute.route) {
+                    popUpTo<MissionRoute> {
                         inclusive = true
                     }
                 },

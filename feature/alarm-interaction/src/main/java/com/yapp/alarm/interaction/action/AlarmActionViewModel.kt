@@ -6,10 +6,9 @@ import androidx.lifecycle.ViewModel
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmSnoozeIntent
 import com.yapp.domain.model.Alarm
-import com.yapp.domain.repository.FortuneRepository
+import com.yapp.domain.model.MissionType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.firstOrNull
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
@@ -18,7 +17,6 @@ import org.orbitmvi.orbit.syntax.simple.reduce
 import org.orbitmvi.orbit.viewmodel.container
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 import javax.inject.Inject
@@ -26,14 +24,13 @@ import javax.inject.Inject
 @HiltViewModel
 class AlarmActionViewModel @Inject constructor(
     private val app: Application,
-    private val fortuneRepository: FortuneRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel(), ContainerHost<AlarmActionContract.State, AlarmActionContract.SideEffect> {
 
     override val container: Container<AlarmActionContract.State, AlarmActionContract.SideEffect> = container(
         initialState = AlarmActionContract.State(),
     ) {
-        fetchIsFirstMission()
+        fetchShouldShowMissionStart()
         initializeAlarmState()
         startClock()
     }
@@ -58,13 +55,9 @@ class AlarmActionViewModel @Inject constructor(
         }
     }
 
-    private fun fetchIsFirstMission() = intent {
-        val fortuneDate = fortuneRepository.fortuneDateFlow.firstOrNull()
-        val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-        val isFirstMission = fortuneDate != todayDate
-
+    private fun fetchShouldShowMissionStart() = intent {
         reduce {
-            state.copy(isFirstMission = isFirstMission)
+            state.copy(shouldShowMissionStart = (alarm?.missionType ?: MissionType.NONE) != MissionType.NONE)
         }
     }
 

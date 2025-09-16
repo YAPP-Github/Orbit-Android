@@ -3,11 +3,13 @@ package com.yapp.fortune
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -15,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,6 +37,7 @@ import com.yapp.fortune.component.FortuneTopAppBar
 import com.yapp.fortune.component.SlidingIndicator
 import com.yapp.fortune.page.FortunePager
 import com.yapp.ui.component.lottie.LottieAnimation
+import kotlinx.coroutines.delay
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -184,21 +188,49 @@ fun FortuneScreen(
 
 @Composable
 fun FortuneLoadingScreen() {
+    var isDelivering by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(2000)
+            isDelivering = !isDelivering
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(OrbitTheme.colors.gray_900.copy(alpha = 0.7f)),
         contentAlignment = Alignment.Center,
     ) {
-        LottieAnimation(
-            modifier = Modifier
-                .size(70.dp),
-            resId = core.designsystem.R.raw.star_loading,
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            val imageRes = if (isDelivering) {
+                core.designsystem.R.drawable.ic_fortune_delivering_speech_bubble
+            } else {
+                core.designsystem.R.drawable.ic_fortune_waiting_speech_bubble
+            }
+            Image(
+                painter = painterResource(id = imageRes),
+                contentDescription = null,
+            )
+
+            LottieAnimation(
+                modifier = Modifier
+                    .width(375.dp)
+                    .height(267.dp),
+                resId = core.designsystem.R.raw.fortune_loading,
+            )
+        }
     }
 }
 
 @Composable
 @Preview
-fun FortuneRoutePreview() {
+private fun FortuneLoadingScreenPreview() {
+    OrbitTheme {
+        FortuneLoadingScreen()
+    }
 }

@@ -8,8 +8,4 @@ data class MissionRoute(
     val missionType: String,
     val missionCount: String,
     val missionMode: String = MissionMode.REAL.name,
-) {
-    companion object {
-        const val route = "mission"
-    }
-}
+)

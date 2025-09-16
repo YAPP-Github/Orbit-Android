@@ -36,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,6 +57,8 @@ import com.yapp.home.component.AlarmListDropDownMenu
 import com.yapp.home.component.AlarmSortDropDownMenu
 import com.yapp.ui.component.checkbox.OrbitCheckBox
 import feature.home.R
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 enum class BottomSheetExpandState {
@@ -87,22 +90,28 @@ internal fun AlarmListBottomSheet(
     onToggleSelect: (Long) -> Unit,
     onToggleActive: (Long) -> Unit,
     onSwipe: (Long) -> Unit,
+    onExpanded: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     var expandedType by remember { mutableStateOf(BottomSheetExpandState.HALF_EXPANDED) }
 
-    val sheetState = rememberStandardBottomSheetState(
-        confirmValueChange = {
-            expandedType = when (it) {
-                SheetValue.Expanded -> BottomSheetExpandState.EXPANDED
-                else -> BottomSheetExpandState.HALF_EXPANDED
-            }
-            true
-        },
-    )
-
+    val sheetState = rememberStandardBottomSheetState()
     val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
     val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { sheetState.currentValue }
+            .distinctUntilChanged()
+            .collectLatest { value ->
+                expandedType = when (value) {
+                    SheetValue.Expanded -> {
+                        onExpanded()
+                        BottomSheetExpandState.EXPANDED
+                    }
+                    SheetValue.PartiallyExpanded, SheetValue.Hidden -> BottomSheetExpandState.HALF_EXPANDED
+                }
+            }
+    }
 
     val nestedScrollConnection = remember {
         object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
@@ -115,13 +124,6 @@ internal fun AlarmListBottomSheet(
                 }
                 return Offset.Zero
             }
-        }
-    }
-
-    LaunchedEffect(sheetState.currentValue) {
-        expandedType = when (sheetState.currentValue) {
-            SheetValue.Expanded -> BottomSheetExpandState.EXPANDED
-            else -> BottomSheetExpandState.HALF_EXPANDED
         }
     }
 
@@ -324,23 +326,19 @@ private fun AlarmListTopBar(
                 onClick = onClickMore,
             )
 
-            if (menuExpanded) {
-                AlarmListDropDownMenu(
-                    expanded = menuExpanded,
-                    onDismissRequest = onDismissRequest,
-                    onClickEdit = onClickEdit,
-                    onClickSort = onClickSort,
-                )
-            }
+            AlarmListDropDownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = onDismissRequest,
+                onClickEdit = onClickEdit,
+                onClickSort = onClickSort,
+            )
 
-            if (sortDropDownMenuExpanded) {
-                AlarmSortDropDownMenu(
-                    expanded = sortDropDownMenuExpanded,
-                    sortOrder = sortOrder,
-                    onDismissRequest = onDismissRequest,
-                    onSetSortOrder = onSetSortOrder,
-                )
-            }
+            AlarmSortDropDownMenu(
+                expanded = sortDropDownMenuExpanded,
+                sortOrder = sortOrder,
+                onDismissRequest = onDismissRequest,
+                onSetSortOrder = onSetSortOrder,
+            )
         }
     }
 }

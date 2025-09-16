@@ -10,7 +10,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.Modifier
 import androidx.core.util.Consumer
 import androidx.navigation.compose.NavHost
 import com.yapp.alarm.AlarmConstants
@@ -18,6 +21,7 @@ import com.yapp.alarm.receivers.AlarmInteractionActivityReceiver
 import com.yapp.common.navigation.rememberOrbitNavigator
 import com.yapp.common.navigation.route.AlarmInteractionBaseRoute
 import com.yapp.domain.model.Alarm
+import com.yapp.ui.component.navigation.NavigationBarScrim
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -45,14 +49,19 @@ class AlarmInteractionActivity : ComponentActivity() {
         setContent {
             val navigator = rememberOrbitNavigator()
 
-            NavHost(
-                navController = navigator.navController,
-                startDestination = AlarmInteractionBaseRoute,
-            ) {
-                alarmInteractionNavGraph(
-                    navigator = navigator,
-                    alarm = alarm,
-                )
+            Box {
+                NavHost(
+                    modifier = Modifier.navigationBarsPadding(),
+                    navController = navigator.navController,
+                    startDestination = AlarmInteractionBaseRoute,
+                ) {
+                    alarmInteractionNavGraph(
+                        navigator = navigator,
+                        alarm = alarm,
+                    )
+                }
+
+                NavigationBarScrim()
             }
 
             DisposableEffect(this, navigator.navController) {

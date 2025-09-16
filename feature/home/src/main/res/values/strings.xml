@@ -48,6 +48,9 @@
     <string name="mission_setting_content_btn_change">미션 변경</string>
     <string name="mission_setting_content_btn_done">완료</string>
 
+    <string name="mission_select_content_title">미션 선택</string>
+    <string name="mission_select_content_selected">선택됨</string>
+
     <string name="mission_count_chip_format">%d회</string>
 
     <string name="mission_detail_content_count_title">횟수</string>
@@ -121,4 +124,7 @@
     <string name="alarm_remaining_time_hours_minutes">%1$d시간 %2$d분 후에 울려요</string>
     <string name="alarm_remaining_time_minutes_only">%d분 후에 울려요</string>
     <string name="alarm_remaining_time_soon">곧 울려요</string>
+
+    <string name="update_notice_bottom_sheet_dont_show_again">다시 보지 않기</string>
+    <string name="update_notice_bottom_sheet_close">닫기</string>
 </resources>
