@@ -1,12 +1,12 @@
 name: Orbit CI
 
 on:
-  pull_request:
-    branches: [develop]
-    paths:
-      - 'app/**'
-      - 'build.gradle'
-      - '**/*.kt'
+    pull_request:
+        branches: [develop]
+        paths:
+            - '**/*.kt'
+            - 'build.gradle'
+            - 'app/**'
 
 jobs:
   build:
@@ -80,3 +80,16 @@ jobs:
       # Run Lint and Build
       - name: Run lint and build
         run: ./gradlew ktlintCheck assembleDebug
+
+      # Run Unit Test and Generate Coverage
+      - name: Run unit tests and generate coverage
+        run: ./gradlew generateTestCoverageReport
+
+      # Upload Coverage to Codecov
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+            token: ${{ secrets.CODECOV_TOKEN }}
+            files: data/build/reports/jacoco/testDebugUnitTestCoverage/testDebugUnitTestCoverage.xml
+            name: codecov-report
+            fail_ci_if_error: true

@@ -55,36 +55,36 @@ fun EditProfileRoute(
 
     LaunchedEffect(state.shouldFetchUserInfo) {
         if (state.shouldFetchUserInfo) {
-            viewModel.onAction(SettingContract.Action.RefreshUserInfo)
+            viewModel.processAction(SettingContract.Action.RefreshUserInfo)
         }
     }
 
     EditProfileScreen(
         state = state,
-        onBack = { viewModel.onAction(SettingContract.Action.ShowDialog) },
-        onUpdateName = { name -> viewModel.onAction(SettingContract.Action.UpdateName(name)) },
-        onToggleGender = { isMale -> viewModel.onAction(SettingContract.Action.ToggleGender(isMale)) },
+        onBack = { viewModel.processAction(SettingContract.Action.ShowDialog) },
+        onUpdateName = { name -> viewModel.processAction(SettingContract.Action.UpdateName(name)) },
+        onToggleGender = { isMale -> viewModel.processAction(SettingContract.Action.ToggleGender(isMale)) },
         onToggleTimeUnknown = { isChecked ->
-            viewModel.onAction(
+            viewModel.processAction(
                 SettingContract.Action.ToggleTimeUnknown(
                     isChecked,
                 ),
             )
         },
         onUpdateTimeOfBirth = { time ->
-            viewModel.onAction(
+            viewModel.processAction(
                 SettingContract.Action.UpdateTimeOfBirth(
                     time,
                 ),
             )
         },
-        onNavigateToEditBirthday = { viewModel.onAction(SettingContract.Action.NavigateToEditBirthday) },
+        onNavigateToEditBirthday = { viewModel.processAction(SettingContract.Action.NavigateToEditBirthday) },
         onConfirmExit = {
-            viewModel.onAction(SettingContract.Action.HideDialog)
-            viewModel.onAction(SettingContract.Action.PreviousStep)
+            viewModel.processAction(SettingContract.Action.HideDialog)
+            viewModel.processAction(SettingContract.Action.PreviousStep)
         },
-        onCancelDialog = { viewModel.onAction(SettingContract.Action.HideDialog) },
-        onSaveUserInfo = { viewModel.onAction(SettingContract.Action.SubmitUserInfo) },
+        onCancelDialog = { viewModel.processAction(SettingContract.Action.HideDialog) },
+        onSaveUserInfo = { viewModel.processAction(SettingContract.Action.SubmitUserInfo) },
     )
 }
 

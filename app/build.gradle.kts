@@ -8,11 +8,12 @@ plugins {
 
 android {
     namespace = "com.yapp.orbit"
+    compileSdk = 35
 
     defaultConfig {
-        versionCode = 5
-        versionName = "1.0.3"
-        targetSdk = 34
+        versionCode = 6
+        versionName = "1.1.3"
+        targetSdk = 35
     }
 
     buildTypes {
@@ -29,22 +30,30 @@ android {
 
 dependencies {
     implementation(projects.core.common)
+    implementation(projects.core.analytics)
     implementation(projects.core.buildconfig)
     implementation(projects.core.network)
     implementation(projects.core.designsystem)
     implementation(projects.core.datastore)
     implementation(projects.core.alarm)
     implementation(projects.core.media)
+    implementation(projects.core.ui)
     implementation(projects.data)
     implementation(projects.domain)
+    implementation(projects.feature.splash)
     implementation(projects.feature.onboarding)
     implementation(projects.feature.home)
     implementation(projects.feature.alarmInteraction)
     implementation(projects.feature.fortune)
     implementation(projects.feature.mission)
     implementation(projects.feature.setting)
-    implementation(projects.feature.navigator)
+    implementation(projects.feature.webview)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.compose.material)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
     implementation(libs.play.services.ads)
+    implementation(libs.kotlin.reflect)
+    implementation(libs.hilt.worker)
+    implementation(libs.androidx.work.runtime)
 }

@@ -1,5 +1,6 @@
 package com.yapp.mission
 
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
@@ -9,14 +10,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +39,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -38,7 +47,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
 import com.yapp.analytics.LocalAnalyticsHelper
+import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.designsystem.theme.OrbitTheme
+import com.yapp.domain.MissionMode
 import com.yapp.domain.model.MissionType
 import com.yapp.mission.component.FlipCard
 import com.yapp.mission.component.MissionProgressBar
@@ -47,9 +58,13 @@ import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.extensions.customClickable
 import com.yapp.ui.utils.heightForScreenPercentage
 import com.yapp.ui.utils.paddingForScreenPercentage
+import feature.mission.R
 
 @Composable
-fun MissionRoute(viewModel: MissionViewModel = hiltViewModel()) {
+fun MissionRoute(
+    viewModel: MissionViewModel = hiltViewModel(),
+    navigator: OrbitNavigator,
+) {
     val state by viewModel.container.stateFlow.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -57,6 +72,21 @@ fun MissionRoute(viewModel: MissionViewModel = hiltViewModel()) {
         ShakeDetector(context) {
             viewModel.processAction(MissionContract.Action.ShakeCard)
         }
+    }
+
+    BackHandler {
+        if (state.missionMode == MissionMode.PREVIEW) {
+            navigator.navigateBack()
+            return@BackHandler
+        }
+
+        viewModel.processAction(
+            if (state.showExitDialog) {
+                MissionContract.Action.HideExitDialog
+            } else {
+                MissionContract.Action.ShowExitDialog
+            },
+        )
     }
 
     LaunchedEffect(Unit) {
@@ -76,10 +106,6 @@ fun MissionRoute(viewModel: MissionViewModel = hiltViewModel()) {
     )
 }
 
-/**
- * Mission 상태에 따라 적절한 화면을 구성하는 메인 컨테이너.
- * 로딩, 콘텐츠, 성공 오버레이, 다이얼로그 등 분기 처리 포함.
- */
 @Composable
 fun MissionScreen(
     stateProvider: () -> MissionContract.State,
@@ -89,18 +115,10 @@ fun MissionScreen(
     val state = stateProvider()
     val analytics = LocalAnalyticsHelper.current
 
-    BackHandler {
-        eventDispatcher(
-            if (state.showExitDialog) {
-                MissionContract.Action.HideExitDialog
-            } else {
-                MissionContract.Action.ShowExitDialog
-            },
-        )
-    }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (state.isMissionTypeLoading) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        if (state.isMissionTypeLoading || state.missionType == MissionType.NONE) {
             MissionLoadingScreen()
             return
         }
@@ -112,7 +130,10 @@ fun MissionScreen(
             modifier = Modifier.matchParentSize(),
         )
 
-        MissionContent(state, eventDispatcher)
+        MissionContent(
+            state = state,
+            eventDispatcher = eventDispatcher,
+        )
 
         if (state.showExitDialog) {
             ExitDialog(state, eventDispatcher, onFinish, analytics)
@@ -122,17 +143,35 @@ fun MissionScreen(
             MissionSuccessOverlay()
         }
 
-        state.errorMessage?.let {
-            ErrorDialog(message = it) {
-                eventDispatcher(MissionContract.Action.RetryPostFortune)
+        if (state.missionMode == MissionMode.PREVIEW) {
+            val insets = WindowInsets.navigationBars.asPaddingValues()
+
+            Button(
+                onClick = {
+                    eventDispatcher(MissionContract.Action.NavigateBack)
+                },
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = OrbitTheme.colors.white,
+                    contentColor = OrbitTheme.colors.gray_900,
+                ),
+                contentPadding = PaddingValues(
+                    horizontal = 24.dp,
+                    vertical = 12.dp,
+                ),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = insets.calculateBottomPadding() + 28.dp),
+            ) {
+                Text(
+                    text = stringResource(id = R.string.mission_preview_exit),
+                    style = OrbitTheme.typography.body1SemiBold,
+                )
             }
         }
     }
 }
 
-/**
- * 미션 콘텐츠 본문. TopBar, 진행 바, 상태별 게임 포함.
- */
 @Composable
 fun MissionContent(
     state: MissionContract.State,
@@ -142,32 +181,39 @@ fun MissionContent(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        MissionTopAppBar(onExit = { eventDispatcher(MissionContract.Action.ShowExitDialog) })
+        MissionTopAppBar(
+            mode = state.missionMode,
+            onExit = { eventDispatcher(MissionContract.Action.ShowExitDialog) },
+        )
         MissionProgressBarSection(state)
         MissionLabel(state)
         Spacer(modifier = Modifier.heightForScreenPercentage(0.0665f))
 
         when (state.missionType) {
-            is MissionType.Shake -> {
-                if (state.shakeCount == 0) {
+            MissionType.SHAKE -> {
+                if (state.currentCount == 0) {
                     MissionShakeInitialImage()
                 } else {
-                    FlipCard(state = state, eventDispatcher = eventDispatcher)
+                    FlipCard(state)
                 }
             }
 
-            is MissionType.Click -> {
+            MissionType.TAP -> {
                 MissionClickCard(state, eventDispatcher)
+            }
+
+            MissionType.NONE -> {
+                Log.e("MissionContent", "Invalid or NONE MissionType: ${state.missionType}")
             }
         }
     }
 }
 
-/**
- * '나가기' 버튼이 포함된 미션 상단 앱바 영역.
- */
 @Composable
-fun MissionTopAppBar(onExit: () -> Unit) {
+fun MissionTopAppBar(
+    mode: MissionMode,
+    onExit: () -> Unit,
+) {
     Spacer(modifier = Modifier.heightForScreenPercentage(0.066f))
     Box(
         modifier = Modifier
@@ -176,43 +222,41 @@ fun MissionTopAppBar(onExit: () -> Unit) {
         contentAlignment = Alignment.TopEnd,
     ) {
         Row(
-            modifier = Modifier.customClickable(
-                rippleEnabled = false,
-                fadeOnPress = true,
-                pressedAlpha = 0.5f,
-                onClick = onExit,
-            ),
+            modifier = Modifier
+                .height(26.dp)
+                .customClickable(
+                    rippleEnabled = false,
+                    fadeOnPress = true,
+                    pressedAlpha = 0.5f,
+                    onClick = onExit,
+                ),
         ) {
-            Icon(
-                painter = painterResource(id = core.designsystem.R.drawable.ic_cancel),
-                contentDescription = null,
-                tint = OrbitTheme.colors.white,
-                modifier = Modifier.size(24.dp),
-            )
-            Text(
-                text = "나가기",
-                color = OrbitTheme.colors.white,
-                style = OrbitTheme.typography.body1SemiBold,
-                modifier = Modifier
-                    .padding(start = 4.dp)
-                    .align(Alignment.CenterVertically),
-            )
+            if (mode == MissionMode.REAL) {
+                Icon(
+                    painter = painterResource(id = core.designsystem.R.drawable.ic_cancel),
+                    contentDescription = null,
+                    tint = OrbitTheme.colors.white,
+                    modifier = Modifier.size(24.dp),
+                )
+                Text(
+                    text = stringResource(id = R.string.exit),
+                    color = OrbitTheme.colors.white,
+                    style = OrbitTheme.typography.body1SemiBold,
+                    modifier = Modifier
+                        .padding(start = 4.dp)
+                        .align(Alignment.CenterVertically),
+                )
+            }
         }
     }
 }
 
-/**
- * 미션 진행도 ProgressBar 섹션.
- */
 @Composable
 fun MissionProgressBarSection(state: MissionContract.State) {
     Spacer(modifier = Modifier.heightForScreenPercentage(0.0246f))
     MissionProgressBar(
-        currentProgress = when (state.missionType) {
-            is MissionType.Shake -> state.shakeCount
-            is MissionType.Click -> state.clickCount
-        },
-        totalProgress = 10,
+        currentProgress = state.currentCount,
+        totalProgress = state.missionCount,
         modifier = Modifier
             .fillMaxWidth()
             .height(5.dp)
@@ -221,14 +265,15 @@ fun MissionProgressBarSection(state: MissionContract.State) {
     Spacer(modifier = Modifier.heightForScreenPercentage(0.06f))
 }
 
-/**
- * 미션 안내 문구 및 현재 카운트.
- */
 @Composable
 fun MissionLabel(state: MissionContract.State) {
-    val instruction =
-        if (state.missionType is MissionType.Shake) "10회를 흔들어 부적을 뒤집어줘" else "10회를 눌러 편지를 열어줘"
-    val count = if (state.missionType is MissionType.Shake) state.shakeCount else state.clickCount
+    val instruction = stringResource(
+        id = when (state.missionType) {
+            MissionType.SHAKE -> R.string.mission_instruction_shake
+            else -> R.string.mission_instruction_tap
+        },
+        state.missionCount,
+    )
 
     Text(
         text = instruction,
@@ -237,15 +282,12 @@ fun MissionLabel(state: MissionContract.State) {
     )
     Spacer(modifier = Modifier.heightForScreenPercentage(0.005f))
     Text(
-        text = count.toString(),
+        text = state.currentCount.toString(),
         color = OrbitTheme.colors.white,
         style = OrbitTheme.typography.displaySemiBold,
     )
 }
 
-/**
- * 흔들기 미션 초기 이미지.
- */
 @Composable
 fun MissionShakeInitialImage() {
     Image(
@@ -257,15 +299,12 @@ fun MissionShakeInitialImage() {
     )
 }
 
-/**
- * 클릭 미션 카드. 클릭 시 애니메이션 및 상태 변화.
- */
 @Composable
 fun MissionClickCard(
     state: MissionContract.State,
     eventDispatcher: (MissionContract.Action) -> Unit,
 ) {
-    if (state.clickCount == 0) {
+    if (state.currentCount == 0) {
         Image(
             painter = painterResource(id = core.designsystem.R.drawable.ic_mission_main_letter),
             contentDescription = null,
@@ -295,9 +334,6 @@ fun MissionClickCard(
     }
 }
 
-/**
- * 미션 종료 시 나가기 다이얼로그.
- */
 @Composable
 fun ExitDialog(
     state: MissionContract.State,
@@ -306,18 +342,19 @@ fun ExitDialog(
     analytics: AnalyticsHelper,
 ) {
     OrbitDialog(
-        title = "나가면 운세를 받을 수 없어요",
-        message = "미션을 수행하지 않고 나가시겠어요?",
-        confirmText = "나가기",
-        cancelText = "취소",
+        title = stringResource(id = R.string.mission_exit_dialog_title),
+        message = stringResource(id = R.string.mission_exit_dialog_message),
+        confirmText = stringResource(id = R.string.exit),
+        cancelText = stringResource(id = R.string.cancel),
         onConfirm = {
             analytics.logEvent(
                 AnalyticsEvent(
                     type = "mission_fail",
                     properties = mapOf(
                         AnalyticsEvent.MissionPropertiesKeys.MISSION_TYPE to when (state.missionType) {
-                            is MissionType.Shake -> "shake"
-                            is MissionType.Click -> "click"
+                            MissionType.SHAKE -> "shake"
+                            MissionType.TAP -> "click"
+                            else -> ""
                         },
                     ),
                 ),
@@ -328,9 +365,6 @@ fun ExitDialog(
     )
 }
 
-/**
- * 미션 성공 시 오버레이 화면.
- */
 @Composable
 fun MissionSuccessOverlay() {
     Box(
@@ -354,7 +388,7 @@ fun MissionSuccessOverlay() {
                 play = true,
             )
             Text(
-                text = "미션 성공!",
+                text = stringResource(id = R.string.mission_success),
                 color = OrbitTheme.colors.white,
                 style = OrbitTheme.typography.title1Bold,
                 modifier = Modifier
@@ -365,22 +399,6 @@ fun MissionSuccessOverlay() {
     }
 }
 
-/**
- * 오류 발생 시 다이얼로그.
- */
-@Composable
-fun ErrorDialog(message: String, onConfirm: () -> Unit) {
-    OrbitDialog(
-        title = "오류",
-        message = message,
-        confirmText = "확인",
-        onConfirm = onConfirm,
-    )
-}
-
-/**
- * 로딩 화면. 미션 타입 로딩 중에 표시.
- */
 @Composable
 fun MissionLoadingScreen() {
     Box(
@@ -396,14 +414,34 @@ fun MissionLoadingScreen() {
 
 @Composable
 @Preview
-private fun MissionRoutePreview() {
+private fun MissionRouteReal() {
     MissionScreen(
         stateProvider = {
             MissionContract.State(
                 isMissionTypeLoading = false,
-                missionType = MissionType.Shake,
-                shakeCount = 0,
-                clickCount = 0,
+                missionType = MissionType.TAP,
+                currentCount = 0,
+                showFinalAnimation = false,
+                playWhenClick = false,
+                showExitDialog = false,
+                isMissionCompleted = false,
+            )
+        },
+        eventDispatcher = {},
+        onFinish = {},
+    )
+}
+
+@Composable
+@Preview
+private fun MissionRoutePreview() {
+    MissionScreen(
+        stateProvider = {
+            MissionContract.State(
+                missionMode = MissionMode.PREVIEW,
+                isMissionTypeLoading = false,
+                missionType = MissionType.TAP,
+                currentCount = 0,
                 showFinalAnimation = false,
                 playWhenClick = false,
                 showExitDialog = false,

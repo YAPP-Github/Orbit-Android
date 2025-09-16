@@ -51,11 +51,13 @@ fun FortunePager(
                 val index = (page - 1).coerceIn(0, state.fortunePages.lastIndex)
                 FortunePageLayout(state.fortunePages[index])
             }
+
             5 -> FortuneCompletePage(
                 hasReward = state.hasReward,
                 onCompleteClick = onNextStep,
                 onNavigateToHome = onNavigateToHome,
             )
+
             else -> {}
         }
     }

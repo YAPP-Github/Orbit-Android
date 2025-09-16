@@ -5,7 +5,6 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navOptions
@@ -14,7 +13,7 @@ import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.common.navigation.extensions.sharedHiltViewModel
 import com.yapp.common.navigation.route.SettingBaseRoute
 import com.yapp.common.navigation.route.SettingDestination
-import kotlinx.coroutines.flow.collectLatest
+import org.orbitmvi.orbit.compose.collectSideEffect
 
 fun NavGraphBuilder.settingNavGraph(
     navigator: OrbitNavigator,
@@ -25,10 +24,8 @@ fun NavGraphBuilder.settingNavGraph(
         composable<SettingDestination.Setting> {
             val viewModel = it.sharedHiltViewModel<SettingViewModel>(navigator.navController)
 
-            LaunchedEffect(viewModel) {
-                viewModel.container.sideEffectFlow.collectLatest { sideEffect ->
-                    handleSideEffect(sideEffect, navigator)
-                }
+            viewModel.collectSideEffect {
+                handleSideEffect(it, navigator)
             }
 
             SettingRoute(viewModel)
@@ -37,10 +34,8 @@ fun NavGraphBuilder.settingNavGraph(
         composable<SettingDestination.EditProfile> {
             val viewModel = it.sharedHiltViewModel<EditProfileViewModel>(navigator.navController)
 
-            LaunchedEffect(viewModel) {
-                viewModel.container.sideEffectFlow.collectLatest { sideEffect ->
-                    handleSideEffect(sideEffect, navigator)
-                }
+            viewModel.collectSideEffect {
+                handleSideEffect(it, navigator)
             }
 
             EditProfileRoute(viewModel)
@@ -86,10 +81,8 @@ fun NavGraphBuilder.settingNavGraph(
         ) {
             val viewModel = it.sharedHiltViewModel<EditProfileViewModel>(navigator.navController)
 
-            LaunchedEffect(viewModel) {
-                viewModel.container.sideEffectFlow.collectLatest { sideEffect ->
-                    handleSideEffect(sideEffect, navigator)
-                }
+            viewModel.collectSideEffect {
+                handleSideEffect(it, navigator)
             }
 
             EditBirthdayRoute(viewModel)

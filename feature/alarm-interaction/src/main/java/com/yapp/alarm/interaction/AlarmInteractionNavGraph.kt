@@ -48,14 +48,6 @@ fun NavGraphBuilder.alarmInteractionNavGraph(
                             }
                         },
                     )
-                } ?: run {
-                    navigator.navigateToHome(
-                        navOptions {
-                            popUpTo(AlarmInteractionBaseRoute) {
-                                inclusive = true
-                            }
-                        },
-                    )
                 }
             }
         }
@@ -71,9 +63,7 @@ fun NavGraphBuilder.alarmInteractionNavGraph(
         composable<AlarmInteractionDestination.AlarmSnoozeTimer>(
             typeMap = mapOf(typeOf<Alarm>() to AlarmArgType),
         ) {
-            AlarmSnoozeTimerRoute(
-                navigator = navigator,
-            )
+            AlarmSnoozeTimerRoute()
         }
     }
 }

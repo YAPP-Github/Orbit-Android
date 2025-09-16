@@ -1,7 +1,6 @@
 package com.yapp.alarm.interaction.action
 
 import com.yapp.domain.model.Alarm
-import com.yapp.ui.base.SideEffect
 import com.yapp.ui.base.UiState
 
 class AlarmActionContract {
@@ -15,7 +14,7 @@ class AlarmActionContract {
         val snoozeEnabled: Boolean = true,
         val snoozeInterval: Int = 5,
         val snoozeCount: Int = 5,
-        val isFirstMission: Boolean? = null,
+        val shouldShowMissionStart: Boolean? = null,
     ) : UiState
 
     sealed class Action {

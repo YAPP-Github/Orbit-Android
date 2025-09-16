@@ -1,12 +1,13 @@
 package com.yapp.onboarding
 
 import com.yapp.ui.base.UiState
+import java.time.LocalTime
 
 sealed class OnboardingContract {
 
     data class State(
         val currentStep: Int = 1,
-        val timeState: AlarmTimeState = AlarmTimeState(),
+        val selectedTime: LocalTime = LocalTime.of(1, 0),
         val textFieldValue: String = "",
         val showWarning: Boolean = false,
         val isButtonEnabled: Boolean = false,
@@ -18,7 +19,6 @@ sealed class OnboardingContract {
         val isBirthDateValid: Boolean = false,
         val isBirthTimeValid: Boolean = false,
         val isValid: Boolean = false,
-        val isBottomSheetOpen: Boolean = false,
         val isShowWarningDialog: Boolean = false,
     ) : UiState {
         val birthDateFormatted: String
@@ -43,23 +43,18 @@ sealed class OnboardingContract {
             }
     }
 
-    data class AlarmTimeState(
-        val selectedAmPm: String = "오전",
-        val selectedHour: Int = 1,
-        val selectedMinute: Int = 0,
-    )
-
     sealed class Action {
         data object NextStep : Action()
         data object PreviousStep : Action()
-        data class SetAlarmTime(val isAm: String, val hour: Int, val minute: Int) : Action()
+        data class SetAlarmTime(val newTime: LocalTime) : Action()
         data object CreateAlarm : Action()
         data class UpdateField(val value: String, val fieldType: FieldType) : Action()
         data object Reset : Action()
         data object Submit : Action()
         data class UpdateGender(val gender: String) : Action()
         data class UpdateBirthDate(val lunar: String, val year: Int, val month: Int, val day: Int) : Action()
-        data object ToggleBottomSheet : Action()
+        data object ShowBottomSheet : Action()
+        data object HideBottomSheet : Action()
         data object CompleteOnboarding : Action()
         data class OpenWebView(val url: String) : Action()
         data object ShowWarningDialog : Action()
@@ -75,6 +70,10 @@ sealed class OnboardingContract {
         data class NavigateToNextStep(val currentStep: Int) : SideEffect()
 
         data object NavigateBack : SideEffect()
+
+        data object ShowBottomSheet : SideEffect()
+
+        data object HideBottomSheet : SideEffect()
 
         data object OnboardingCompleted : SideEffect()
 

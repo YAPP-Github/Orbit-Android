@@ -33,6 +33,7 @@ fun OrbitButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     enabled: Boolean = false,
+    useFillMaxWidth: Boolean = true,
     debounceTime: Long = 500L,
     height: Dp = 54.dp,
     containerColor: Color = OrbitTheme.colors.main,
@@ -77,7 +78,9 @@ fun OrbitButton(
         ),
         interactionSource = interactionSource,
         modifier = modifier
-            .fillMaxWidth()
+            .then(
+                if (useFillMaxWidth) Modifier.fillMaxWidth() else Modifier,
+            )
             .padding(padding)
             .height(height - padding * 2),
     ) {

@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <application
         android:name=".OrbitApplication"
@@ -22,15 +23,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Orbit"
+        android:enableOnBackInvokedCallback="true"
         android:usesCleartextTraffic="true"
-        tools:targetApi="31">
+        tools:targetApi="33">
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="@string/admob_app_id" />
 
         <activity
-            android:name="com.yapp.navigator.MainActivity"
+            android:name="com.yapp.orbit.MainActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="true"
             android:label="@string/app_name"
@@ -45,9 +47,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="orbitapp"
-                    android:host="mission"/>
+                <data android:scheme="orbitapp" />
             </intent-filter>
         </activity>
 
@@ -79,5 +79,15 @@
         <service
             android:name="com.yapp.alarm.services.AlarmService"
             android:foregroundServiceType="mediaPlayback" />
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                tools:node="remove" />
+        </provider>
     </application>
 </manifest>

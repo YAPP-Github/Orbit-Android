@@ -3,7 +3,6 @@ package com.yapp.home
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yapp.domain.model.Alarm
-import com.yapp.ui.base.SideEffect
 import com.yapp.ui.base.UiState
 
 sealed class HomeContract {
@@ -19,6 +18,7 @@ sealed class HomeContract {
         val isDeleteDialogVisible: Boolean = false,
         val isNoActivatedAlarmDialogVisible: Boolean = false,
         val isNoDailyFortuneDialogVisible: Boolean = false,
+        val isUpdateNoticeVisible: Boolean = false,
         val hasNewFortune: Boolean = false,
         val isToolTipVisible: Boolean = false,
         val pendingAlarmToggle: Pair<Long, Boolean>? = null,
@@ -59,6 +59,8 @@ sealed class HomeContract {
         data object ShowNoDailyFortuneDialog : Action()
         data object HideNoDailyFortuneDialog : Action()
         data object HideToolTip : Action()
+        data object OnClickDontShowAgain : Action()
+        data object HideUpdateNotice : Action()
         data object RollbackPendingAlarmToggle : Action()
         data object ConfirmDeletion : Action()
         data class DeleteSingleAlarm(val alarmId: Long) : Action()

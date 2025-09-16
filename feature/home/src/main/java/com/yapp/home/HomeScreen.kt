@@ -1,5 +1,6 @@
 package com.yapp.home
 
+import android.os.Build
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -15,12 +16,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -64,12 +69,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.yapp.alarm.component.AlarmListItem
-import com.yapp.alarm.component.AlarmListItemMenu
 import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.Alarm
+import com.yapp.home.alarm.component.AlarmListItem
+import com.yapp.home.alarm.component.AlarmListItemMenu
 import com.yapp.home.component.bottomsheet.AlarmListBottomSheet
+import com.yapp.home.component.bottomsheet.UpdateNoticeBottomSheet
 import com.yapp.ui.component.dialog.OrbitDialog
 import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.component.snackbar.showCustomSnackBar
@@ -77,7 +83,8 @@ import com.yapp.ui.component.tooltip.OrbitToolTip
 import com.yapp.ui.utils.heightForScreenPercentage
 import com.yapp.ui.utils.toPx
 import feature.home.R
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.CoroutineScope
+import org.orbitmvi.orbit.compose.collectSideEffect
 
 @Composable
 fun HomeRoute(
@@ -86,7 +93,6 @@ fun HomeRoute(
     snackBarHostState: SnackbarHostState,
 ) {
     val state by viewModel.container.stateFlow.collectAsStateWithLifecycle()
-    val sideEffect = viewModel.container.sideEffectFlow
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -120,70 +126,75 @@ fun HomeRoute(
             }
     }
 
-    LaunchedEffect(sideEffect) {
-        sideEffect.collectLatest { effect ->
-            when (effect) {
-                is HomeContract.SideEffect.NavigateToAddAlarm -> {
-                    navigator.navigateToAddAlarm()
-                }
-
-                is HomeContract.SideEffect.NavigateToEditAlarm -> {
-                    navigator.navigateToEditAlarm(effect.alarmId)
-                }
-
-                is HomeContract.SideEffect.NavigateToFortune -> {
-                    navigator.navigateToFortune()
-                }
-
-                is HomeContract.SideEffect.NavigateToSetting -> {
-                    navigator.navigateToSetting()
-                }
-
-                is HomeContract.SideEffect.ShowSnackBar -> {
-                    val result = showCustomSnackBar(
-                        scope = coroutineScope,
-                        snackBarHostState = snackBarHostState,
-                        message = effect.message,
-                        actionLabel = effect.label,
-                        iconRes = effect.iconRes,
-                        bottomPadding = effect.bottomPadding,
-                        durationMillis = effect.durationMillis,
-                    )
-
-                    when (result) {
-                        SnackbarResult.ActionPerformed -> effect.onAction()
-                        SnackbarResult.Dismissed -> effect.onDismiss()
-                    }
-                }
-            }
-        }
+    viewModel.collectSideEffect {
+        handleSideEffect(it, navigator, snackBarHostState, coroutineScope)
     }
 
     HomeScreen(
-        stateProvider = { state },
-        eventDispatcher = viewModel::processAction,
+        state = state,
+        processAction = viewModel::processAction,
     )
+}
+
+private suspend fun handleSideEffect(
+    sideEffect: HomeContract.SideEffect,
+    navigator: OrbitNavigator,
+    snackBarHostState: SnackbarHostState,
+    coroutineScope: CoroutineScope,
+) {
+    when (sideEffect) {
+        is HomeContract.SideEffect.NavigateToAddAlarm -> {
+            navigator.navigateToAddAlarm()
+        }
+
+        is HomeContract.SideEffect.NavigateToEditAlarm -> {
+            navigator.navigateToEditAlarm(sideEffect.alarmId)
+        }
+
+        is HomeContract.SideEffect.NavigateToFortune -> {
+            navigator.navigateToFortune()
+        }
+
+        is HomeContract.SideEffect.NavigateToSetting -> {
+            navigator.navigateToSetting()
+        }
+
+        is HomeContract.SideEffect.ShowSnackBar -> {
+            val result = showCustomSnackBar(
+                scope = coroutineScope,
+                snackBarHostState = snackBarHostState,
+                message = sideEffect.message,
+                actionLabel = sideEffect.label,
+                iconRes = sideEffect.iconRes,
+                bottomPadding = sideEffect.bottomPadding,
+                durationMillis = sideEffect.durationMillis,
+            )
+
+            when (result) {
+                SnackbarResult.ActionPerformed -> sideEffect.onAction()
+                SnackbarResult.Dismissed -> sideEffect.onDismiss()
+            }
+        }
+    }
 }
 
 @Composable
 fun HomeScreen(
-    stateProvider: () -> HomeContract.State,
-    eventDispatcher: (HomeContract.Action) -> Unit,
+    state: HomeContract.State,
+    processAction: (HomeContract.Action) -> Unit,
 ) {
-    val state = stateProvider()
-
     if (state.initialLoading) {
         HomeLoadingScreen()
     } else if (state.alarms.isEmpty()) {
         HomeAlarmEmptyScreen(
             onSettingClick = {
-                eventDispatcher(HomeContract.Action.NavigateToSetting)
+                processAction(HomeContract.Action.NavigateToSetting)
             },
             onMailClick = {
-                eventDispatcher(HomeContract.Action.ShowDailyFortune)
+                processAction(HomeContract.Action.ShowDailyFortune)
             },
             onAddClick = {
-                eventDispatcher(HomeContract.Action.NavigateToAlarmCreation)
+                processAction(HomeContract.Action.NavigateToAlarmCreation)
             },
             hasNewFortune = state.hasNewFortune,
             isTooltipVisible = state.isToolTipVisible,
@@ -191,7 +202,7 @@ fun HomeScreen(
     } else {
         HomeContent(
             state = state,
-            eventDispatcher = eventDispatcher,
+            processAction = processAction,
         )
     }
 
@@ -202,10 +213,10 @@ fun HomeScreen(
             confirmText = stringResource(id = R.string.alarm_delete_dialog_btn_delete),
             cancelText = stringResource(id = R.string.alarm_delete_dialog_btn_cancel),
             onConfirm = {
-                eventDispatcher(HomeContract.Action.ConfirmDeletion)
+                processAction(HomeContract.Action.ConfirmDeletion)
             },
             onCancel = {
-                eventDispatcher(HomeContract.Action.HideDeleteDialog)
+                processAction(HomeContract.Action.HideDeleteDialog)
             },
         )
     }
@@ -217,10 +228,10 @@ fun HomeScreen(
             confirmText = stringResource(id = R.string.no_active_alarm_dialog_btn_confirm),
             cancelText = stringResource(id = R.string.no_active_alarm_dialog_btn_cancel),
             onConfirm = {
-                eventDispatcher(HomeContract.Action.HideNoActivatedAlarmDialog)
+                processAction(HomeContract.Action.HideNoActivatedAlarmDialog)
             },
             onCancel = {
-                eventDispatcher(HomeContract.Action.RollbackPendingAlarmToggle)
+                processAction(HomeContract.Action.RollbackPendingAlarmToggle)
             },
         )
     }
@@ -231,7 +242,18 @@ fun HomeScreen(
             message = stringResource(id = R.string.no_daily_fortune_dialog_message),
             confirmText = stringResource(id = R.string.no_daily_fortune_dialog_btn_confirm),
             onConfirm = {
-                eventDispatcher(HomeContract.Action.HideNoDailyFortuneDialog)
+                processAction(HomeContract.Action.HideNoDailyFortuneDialog)
+            },
+        )
+    }
+
+    if (state.isUpdateNoticeVisible) {
+        UpdateNoticeBottomSheet(
+            onDontShowAgain = {
+                processAction(HomeContract.Action.OnClickDontShowAgain)
+            },
+            onClose = {
+                processAction(HomeContract.Action.HideUpdateNotice)
             },
         )
     }
@@ -268,9 +290,11 @@ private fun HomeLoadingScreen() {
 @Composable
 private fun HomeContent(
     state: HomeContract.State,
-    eventDispatcher: (HomeContract.Action) -> Unit,
+    processAction: (HomeContract.Action) -> Unit,
 ) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val navBarHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     var sheetHalfExpandHeight by remember { mutableStateOf(0.dp) }
 
     val listState = rememberLazyListState()
@@ -278,7 +302,7 @@ private fun HomeContent(
     LaunchedEffect(state.lastAddedAlarmIndex) {
         state.lastAddedAlarmIndex?.let { index ->
             listState.scrollToItem(index)
-            eventDispatcher(HomeContract.Action.ResetLastAddedAlarmIndex)
+            processAction(HomeContract.Action.ResetLastAddedAlarmIndex)
         }
     }
 
@@ -288,7 +312,7 @@ private fun HomeContent(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
             ) {
-                eventDispatcher(HomeContract.Action.HideToolTip)
+                processAction(HomeContract.Action.HideToolTip)
             },
     ) {
         if (state.activeItemMenu != null) {
@@ -299,7 +323,7 @@ private fun HomeContent(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                     ) {
-                        eventDispatcher(HomeContract.Action.HideItemMenu)
+                        processAction(HomeContract.Action.HideItemMenu)
                     }
                     .zIndex(1f),
             )
@@ -325,47 +349,50 @@ private fun HomeContent(
                 halfExpandedHeight = sheetHalfExpandHeight,
                 listState = listState,
                 onClickAlarm = { alarmId ->
-                    eventDispatcher(HomeContract.Action.EditAlarm(alarmId))
+                    processAction(HomeContract.Action.EditAlarm(alarmId))
                 },
                 onLongPressAlarm = { alarmId, x, y ->
-                    eventDispatcher(HomeContract.Action.ShowItemMenu(alarmId, x, y))
+                    processAction(HomeContract.Action.ShowItemMenu(alarmId, x, y))
                 },
                 onClickAdd = {
-                    eventDispatcher(HomeContract.Action.NavigateToAlarmCreation)
+                    processAction(HomeContract.Action.NavigateToAlarmCreation)
                 },
                 onClickMore = {
                     if (state.dropdownMenuExpanded || state.sortDropDownMenuExpanded) {
-                        eventDispatcher(HomeContract.Action.HideDropDownMenu)
+                        processAction(HomeContract.Action.HideDropDownMenu)
                     } else {
-                        eventDispatcher(HomeContract.Action.ShowDropDownMenu)
+                        processAction(HomeContract.Action.ShowDropDownMenu)
                     }
                 },
                 onClickCheckAll = {
-                    eventDispatcher(HomeContract.Action.ToggleAllAlarmSelection)
+                    processAction(HomeContract.Action.ToggleAllAlarmSelection)
                 },
                 onClickClose = {
-                    eventDispatcher(HomeContract.Action.ToggleMultiSelectionMode)
+                    processAction(HomeContract.Action.ToggleMultiSelectionMode)
                 },
                 onClickEdit = {
-                    eventDispatcher(HomeContract.Action.ToggleMultiSelectionMode)
+                    processAction(HomeContract.Action.ToggleMultiSelectionMode)
                 },
                 onClickSort = {
-                    eventDispatcher(HomeContract.Action.ShowSortDropDownMenu)
+                    processAction(HomeContract.Action.ShowSortDropDownMenu)
                 },
                 onSetSortOrder = { sortOrder ->
-                    eventDispatcher(HomeContract.Action.SetSortOrder(sortOrder))
+                    processAction(HomeContract.Action.SetSortOrder(sortOrder))
                 },
                 onDismissRequest = {
-                    eventDispatcher(HomeContract.Action.HideDropDownMenu)
+                    processAction(HomeContract.Action.HideDropDownMenu)
                 },
                 onToggleSelect = { alarmId ->
-                    eventDispatcher(HomeContract.Action.ToggleAlarmSelection(alarmId))
+                    processAction(HomeContract.Action.ToggleAlarmSelection(alarmId))
                 },
                 onToggleActive = { alarmId ->
-                    eventDispatcher(HomeContract.Action.ToggleAlarmActivation(alarmId))
+                    processAction(HomeContract.Action.ToggleAlarmActivation(alarmId))
                 },
                 onSwipe = { alarmId ->
-                    eventDispatcher(HomeContract.Action.SwipeToDeleteAlarm(alarmId))
+                    processAction(HomeContract.Action.SwipeToDeleteAlarm(alarmId))
+                },
+                onExpanded = {
+                    processAction(HomeContract.Action.HideToolTip)
                 },
             ) {
                 Box(
@@ -384,7 +411,15 @@ private fun HomeContent(
                             .fillMaxWidth()
                             .layout { measurable, constraints ->
                                 val placeable = measurable.measure(constraints)
-                                sheetHalfExpandHeight = screenHeight - placeable.height.toDp()
+                                val contentHeight = placeable.height.toDp()
+
+                                val offset = if (Build.VERSION.SDK_INT < 35) {
+                                    0.dp
+                                } else {
+                                    statusBarHeight + navBarHeight
+                                }
+                                sheetHalfExpandHeight = screenHeight - contentHeight - offset
+
                                 layout(placeable.width, placeable.height) {
                                     placeable.placeRelative(0, 0)
                                 }
@@ -407,8 +442,8 @@ private fun HomeContent(
                     }
 
                     HomeTopBar(
-                        onSettingClick = { eventDispatcher(HomeContract.Action.NavigateToSetting) },
-                        onMailClick = { eventDispatcher(HomeContract.Action.ShowDailyFortune) },
+                        onSettingClick = { processAction(HomeContract.Action.NavigateToSetting) },
+                        onMailClick = { processAction(HomeContract.Action.ShowDailyFortune) },
                         hasNewFortune = state.hasNewFortune,
                         isShowTooltip = state.isToolTipVisible,
                     )
@@ -425,7 +460,7 @@ private fun HomeContent(
                         .padding(bottom = 26.dp),
                     selectedAlarmCount = state.selectedAlarmIds.size,
                     onClick = {
-                        eventDispatcher(HomeContract.Action.ShowDeleteDialog)
+                        processAction(HomeContract.Action.ShowDeleteDialog)
                     },
                 )
             }
@@ -438,7 +473,7 @@ private fun HomeContent(
                     activeItemMenuPosition = state.activeItemMenuPosition,
                     selectedAlarmIds = state.selectedAlarmIds,
                     onDelete = { alarmId ->
-                        eventDispatcher(HomeContract.Action.DeleteSingleAlarm(alarmId))
+                        processAction(HomeContract.Action.DeleteSingleAlarm(alarmId))
                     },
                 )
             }
@@ -529,7 +564,7 @@ private fun HomeTopBar(
 }
 
 @Composable
-fun HillWithGradient() {
+private fun HillWithGradient() {
     val hillTopY = (LocalConfiguration.current.screenHeightDp.dp * 0.28f).toPx()
 
     Canvas(
@@ -565,7 +600,7 @@ fun HillWithGradient() {
 }
 
 @Composable
-fun SkyImage() {
+private fun SkyImage() {
     Image(
         painter = painterResource(id = core.designsystem.R.drawable.ic_main_sky),
         contentDescription = "IMG_MAIN_SKY",
@@ -898,7 +933,6 @@ private fun AlarmWithMenu(
             swipeable = false,
             selectable = false,
             selected = selectedAlarmIds.contains(activeItemMenu.id),
-            isAm = activeItemMenu.isAm,
             hour = activeItemMenu.hour,
             minute = activeItemMenu.minute,
             isActive = activeItemMenu.isAlarmActive,
@@ -926,18 +960,16 @@ private fun AlarmWithMenu(
 fun HomeScreenPreview() {
     OrbitTheme {
         HomeScreen(
-            stateProvider = {
-                HomeContract.State()
-                    .copy(
-                        initialLoading = false,
-                        alarms = listOf(
-                            Alarm(),
-                        ),
-                        activeItemMenu = 0L,
-                        activeItemMenuPosition = Pair(0f, 0f),
-                    )
-            },
-            eventDispatcher = {},
+            state = HomeContract.State()
+                .copy(
+                    initialLoading = false,
+                    alarms = listOf(
+                        Alarm(),
+                    ),
+                    activeItemMenu = 0L,
+                    activeItemMenuPosition = Pair(0f, 0f),
+                ),
+            processAction = {},
         )
     }
 }

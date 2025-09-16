@@ -1,6 +1,5 @@
 package com.yapp.datastore
 
-import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -14,7 +13,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,14 +24,24 @@ class UserPreferences @Inject constructor(
         val USER_ID = longPreferencesKey("user_id")
         val USER_NAME = stringPreferencesKey("user_name")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+
         val FORTUNE_ID = longPreferencesKey("fortune_id")
-        val FORTUNE_DATE = stringPreferencesKey("fortune_date")
+        val FORTUNE_DATE_EPOCH = longPreferencesKey("fortune_date_epoch")
         val FORTUNE_IMAGE_ID = intPreferencesKey("fortune_image_id")
         val FORTUNE_SCORE = intPreferencesKey("fortune_score")
-        val FORTUNE_CHECKED = booleanPreferencesKey("fortune_checked")
-        val FIRST_DISMISSED_ALARM_ID = longPreferencesKey("first_dismissed_alarm_id")
-        val DISMISSED_DATE = stringPreferencesKey("dismissed_date")
+        val FORTUNE_SEEN = booleanPreferencesKey("fortune_seen")
+        val FORTUNE_TOOLTIP_SHOWN = booleanPreferencesKey("fortune_tooltip_shown")
+        val FORTUNE_CREATING = booleanPreferencesKey("fortune_creating")
+        val FORTUNE_FAILED = booleanPreferencesKey("fortune_failed")
+
+        val FIRST_ALARM_DISMISSED_TODAY = booleanPreferencesKey("first_alarm_dismissed_today")
+        val FIRST_ALARM_DISMISSED_DATE_EPOCH = longPreferencesKey("first_alarm_dismissed_date_epoch")
+
+        val UPDATE_NOTICE_DONT_SHOW_VERSION = stringPreferencesKey("update_notice_dont_show_version")
+        val UPDATE_NOTICE_LAST_SHOWN_DATE_EPOCH = longPreferencesKey("update_notice_last_shown_date_epoch")
     }
+
+    private fun todayEpoch(): Long = LocalDate.now().toEpochDay()
 
     val userIdFlow: Flow<Long?> = dataStore.data
         .catch { emit(emptyPreferences()) }
@@ -55,9 +63,9 @@ class UserPreferences @Inject constructor(
         .map { it[Keys.FORTUNE_ID] }
         .distinctUntilChanged()
 
-    val fortuneDateFlow: Flow<String?> = dataStore.data
+    val fortuneDateEpochFlow: Flow<Long?> = dataStore.data
         .catch { emit(emptyPreferences()) }
-        .map { it[Keys.FORTUNE_DATE] }
+        .map { it[Keys.FORTUNE_DATE_EPOCH] }
         .distinctUntilChanged()
 
     val fortuneImageIdFlow: Flow<Int?> = dataStore.data
@@ -70,108 +78,143 @@ class UserPreferences @Inject constructor(
         .map { it[Keys.FORTUNE_SCORE] }
         .distinctUntilChanged()
 
-    val hasNewFortuneFlow: Flow<Boolean> = dataStore.data
+    val hasUnseenFortuneFlow: Flow<Boolean> = dataStore.data
         .catch { emit(emptyPreferences()) }
-        .map { preferences ->
-            val savedDate = preferences[Keys.FORTUNE_DATE]
-            val isChecked = preferences[Keys.FORTUNE_CHECKED] ?: true
-            val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-            savedDate == todayDate && !isChecked
+        .map { pref ->
+            val isToday = pref[Keys.FORTUNE_DATE_EPOCH] == todayEpoch()
+            isToday && (pref[Keys.FORTUNE_ID] != null) && (pref[Keys.FORTUNE_SEEN] != true)
         }
         .distinctUntilChanged()
 
-    val firstDismissedAlarmIdFlow: Flow<Long?> = dataStore.data
+    val shouldShowFortuneToolTipFlow: Flow<Boolean> = dataStore.data
         .catch { emit(emptyPreferences()) }
-        .map { preferences ->
-            val savedDate = preferences[Keys.DISMISSED_DATE]
-            val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-
-            if (savedDate == todayDate) {
-                preferences[Keys.FIRST_DISMISSED_ALARM_ID]
-            } else {
-                null
-            }
+        .map { pref ->
+            val hasTodayFortune = (pref[Keys.FORTUNE_DATE_EPOCH] == todayEpoch()) && (pref[Keys.FORTUNE_ID] != null)
+            val tooltipShown = pref[Keys.FORTUNE_TOOLTIP_SHOWN] ?: false
+            hasTodayFortune && !tooltipShown
         }
+        .distinctUntilChanged()
+
+    val isFortuneCreatingFlow: Flow<Boolean> = dataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[Keys.FORTUNE_CREATING] ?: false }
+        .distinctUntilChanged()
+
+    val isFortuneFailedFlow: Flow<Boolean> = dataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[Keys.FORTUNE_FAILED] ?: false }
+        .distinctUntilChanged()
+
+    val isFirstAlarmDismissedTodayFlow: Flow<Boolean> = dataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { pref ->
+            val flag = pref[Keys.FIRST_ALARM_DISMISSED_TODAY] ?: false
+            val isToday = pref[Keys.FIRST_ALARM_DISMISSED_DATE_EPOCH] == todayEpoch()
+            flag && isToday
+        }
+        .distinctUntilChanged()
+
+    val updateNoticeDontShowVersionFlow: Flow<String?> = dataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[Keys.UPDATE_NOTICE_DONT_SHOW_VERSION] }
+        .distinctUntilChanged()
+
+    val updateNoticeLastShownDateEpochFlow: Flow<Long?> = dataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { it[Keys.UPDATE_NOTICE_LAST_SHOWN_DATE_EPOCH] }
         .distinctUntilChanged()
 
     suspend fun saveUserId(userId: Long) {
-        dataStore.edit { preferences ->
-            preferences[Keys.USER_ID] = userId
-        }
+        dataStore.edit { it[Keys.USER_ID] = userId }
     }
 
     suspend fun saveUserName(userName: String) {
-        dataStore.edit { preferences ->
-            preferences[Keys.USER_NAME] = userName
+        dataStore.edit { it[Keys.USER_NAME] = userName }
+    }
+
+    suspend fun setOnboardingCompleted() {
+        dataStore.edit { it[Keys.ONBOARDING_COMPLETED] = true }
+    }
+
+    suspend fun markFortuneCreating() {
+        dataStore.edit { pref ->
+            pref[Keys.FORTUNE_CREATING] = true
+            pref[Keys.FORTUNE_FAILED] = false
         }
     }
 
-    suspend fun saveFortuneId(fortuneId: Long) {
-        val currentDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-        dataStore.edit { preferences ->
-            preferences[Keys.FORTUNE_ID] = fortuneId
-            preferences[Keys.FORTUNE_DATE] = currentDate
-            preferences[Keys.FORTUNE_CHECKED] = false
-        }
-    }
+    suspend fun markFortuneCreated(fortuneId: Long) {
+        dataStore.edit { pref ->
+            val today = todayEpoch()
+            val prevDate = pref[Keys.FORTUNE_DATE_EPOCH]
+            val isNewForToday = (pref[Keys.FORTUNE_ID] != fortuneId) || (prevDate != today)
 
-    suspend fun markFortuneAsChecked() {
-        dataStore.edit { preferences ->
-            preferences[Keys.FORTUNE_CHECKED] = true
-        }
-    }
+            pref[Keys.FORTUNE_ID] = fortuneId
+            pref[Keys.FORTUNE_DATE_EPOCH] = today
+            pref[Keys.FORTUNE_CREATING] = false
+            pref[Keys.FORTUNE_FAILED] = false
 
-    suspend fun saveFortuneImageId(imageResId: Int) {
-        dataStore.edit { preferences ->
-            preferences[Keys.FORTUNE_IMAGE_ID] = imageResId
-        }
-    }
-
-    suspend fun saveFortuneScore(score: Int) {
-        dataStore.edit { preferences ->
-            preferences[Keys.FORTUNE_SCORE] = score
-        }
-    }
-
-    suspend fun saveFirstDismissedAlarmId(alarmId: Long) {
-        dataStore.edit { preferences ->
-            val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-            if (preferences[Keys.FIRST_DISMISSED_ALARM_ID] == null) {
-                preferences[Keys.FIRST_DISMISSED_ALARM_ID] = alarmId
-                preferences[Keys.DISMISSED_DATE] = todayDate
-                Log.d("UserPreferences", "첫 해제된 알람 ID 저장 완료: $alarmId (날짜: $todayDate)")
-            } else {
-                Log.d("UserPreferences", "이미 첫 알람 해제 ID가 저장되어 있음)")
+            if (isNewForToday) {
+                pref[Keys.FORTUNE_SEEN] = false
+                pref[Keys.FORTUNE_TOOLTIP_SHOWN] = false
             }
         }
     }
 
-    suspend fun setOnboardingCompleted() {
-        dataStore.edit { preferences ->
-            preferences[Keys.ONBOARDING_COMPLETED] = true
+    suspend fun markFortuneFailed() {
+        dataStore.edit { pref ->
+            pref[Keys.FORTUNE_CREATING] = false
+            pref[Keys.FORTUNE_FAILED] = true
         }
     }
 
-    suspend fun clearDismissedAlarmId() {
-        dataStore.edit { preferences ->
-            preferences.remove(Keys.FIRST_DISMISSED_ALARM_ID)
-            preferences.remove(Keys.DISMISSED_DATE)
+    suspend fun markFortuneSeen() {
+        dataStore.edit { it[Keys.FORTUNE_SEEN] = true }
+    }
+
+    suspend fun markFortuneTooltipShown() {
+        dataStore.edit { it[Keys.FORTUNE_TOOLTIP_SHOWN] = true }
+    }
+
+    suspend fun saveFortuneImageId(imageResId: Int) {
+        dataStore.edit { it[Keys.FORTUNE_IMAGE_ID] = imageResId }
+    }
+
+    suspend fun saveFortuneScore(score: Int) {
+        dataStore.edit { it[Keys.FORTUNE_SCORE] = score }
+    }
+
+    suspend fun markFirstAlarmDismissedToday() {
+        dataStore.edit { pref ->
+            pref[Keys.FIRST_ALARM_DISMISSED_TODAY] = true
+            pref[Keys.FIRST_ALARM_DISMISSED_DATE_EPOCH] = todayEpoch()
+        }
+    }
+
+    suspend fun markUpdateNoticeDontShow(version: String) {
+        dataStore.edit { it[Keys.UPDATE_NOTICE_DONT_SHOW_VERSION] = version }
+    }
+
+    suspend fun markUpdateNoticeShownToday() {
+        dataStore.edit { pref ->
+            pref[Keys.UPDATE_NOTICE_LAST_SHOWN_DATE_EPOCH] = todayEpoch()
         }
     }
 
     suspend fun clearUserData() {
-        dataStore.edit { preferences ->
-            preferences.clear()
-        }
+        dataStore.edit { it.clear() }
     }
 
-    suspend fun clearFortuneId() {
-        dataStore.edit { preferences ->
-            preferences.remove(Keys.FORTUNE_ID)
-            preferences.remove(Keys.FORTUNE_DATE)
-            preferences.remove(Keys.FORTUNE_IMAGE_ID)
-            preferences.remove(Keys.FORTUNE_SCORE)
-            preferences.remove(Keys.FORTUNE_CHECKED)
+    suspend fun clearFortuneData() {
+        dataStore.edit { pref ->
+            pref.remove(Keys.FORTUNE_ID)
+            pref.remove(Keys.FORTUNE_DATE_EPOCH)
+            pref.remove(Keys.FORTUNE_IMAGE_ID)
+            pref.remove(Keys.FORTUNE_SCORE)
+            pref.remove(Keys.FORTUNE_SEEN)
+            pref.remove(Keys.FORTUNE_TOOLTIP_SHOWN)
+            pref.remove(Keys.FORTUNE_CREATING)
+            pref.remove(Keys.FORTUNE_FAILED)
         }
     }
 }

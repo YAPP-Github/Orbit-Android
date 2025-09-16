@@ -1,25 +1,29 @@
 package com.yapp.setting
 
 import android.util.Log
-import androidx.lifecycle.viewModelScope
-import com.yapp.datastore.UserPreferences
+import androidx.lifecycle.ViewModel
 import com.yapp.domain.model.EditUser
 import com.yapp.domain.repository.UserInfoRepository
-import com.yapp.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
+import org.orbitmvi.orbit.Container
+import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.syntax.simple.intent
+import org.orbitmvi.orbit.syntax.simple.postSideEffect
+import org.orbitmvi.orbit.syntax.simple.reduce
+import org.orbitmvi.orbit.viewmodel.container
 import javax.inject.Inject
 
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
     private val userInfoRepository: UserInfoRepository,
-    private val userPreferences: UserPreferences,
-) : BaseViewModel<SettingContract.State, SettingContract.SideEffect>(
-    SettingContract.State(),
-) {
-    fun onAction(action: SettingContract.Action) = intent {
+) : ViewModel(), ContainerHost<SettingContract.State, SettingContract.SideEffect> {
+
+    override val container: Container<SettingContract.State, SettingContract.SideEffect> = container(
+        initialState = SettingContract.State(),
+    )
+
+    fun processAction(action: SettingContract.Action) {
         when (action) {
             is SettingContract.Action.UpdateName -> updateName(action.name)
             is SettingContract.Action.UpdateBirthDate -> updateBirthDate(action)
@@ -28,63 +32,73 @@ class EditProfileViewModel @Inject constructor(
             is SettingContract.Action.ToggleGender -> toggleGender(action.isMale)
             is SettingContract.Action.ToggleTimeUnknown -> toggleTimeUnknown(action.isChecked)
             is SettingContract.Action.UpdateTimeOfBirth -> updateTimeOfBirth(action.time)
-            is SettingContract.Action.ConfirmAndNavigateBack -> emitSideEffect(SettingContract.SideEffect.NavigateBack)
-            is SettingContract.Action.Reset -> updateState { SettingContract.State() }
-            SettingContract.Action.ShowDialog -> updateState { copy(isDialogVisible = true) }
-            SettingContract.Action.HideDialog -> updateState { copy(isDialogVisible = false) }
+            is SettingContract.Action.ConfirmAndNavigateBack -> navigateBack()
+            is SettingContract.Action.Reset -> resetState()
+            SettingContract.Action.ShowDialog -> showDialog()
+            SettingContract.Action.HideDialog -> hideDialog()
             SettingContract.Action.PreviousStep -> previousStep()
             SettingContract.Action.SubmitUserInfo -> submitUserInfo()
             is SettingContract.Action.NavigateToEditBirthday -> navigateToEditBirthday()
-            is SettingContract.Action.RefreshUserInfo -> {
-                if (currentState.shouldFetchUserInfo) {
-                    refreshUserInfo()
-                }
-            }
+            is SettingContract.Action.RefreshUserInfo -> refreshUserInfo()
             else -> {}
         }
     }
 
-    private fun updateName(name: String) = updateState {
-        copy(name = name, isNameValid = validateName(name))
+    private fun updateName(name: String) = intent {
+        reduce {
+            state.copy(name = name, isNameValid = validateName(name))
+        }
     }
 
     private fun validateName(name: String): Boolean {
         return SettingContract.FieldType.NAME.validationRegex.matches(name)
     }
 
-    private fun updateBirthDate(action: SettingContract.Action.UpdateBirthDate) = updateState {
-        val formattedDate = "${action.year}-${action.month.toString().padStart(2, '0')}-${
-        action.day.toString().padStart(2, '0')
-        }"
-        copy(birthDate = formattedDate)
+    private fun updateBirthDate(action: SettingContract.Action.UpdateBirthDate) = intent {
+        reduce {
+            val formattedDate = "${action.year}-${action.month.toString().padStart(2, '0')}-${
+            action.day.toString().padStart(2, '0')
+            }"
+            state.copy(birthDate = formattedDate)
+        }
     }
 
-    private fun updateCalendarType(calendarType: String) = updateState {
-        copy(birthType = calendarType)
+    private fun updateCalendarType(calendarType: String) = intent {
+        reduce {
+            state.copy(birthType = calendarType)
+        }
     }
 
-    private fun updateGender(gender: String) = updateState {
-        copy(selectedGender = gender)
+    private fun updateGender(gender: String) = intent {
+        reduce {
+            state.copy(selectedGender = gender)
+        }
     }
 
-    private fun toggleGender(isMale: Boolean) = updateState {
-        copy(
-            isMaleSelected = isMale,
-            isFemaleSelected = !isMale,
-            selectedGender = if (isMale) "남성" else "여성",
-        )
+    private fun toggleGender(isMale: Boolean) = intent {
+        reduce {
+            state.copy(
+                isMaleSelected = isMale,
+                isFemaleSelected = !isMale,
+                selectedGender = if (isMale) "남성" else "여성",
+            )
+        }
     }
 
-    private fun toggleTimeUnknown(isChecked: Boolean) = updateState {
-        val newState = copy(
-            isTimeUnknown = isChecked,
-            timeOfBirth = if (isChecked) "시간모름" else "",
-        )
-        newState.copy(isTimeValid = validateTimeOfBirth(newState.timeOfBirth, isChecked))
+    private fun toggleTimeUnknown(isChecked: Boolean) = intent {
+        reduce {
+            val newState = state.copy(
+                isTimeUnknown = isChecked,
+                timeOfBirth = if (isChecked) "시간모름" else "",
+            )
+            newState.copy(isTimeValid = validateTimeOfBirth(newState.timeOfBirth, isChecked))
+        }
     }
 
-    private fun updateTimeOfBirth(time: String) = updateState {
-        copy(timeOfBirth = time, isTimeValid = validateTimeOfBirth(time, isTimeUnknown))
+    private fun updateTimeOfBirth(time: String) = intent {
+        reduce {
+            state.copy(timeOfBirth = time, isTimeValid = validateTimeOfBirth(time, state.isTimeUnknown))
+        }
     }
 
     private fun validateTimeOfBirth(time: String, isTimeUnknown: Boolean): Boolean {
@@ -95,47 +109,44 @@ class EditProfileViewModel @Inject constructor(
         }
     }
 
-    private fun fetchUserInfo(userId: Long) {
-        viewModelScope.launch {
-            userInfoRepository.getUserInfo(userId)
-                .onSuccess { user ->
-                    val (initialYear, initialMonth, initialDay) = user.birthDate.split("-")
+    private fun fetchUserInfo(userId: Long) = intent {
+        userInfoRepository.getUserInfo(userId)
+            .onSuccess { user ->
+                val (initialYear, initialMonth, initialDay) = user.birthDate.split("-")
 
-                    updateState {
-                        copy(
-                            name = user.name,
-                            isNameValid = validateName(user.name),
-                            initialYear = initialYear,
-                            initialMonth = initialMonth,
-                            initialDay = initialDay,
-                            birthType = user.calendarType,
-                            birthDate = user.birthDate,
-                            selectedGender = user.gender,
-                            timeOfBirth = user.birthTime ?: "99:99",
-                            isTimeUnknown = user.birthTime == "시간모름",
-                            isTimeValid = validateTimeOfBirth(
-                                user.birthTime ?: "",
-                                user.birthTime == "시간모름",
-                            ),
-                            isMaleSelected = user.gender == "남성",
-                            isFemaleSelected = user.gender == "여성",
-                        )
-                    }
+                reduce {
+                    state.copy(
+                        name = user.name,
+                        isNameValid = validateName(user.name),
+                        initialYear = initialYear,
+                        initialMonth = initialMonth,
+                        initialDay = initialDay,
+                        birthType = user.calendarType,
+                        birthDate = user.birthDate,
+                        selectedGender = user.gender,
+                        timeOfBirth = user.birthTime ?: "99:99",
+                        isTimeUnknown = user.birthTime == "시간모름",
+                        isTimeValid = validateTimeOfBirth(
+                            user.birthTime ?: "",
+                            user.birthTime == "시간모름",
+                        ),
+                        isMaleSelected = user.gender == "남성",
+                        isFemaleSelected = user.gender == "여성",
+                    )
                 }
-                .onFailure { error ->
-                    Log.e("EditProfileViewModel", "사용자 정보 가져오기 실패: ${error.message}")
-                }
-        }
+            }
+            .onFailure { error ->
+                Log.e("EditProfileViewModel", "사용자 정보 가져오기 실패: ${error.message}")
+            }
     }
 
-    private fun previousStep() {
-        updateState { copy(shouldFetchUserInfo = true) }
-        emitSideEffect(SettingContract.SideEffect.NavigateBack)
+    private fun previousStep() = intent {
+        reduce { state.copy(shouldFetchUserInfo = true) }
+        postSideEffect(SettingContract.SideEffect.NavigateBack)
     }
 
-    private fun submitUserInfo() = viewModelScope.launch {
-        val userId = userPreferences.userIdFlow.firstOrNull() ?: return@launch
-        val state = container.stateFlow.value
+    private fun submitUserInfo() = intent {
+        val userId = userInfoRepository.userIdFlow.firstOrNull() ?: return@intent
 
         val updatedUser = EditUser(
             name = state.name,
@@ -148,8 +159,8 @@ class EditProfileViewModel @Inject constructor(
         val result = userInfoRepository.updateUserInfo(userId, updatedUser)
 
         if (result.isSuccess) {
-            userPreferences.saveUserName(state.name)
-            emitSideEffect(SettingContract.SideEffect.NavigateToSettingRoute)
+            userInfoRepository.saveUserName(state.name)
+            postSideEffect(SettingContract.SideEffect.NavigateToSettingRoute)
         } else {
             Log.e("EditProfileViewModel", "사용자 정보 수정 실패")
         }
@@ -159,17 +170,31 @@ class EditProfileViewModel @Inject constructor(
         return formattedDate.replace(Regex("[^0-9-]"), "")
     }
 
-    private fun navigateToEditBirthday() {
-        updateState { copy(shouldFetchUserInfo = false) }
-        emitSideEffect(SettingContract.SideEffect.NavigateToEditBirthday)
+    private fun navigateBack() = intent {
+        postSideEffect(SettingContract.SideEffect.NavigateBack)
     }
 
-    private fun refreshUserInfo() {
-        viewModelScope.launch {
-            val userId = userPreferences.userIdFlow.firstOrNull()
-            if (userId != null) {
-                fetchUserInfo(userId)
-            }
+    private fun resetState() = intent {
+        reduce { SettingContract.State() }
+    }
+
+    private fun showDialog() = intent {
+        reduce { state.copy(isDialogVisible = true) }
+    }
+
+    private fun hideDialog() = intent {
+        reduce { state.copy(isDialogVisible = false) }
+    }
+
+    private fun refreshUserInfo() = intent {
+        val userId = userInfoRepository.userIdFlow.firstOrNull()
+        if (userId != null) {
+            fetchUserInfo(userId)
         }
+    }
+
+    private fun navigateToEditBirthday() = intent {
+        reduce { state.copy(shouldFetchUserInfo = false) }
+        postSideEffect(SettingContract.SideEffect.NavigateToEditBirthday)
     }
 }

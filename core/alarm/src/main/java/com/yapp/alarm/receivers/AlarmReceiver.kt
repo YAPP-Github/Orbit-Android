@@ -7,20 +7,21 @@ import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import com.yapp.alarm.AlarmConstants
-import com.yapp.alarm.AlarmHelper
+import com.yapp.alarm.AndroidAlarmScheduler
 import com.yapp.alarm.services.AlarmService
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
-import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.Alarm
+import com.yapp.domain.model.toAlarmDay
 import com.yapp.domain.model.toTimeString
+import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.usecase.AlarmUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -31,10 +32,10 @@ class AlarmReceiver : BroadcastReceiver() {
     lateinit var analyticsHelper: AnalyticsHelper
 
     @Inject
-    lateinit var alarmHelper: AlarmHelper
+    lateinit var androidAlarmScheduler: AndroidAlarmScheduler
 
     @Inject
-    lateinit var userPreferences: UserPreferences
+    lateinit var fortuneRepository: FortuneRepository
 
     @Inject
     lateinit var alarmUseCase: AlarmUseCase
@@ -46,10 +47,11 @@ class AlarmReceiver : BroadcastReceiver() {
         val alarmServiceIntent = createAlarmServiceIntent(context, intent)
         when (intent.action) {
             AlarmConstants.ACTION_ALARM_TRIGGERED -> {
-                Log.d("AlarmReceiver", "Alarm Triggered")
-
                 val alarm: Alarm? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    alarmServiceIntent.getParcelableExtra(AlarmConstants.EXTRA_ALARM, Alarm::class.java)
+                    alarmServiceIntent.getParcelableExtra(
+                        AlarmConstants.EXTRA_ALARM,
+                        Alarm::class.java,
+                    )
                 } else {
                     @Suppress("DEPRECATION")
                     alarmServiceIntent.getParcelableExtra(AlarmConstants.EXTRA_ALARM)
@@ -68,8 +70,6 @@ class AlarmReceiver : BroadcastReceiver() {
             }
 
             AlarmConstants.ACTION_ALARM_SNOOZED -> {
-                Log.d("AlarmReceiver", "Alarm Snoozed")
-
                 val alarm: Alarm? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     intent.getParcelableExtra(AlarmConstants.EXTRA_ALARM, Alarm::class.java)
                 } else {
@@ -86,44 +86,68 @@ class AlarmReceiver : BroadcastReceiver() {
                 )
                 alarm?.let { handleSnooze(context, it) }
 
-                Toast.makeText(context, "알람이 ${alarm?.snoozeInterval}분 후 다시 울려요", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "알람이 ${alarm?.snoozeInterval}분 후 다시 울려요",
+                    Toast.LENGTH_SHORT,
+                ).show()
             }
 
             AlarmConstants.ACTION_ALARM_DISMISSED -> {
-                Log.d("AlarmReceiver", "Alarm Dismissed")
+                val notificationId = intent.getLongExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, -1L)
+                val missionType = intent.getIntExtra(AlarmConstants.EXTRA_MISSION_TYPE, -1)
+                val missionCount = intent.getIntExtra(AlarmConstants.EXTRA_MISSION_COUNT, -1)
 
-                val alarmId = intent.getLongExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, -1L)
-                if (alarmId != -1L) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        val alarms = alarmUseCase.getAllAlarms().first().sortedBy { it.isAlarmActive }
-                        val isFirstAlarm = alarms.firstOrNull()?.id == alarmId
+                if (notificationId == -1L) {
+                    Log.e("AlarmReceiver", "notificationId 수신 실패")
+                    return
+                }
 
-                        analyticsHelper.logEvent(
-                            AnalyticsEvent(
-                                type = "alarm_dismiss",
-                                properties = mapOf(
-                                    AnalyticsEvent.AlarmPropertiesKeys.ALARM_ID to "$alarmId",
-                                    AnalyticsEvent.AlarmPropertiesKeys.DISMISS_IS_FIRST_ALARM to isFirstAlarm,
-                                ),
-                            ),
-                        )
-                        val existingId = userPreferences.firstDismissedAlarmIdFlow.firstOrNull()
-                        if (existingId == null) {
-                            // 첫 번째 알람 해제 기록
-                            userPreferences.saveFirstDismissedAlarmId(alarmId)
-                        } else if (existingId != alarmId) {
-                            // 두 번째 알람 해제 감지 - 기존 기록 삭제
-                            userPreferences.clearDismissedAlarmId()
-                        }
+                androidAlarmScheduler.cancelSnoozedAlarm(notificationId)
+                context.stopService(alarmServiceIntent)
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    val alarms = alarmUseCase.getAllAlarms().first()
+
+                    val isSnoozeId = notificationId >= AlarmConstants.SNOOZE_ID_OFFSET
+
+                    fun Alarm.ringsToday(): Boolean {
+                        if (repeatDays == 0) return true
+
+                        val todayAlarmDay = LocalDate.now().dayOfWeek.toAlarmDay()
+                        return (repeatDays and todayAlarmDay.bitValue) != 0
                     }
 
-                    alarmHelper.cancelSnoozedAlarm(alarmId)
-                } else {
-                    Log.e("AlarmReceiver", "알람 ID 수신 실패")
+                    val earliestIdToday: Long? = alarms
+                        .asSequence()
+                        .filter { (it.isAlarmActive || it.id == notificationId) && it.ringsToday() }
+                        .sortedWith(compareBy({ it.hour }, { it.minute }, { it.second }))
+                        .firstOrNull()
+                        ?.id
+
+                    val isEarliestAlarmDismissedToday =
+                        !isSnoozeId && (earliestIdToday == notificationId)
+
+                    if (isEarliestAlarmDismissedToday) fortuneRepository.markFirstAlarmDismissedToday()
+
+                    val isFirstAlarm = earliestIdToday == notificationId
+                    analyticsHelper.logEvent(
+                        AnalyticsEvent(
+                            type = "alarm_dismiss",
+                            properties = mapOf(
+                                AnalyticsEvent.AlarmPropertiesKeys.ALARM_ID to "$notificationId",
+                                AnalyticsEvent.AlarmPropertiesKeys.DISMISS_IS_FIRST_ALARM to isFirstAlarm,
+                            ),
+                        ),
+                    )
+
+                    sendBroadCastToCloseAlarmInteractionActivity(
+                        context = context,
+                        notificationId = notificationId,
+                        missionType = missionType,
+                        missionCount = missionCount,
+                    )
                 }
-                alarmHelper.cancelSnoozedAlarm(alarmId)
-                context.stopService(alarmServiceIntent)
-                sendBroadCastToCloseAlarmInteractionActivity(context)
 
                 Toast.makeText(context, "알람이 해제되었어요", Toast.LENGTH_SHORT).show()
             }
@@ -152,8 +176,7 @@ class AlarmReceiver : BroadcastReceiver() {
             .plusMinutes(alarm.snoozeInterval.toLong())
 
         val updatedAlarm = alarm.copy(
-            isAm = snoozeDateTime.hour < 12,
-            hour = if (snoozeDateTime.hour == 0) 12 else if (snoozeDateTime.hour > 12) snoozeDateTime.hour - 12 else snoozeDateTime.hour,
+            hour = snoozeDateTime.hour,
             minute = snoozeDateTime.minute,
             second = snoozeDateTime.second,
             repeatDays = 0,
@@ -161,21 +184,22 @@ class AlarmReceiver : BroadcastReceiver() {
             id = alarm.id + AlarmConstants.SNOOZE_ID_OFFSET,
         )
 
-        Log.d(
-            "AlarmReceiver",
-            "Scheduling snooze alarm: alarmId=${updatedAlarm.id}, newTime=${updatedAlarm.hour}:${updatedAlarm.minute}, remaining snoozeCount=$newSnoozeCount",
-        )
-
         context.stopService(Intent(context, AlarmService::class.java))
-        alarmHelper.scheduleAlarm(updatedAlarm)
+        androidAlarmScheduler.scheduleAlarm(updatedAlarm)
     }
 
-    private fun sendBroadCastToCloseAlarmInteractionActivity(context: Context) {
-        Log.d("AlarmReceiver", "Send Broadcast to close Alarm Interaction Activity")
-        val alarmAlertActivityCloseIntent =
-            Intent(AlarmConstants.ACTION_ALARM_INTERACTION_ACTIVITY_CLOSE).apply {
-                putExtra(AlarmConstants.EXTRA_IS_SNOOZED, false)
-            }
-        context.sendBroadcast(alarmAlertActivityCloseIntent)
+    private fun sendBroadCastToCloseAlarmInteractionActivity(
+        context: Context,
+        notificationId: Long,
+        missionType: Int,
+        missionCount: Int,
+    ) {
+        val intent = Intent(AlarmConstants.ACTION_ALARM_INTERACTION_ACTIVITY_CLOSE).apply {
+            putExtra(AlarmConstants.EXTRA_IS_SNOOZED, false)
+            putExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, notificationId)
+            putExtra(AlarmConstants.EXTRA_MISSION_TYPE, missionType)
+            putExtra(AlarmConstants.EXTRA_MISSION_COUNT, missionCount)
+        }
+        context.sendBroadcast(intent)
     }
 }

@@ -16,6 +16,8 @@ internal fun Project.configureComposeAndroid() {
             val bom = libs.findLibrary("compose.bom").get()
             add("implementation", platform(bom))
 
+            add("implementation", libs.findLibrary("activity.compose").get())
+
             add("implementation", libs.findLibrary("compose.material3").get())
             add("implementation", libs.findLibrary("compose.ui").get())
             add("implementation", libs.findLibrary("compose.ui.tooling.preview").get())

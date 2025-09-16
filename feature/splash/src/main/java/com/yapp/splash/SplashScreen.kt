@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +22,7 @@ import androidx.navigation.navOptions
 import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.common.navigation.route.SplashRoute
 import com.yapp.designsystem.theme.OrbitTheme
-import kotlinx.coroutines.flow.collectLatest
+import org.orbitmvi.orbit.compose.collectSideEffect
 
 @Composable
 fun SplashRoute(
@@ -31,35 +30,39 @@ fun SplashRoute(
     viewModel: SplashViewModel = hiltViewModel(),
 ) {
     val state by viewModel.container.stateFlow.collectAsStateWithLifecycle()
-    val sideEffect = viewModel.container.sideEffectFlow
 
-    LaunchedEffect(sideEffect) {
-        sideEffect.collectLatest { effect ->
-            when (effect) {
-                is SplashContract.SideEffect.NavigateToOnboarding -> {
-                    navigator.navigateToOnboarding(
-                        navOptions = navOptions {
-                            popUpTo(SplashRoute) {
-                                inclusive = true
-                            }
-                        },
-                    )
-                }
-
-                is SplashContract.SideEffect.NavigateToHome -> {
-                    navigator.navigateToHome(
-                        navOptions = navOptions {
-                            popUpTo(SplashRoute) {
-                                inclusive = true
-                            }
-                        },
-                    )
-                }
-            }
-        }
+    viewModel.collectSideEffect {
+        handleSideEffects(it, navigator)
     }
 
     SplashScreen(state = state)
+}
+
+private fun handleSideEffects(
+    sideEffect: SplashContract.SideEffect,
+    navigator: OrbitNavigator,
+) {
+    when (sideEffect) {
+        is SplashContract.SideEffect.NavigateToOnboarding -> {
+            navigator.navigateToOnboarding(
+                navOptions = navOptions {
+                    popUpTo(SplashRoute) {
+                        inclusive = true
+                    }
+                },
+            )
+        }
+
+        is SplashContract.SideEffect.NavigateToHome -> {
+            navigator.navigateToHome(
+                navOptions = navOptions {
+                    popUpTo(SplashRoute) {
+                        inclusive = true
+                    }
+                },
+            )
+        }
+    }
 }
 
 @Composable

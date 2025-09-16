@@ -7,14 +7,11 @@ import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.core.util.Consumer
@@ -23,8 +20,8 @@ import com.yapp.alarm.AlarmConstants
 import com.yapp.alarm.receivers.AlarmInteractionActivityReceiver
 import com.yapp.common.navigation.rememberOrbitNavigator
 import com.yapp.common.navigation.route.AlarmInteractionBaseRoute
-import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.domain.model.Alarm
+import com.yapp.ui.component.navigation.NavigationBarScrim
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -48,35 +45,23 @@ class AlarmInteractionActivity : ComponentActivity() {
 
         registerAlarmInteractionActivityCloseReceiver()
 
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.TRANSPARENT,
-            ),
-            navigationBarStyle = SystemBarStyle.light(
-                android.graphics.Color.BLACK,
-                android.graphics.Color.BLACK,
-            ),
-        )
+        enableEdgeToEdge()
         setContent {
             val navigator = rememberOrbitNavigator()
 
-            Surface(
-                color = OrbitTheme.colors.gray_900,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .navigationBarsPadding(),
-            ) {
+            Box {
                 NavHost(
+                    modifier = Modifier.navigationBarsPadding(),
                     navController = navigator.navController,
                     startDestination = AlarmInteractionBaseRoute,
-                    modifier = Modifier.navigationBarsPadding(),
                 ) {
                     alarmInteractionNavGraph(
                         navigator = navigator,
                         alarm = alarm,
                     )
                 }
+
+                NavigationBarScrim()
             }
 
             DisposableEffect(this, navigator.navController) {
@@ -87,7 +72,6 @@ class AlarmInteractionActivity : ComponentActivity() {
                         @Suppress("DEPRECATION")
                         newIntent.getParcelableExtra(AlarmConstants.EXTRA_ALARM)
                     }
-                    Log.d("AlarmInteractionActivity", "New Intent: $newIntent")
                     newAlarm?.let { alarm ->
                         navigator.navigateToAlarmAction(alarm = alarm)
                     }

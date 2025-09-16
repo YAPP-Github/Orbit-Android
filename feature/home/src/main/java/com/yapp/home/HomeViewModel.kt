@@ -1,39 +1,55 @@
 package com.yapp.home
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.util.Log
-import androidx.lifecycle.viewModelScope
-import com.yapp.alarm.AlarmHelper
+import androidx.lifecycle.ViewModel
 import com.yapp.common.util.ResourceProvider
-import com.yapp.datastore.UserPreferences
 import com.yapp.domain.model.Alarm
-import com.yapp.domain.model.toAlarmDays
-import com.yapp.domain.model.toDayOfWeek
+import com.yapp.domain.repository.FortuneRepository
+import com.yapp.domain.repository.UserInfoRepository
 import com.yapp.domain.usecase.AlarmUseCase
-import com.yapp.ui.base.BaseViewModel
+import com.yapp.home.util.AlarmDateTimeFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import feature.home.R
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
+import org.orbitmvi.orbit.Container
+import org.orbitmvi.orbit.ContainerHost
+import org.orbitmvi.orbit.syntax.simple.intent
+import org.orbitmvi.orbit.syntax.simple.postSideEffect
+import org.orbitmvi.orbit.syntax.simple.reduce
+import org.orbitmvi.orbit.syntax.simple.repeatOnSubscription
+import org.orbitmvi.orbit.viewmodel.container
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import javax.inject.Named
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val alarmUseCase: AlarmUseCase,
     private val resourceProvider: ResourceProvider,
-    private val alarmHelper: AlarmHelper,
-    private val userPreferences: UserPreferences,
-) : BaseViewModel<HomeContract.State, HomeContract.SideEffect>(
-    initialState = HomeContract.State(),
-) {
-    init {
-        loadAllAlarms()
-        loadDailyFortuneState()
-        loadUserName()
+    private val alarmDateTimeFormatter: AlarmDateTimeFormatter,
+    private val fortuneRepository: FortuneRepository,
+    private val userInfoRepository: UserInfoRepository,
+    @Named("appVersion") private val appVersion: String,
+    @ApplicationContext private val context: Context,
+) : ViewModel(), ContainerHost<HomeContract.State, HomeContract.SideEffect> {
+
+    override val container: Container<HomeContract.State, HomeContract.SideEffect> = container(
+        initialState = HomeContract.State(),
+    ) {
+        intent {
+            repeatOnSubscription {
+                loadAllAlarms()
+                loadDailyFortuneState()
+                loadUserName()
+                loadUpdateNoticeVisibility()
+            }
+        }
     }
 
     fun processAction(action: HomeContract.Action) {
@@ -54,6 +70,8 @@ class HomeViewModel @Inject constructor(
             HomeContract.Action.ShowNoDailyFortuneDialog -> showNoDailyFortuneDialog()
             HomeContract.Action.HideNoDailyFortuneDialog -> hideNoDailyFortuneDialog()
             HomeContract.Action.HideToolTip -> hideToolTip()
+            HomeContract.Action.HideUpdateNotice -> hideUpdateNotice()
+            HomeContract.Action.OnClickDontShowAgain -> setUpdateNoticeDontShowVersion()
             HomeContract.Action.RollbackPendingAlarmToggle -> rollbackAlarmActivation()
             HomeContract.Action.ConfirmDeletion -> confirmDeletion()
             is HomeContract.Action.DeleteSingleAlarm -> deleteSingleAlarm(action.alarmId)
@@ -68,17 +86,17 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun scrollToAddedAlarm(id: Long) {
-        val newAlarmIndex = currentState.alarms.indexOfFirst { it.id == id }
-        if (newAlarmIndex == -1) return
+    fun scrollToAddedAlarm(id: Long) = intent {
+        val newAlarmIndex = state.alarms.indexOfFirst { it.id == id }
+        if (newAlarmIndex == -1) return@intent
 
-        updateState {
-            copy(
+        reduce {
+            state.copy(
                 lastAddedAlarmIndex = newAlarmIndex,
             )
         }
 
-        emitSideEffect(
+        postSideEffect(
             HomeContract.SideEffect.ShowSnackBar(
                 message = resourceProvider.getString(R.string.alarm_added),
                 iconRes = resourceProvider.getDrawable(core.designsystem.R.drawable.ic_check_green),
@@ -88,164 +106,160 @@ class HomeViewModel @Inject constructor(
         )
     }
 
-    fun scrollToUpdatedAlarm(id: Long) {
-        val updatedAlarmIndex = currentState.alarms.indexOfFirst { it.id == id }
-        if (updatedAlarmIndex == -1) return
+    fun scrollToUpdatedAlarm(id: Long) = intent {
+        val updatedAlarmIndex = state.alarms.indexOfFirst { it.id == id }
+        if (updatedAlarmIndex == -1) return@intent
 
-        updateState {
-            copy(
+        reduce {
+            state.copy(
                 lastAddedAlarmIndex = updatedAlarmIndex,
             )
         }
     }
 
-    private fun navigateToAlarmCreation() {
-        emitSideEffect(HomeContract.SideEffect.NavigateToAddAlarm)
+    private fun navigateToAlarmCreation() = intent {
+        postSideEffect(HomeContract.SideEffect.NavigateToAddAlarm)
     }
 
-    private fun toggleMultiSelectionMode() {
-        updateState {
-            copy(
-                isSelectionMode = !currentState.isSelectionMode,
+    private fun toggleMultiSelectionMode() = intent {
+        reduce {
+            state.copy(
+                isSelectionMode = !state.isSelectionMode,
                 selectedAlarmIds = emptySet(),
                 dropdownMenuExpanded = false,
             )
         }
     }
 
-    private fun showDropDownMenu() {
-        updateState { copy(dropdownMenuExpanded = true) }
+    private fun showDropDownMenu() = intent {
+        reduce { state.copy(dropdownMenuExpanded = true) }
     }
 
-    private fun showSortDropDownMenu() {
-        updateState {
-            copy(
+    private fun showSortDropDownMenu() = intent {
+        reduce {
+            state.copy(
                 dropdownMenuExpanded = false,
                 sortDropDownMenuExpanded = true,
             )
         }
     }
 
-    private fun hideDropDownMenu() {
-        updateState {
-            copy(
+    private fun hideDropDownMenu() = intent {
+        reduce {
+            state.copy(
                 dropdownMenuExpanded = false,
                 sortDropDownMenuExpanded = false,
             )
         }
     }
 
-    private fun toggleAlarmSelection(alarmId: Long) {
-        updateState {
-            val updatedSelection = currentState.selectedAlarmIds.toMutableSet().apply {
+    private fun toggleAlarmSelection(alarmId: Long) = intent {
+        reduce {
+            val updatedSelection = state.selectedAlarmIds.toMutableSet().apply {
                 if (contains(alarmId)) remove(alarmId) else add(alarmId)
             }
-            copy(selectedAlarmIds = updatedSelection)
+            state.copy(selectedAlarmIds = updatedSelection)
         }
     }
 
-    private fun toggleAllAlarmSelection() {
-        updateState {
-            val allIds = currentState.alarms.map { it.id }.toSet()
-            val updatedSelection = if (currentState.selectedAlarmIds == allIds) emptySet() else allIds
-            copy(selectedAlarmIds = updatedSelection)
+    private fun toggleAllAlarmSelection() = intent {
+        reduce {
+            val allIds = state.alarms.map { it.id }.toSet()
+            val updatedSelection = if (state.selectedAlarmIds == allIds) emptySet() else allIds
+            state.copy(selectedAlarmIds = updatedSelection)
         }
     }
 
-    private fun toggleAlarmActivation(alarmId: Long) {
-        viewModelScope.launch {
-            val currentIndex = currentState.alarms.indexOfFirst { it.id == alarmId }
-            if (currentIndex == -1) return@launch
+    private fun toggleAlarmActivation(alarmId: Long) = intent {
+        val currentIndex = state.alarms.indexOfFirst { it.id == alarmId }
+        if (currentIndex == -1) return@intent
 
-            val currentAlarm = currentState.alarms[currentIndex]
-            val previousState = currentAlarm.isAlarmActive // 기존 상태 저장
-            val updatedAlarm = currentAlarm.copy(isAlarmActive = !currentAlarm.isAlarmActive)
+        val currentAlarm = state.alarms[currentIndex]
+        val previousState = currentAlarm.isAlarmActive // 기존 상태 저장
+        val updatedAlarm = currentAlarm.copy(isAlarmActive = !currentAlarm.isAlarmActive)
 
-            alarmUseCase.updateAlarmActive(alarmId, updatedAlarm.isAlarmActive).onSuccess {
-                val updatedAlarms = currentState.alarms.toMutableList()
-                updatedAlarms[currentIndex] = updatedAlarm
+        alarmUseCase.updateAlarmActive(alarmId, updatedAlarm.isAlarmActive).onSuccess {
+            val updatedAlarms = state.alarms.toMutableList()
+            updatedAlarms[currentIndex] = updatedAlarm
 
-                val hasActivatedAlarm = updatedAlarms.any { it.isAlarmActive }
-                updateState {
-                    copy(
-                        alarms = updatedAlarms,
-                        isNoActivatedAlarmDialogVisible = !hasActivatedAlarm,
-                        pendingAlarmToggle = if (!hasActivatedAlarm) alarmId to previousState else null,
-                    )
-                }
-
-                if (updatedAlarm.isAlarmActive) {
-                    alarmHelper.scheduleAlarm(updatedAlarm)
-                } else {
-                    alarmHelper.unScheduleAlarm(updatedAlarm)
-                }
-            }.onFailure { error ->
-                Log.e("HomeViewModel", "Failed to update alarm state", error)
+            val hasActivatedAlarm = updatedAlarms.any { it.isAlarmActive }
+            reduce {
+                state.copy(
+                    alarms = updatedAlarms,
+                    isNoActivatedAlarmDialogVisible = !hasActivatedAlarm,
+                    pendingAlarmToggle = if (!hasActivatedAlarm) alarmId to previousState else null,
+                )
             }
+
+            if (updatedAlarm.isAlarmActive) {
+                alarmUseCase.scheduleAlarm(updatedAlarm)
+            } else {
+                alarmUseCase.unScheduleAlarm(updatedAlarm)
+            }
+        }.onFailure { error ->
+            Log.e("HomeViewModel", "Failed to update alarm state", error)
         }
     }
 
-    private fun showDeleteDialog() {
-        updateState { copy(isDeleteDialogVisible = true) }
+    private fun showDeleteDialog() = intent {
+        reduce { state.copy(isDeleteDialogVisible = true) }
     }
 
-    private fun hideDeleteDialog() {
-        updateState { copy(isDeleteDialogVisible = false) }
+    private fun hideDeleteDialog() = intent {
+        reduce { state.copy(isDeleteDialogVisible = false) }
     }
 
-    private fun confirmDeletion() {
-        deleteAlarms(currentState.selectedAlarmIds)
-        updateState {
-            copy(
+    private fun confirmDeletion() = intent {
+        deleteAlarms(state.selectedAlarmIds)
+        reduce {
+            state.copy(
                 selectedAlarmIds = emptySet(),
                 isDeleteDialogVisible = false,
             )
         }
     }
 
-    private fun showNoActivatedAlarmDialog() {
-        updateState { copy(isNoActivatedAlarmDialogVisible = true) }
+    private fun showNoActivatedAlarmDialog() = intent {
+        reduce { state.copy(isNoActivatedAlarmDialogVisible = true) }
     }
 
-    private fun hideNoActivatedAlarmDialog() {
-        updateState {
-            copy(
+    private fun hideNoActivatedAlarmDialog() = intent {
+        reduce {
+            state.copy(
                 isNoActivatedAlarmDialogVisible = false,
                 pendingAlarmToggle = null,
             )
         }
     }
 
-    private fun rollbackAlarmActivation() {
-        val pendingAlarm = currentState.pendingAlarmToggle ?: return
+    private fun rollbackAlarmActivation() = intent {
+        val pendingAlarm = state.pendingAlarmToggle ?: return@intent
         val (alarmId, previousState) = pendingAlarm
 
-        viewModelScope.launch {
-            val currentIndex = currentState.alarms.indexOfFirst { it.id == alarmId }
-            if (currentIndex == -1) return@launch
+        val currentIndex = state.alarms.indexOfFirst { it.id == alarmId }
+        if (currentIndex == -1) return@intent
 
-            val currentAlarm = currentState.alarms[currentIndex]
-            val restoredAlarm = currentAlarm.copy(isAlarmActive = previousState)
+        val currentAlarm = state.alarms[currentIndex]
+        val restoredAlarm = currentAlarm.copy(isAlarmActive = previousState)
 
-            alarmUseCase.updateAlarm(restoredAlarm).onSuccess { updatedAlarm ->
-                val updatedAlarms = currentState.alarms.toMutableList()
-                updatedAlarms[currentIndex] = updatedAlarm
-                updateState {
-                    copy(
-                        alarms = updatedAlarms,
-                        pendingAlarmToggle = null,
-                        isNoActivatedAlarmDialogVisible = false,
-                    )
-                }
-
-                if (updatedAlarm.isAlarmActive) {
-                    alarmHelper.scheduleAlarm(updatedAlarm)
-                } else {
-                    alarmHelper.unScheduleAlarm(updatedAlarm)
-                }
-            }.onFailure { error ->
-                Log.e("HomeViewModel", "Failed to rollback alarm state", error)
+        alarmUseCase.updateAlarm(restoredAlarm).onSuccess { updatedAlarm ->
+            val updatedAlarms = state.alarms.toMutableList()
+            updatedAlarms[currentIndex] = updatedAlarm
+            reduce {
+                state.copy(
+                    alarms = updatedAlarms,
+                    pendingAlarmToggle = null,
+                    isNoActivatedAlarmDialogVisible = false,
+                )
             }
+
+            if (updatedAlarm.isAlarmActive) {
+                alarmUseCase.scheduleAlarm(updatedAlarm)
+            } else {
+                alarmUseCase.unScheduleAlarm(updatedAlarm)
+            }
+        }.onFailure { error ->
+            Log.e("HomeViewModel", "Failed to rollback alarm state", error)
         }
     }
 
@@ -253,24 +267,22 @@ class HomeViewModel @Inject constructor(
         deleteAlarms(setOf(alarmId))
     }
 
-    private fun deleteAlarms(alarmIds: Set<Long>) {
-        if (alarmIds.isEmpty()) return
+    private fun deleteAlarms(alarmIds: Set<Long>) = intent {
+        if (alarmIds.isEmpty()) return@intent
 
-        val alarmsToDelete = currentState.alarms
+        val alarmsToDelete = state.alarms
             .filter { it.id in alarmIds }
 
-        viewModelScope.launch {
-            alarmsToDelete.forEach { alarm ->
-                alarmUseCase.deleteAlarm(alarm.id)
-                alarmHelper.unScheduleAlarm(alarm)
-            }
+        alarmsToDelete.forEach { alarm ->
+            alarmUseCase.deleteAlarm(alarm.id)
+            alarmUseCase.unScheduleAlarm(alarm)
         }
 
-        if (currentState.activeItemMenu != null) {
+        if (state.activeItemMenu != null) {
             hideItemMenu()
         }
 
-        emitSideEffect(
+        postSideEffect(
             HomeContract.SideEffect.ShowSnackBar(
                 message = resourceProvider.getString(R.string.alarm_deleted),
                 label = resourceProvider.getString(R.string.alarm_delete_dialog_btn_cancel),
@@ -283,198 +295,171 @@ class HomeViewModel @Inject constructor(
         )
     }
 
-    private fun restoreDeletedAlarms(alarmsWithIndex: List<Alarm>) {
-        viewModelScope.launch {
-            alarmsWithIndex.forEach { alarm ->
-                alarmUseCase.insertAlarm(alarm)
-                alarmHelper.scheduleAlarm(alarm)
+    private fun restoreDeletedAlarms(alarmsWithIndex: List<Alarm>) = intent {
+        alarmsWithIndex.forEach { alarm ->
+            alarmUseCase.insertAlarm(alarm)
+            alarmUseCase.scheduleAlarm(alarm)
+        }
+    }
+
+    private fun restLastAddedAlarmIndex() = intent {
+        reduce { state.copy(lastAddedAlarmIndex = null) }
+    }
+
+    private fun loadAllAlarms() = intent {
+        reduce { state.copy(initialLoading = true) }
+
+        alarmUseCase.getAllAlarms().collect { alarms ->
+            reduce {
+                state.copy(
+                    alarms = alarms,
+                    initialLoading = false,
+                )
+            }
+            updateDeliveryTime(alarms)
+        }
+    }
+
+    private fun editAlarm(alarmId: Long) = intent {
+        postSideEffect(HomeContract.SideEffect.NavigateToEditAlarm(alarmId))
+    }
+
+    private fun updateDeliveryTime(alarms: List<Alarm>) = intent {
+        val deliveryTimeFormats = AlarmDateTimeFormatter.DeliveryTimeFormats(
+            noAlarm = resourceProvider.getString(R.string.home_fortune_no_alarm),
+            today = resourceProvider.getString(R.string.home_fortune_delivery_today, "%s"),
+            tomorrow = resourceProvider.getString(R.string.home_fortune_delivery_tomorrow, "%s"),
+            thisYear = resourceProvider.getString(R.string.home_fortune_delivery_this_year, "%s"),
+            otherYear = resourceProvider.getString(R.string.home_fortune_delivery_other_year, "%s"),
+        )
+
+        val formattedTime = alarmDateTimeFormatter.getFormattedEarliestUpcomingAlarmDeliveryTime(
+            alarms = alarms,
+            formats = deliveryTimeFormats,
+        )
+        reduce { state.copy(deliveryTime = formattedTime) }
+    }
+
+    private fun loadDailyFortune() = intent {
+        val fortuneDate = fortuneRepository.fortuneDateEpochFlow.firstOrNull()
+        val todayDate = LocalDate.now().toEpochDay()
+
+        if (fortuneDate != todayDate) {
+            processAction(HomeContract.Action.ShowNoDailyFortuneDialog)
+        } else {
+            fortuneRepository.markFortuneTooltipShown()
+            postSideEffect(HomeContract.SideEffect.NavigateToFortune)
+        }
+    }
+
+    private fun loadDailyFortuneState() = intent {
+        val todayDate = LocalDate.now().toEpochDay()
+
+        combine(
+            fortuneRepository.fortuneDateEpochFlow,
+            fortuneRepository.fortuneScoreFlow,
+            fortuneRepository.shouldShowFortuneToolTipFlow,
+        ) { fortuneDate, fortuneScore, shouldShowTooltip ->
+            val isTodayFortuneAvailable = fortuneDate == todayDate
+            val finalFortuneScore = if (isTodayFortuneAvailable) fortuneScore ?: -1 else -1
+
+            Pair(finalFortuneScore, shouldShowTooltip)
+        }.collect { (finalFortuneScore, hasNewFortune) ->
+            reduce {
+                state.copy(
+                    lastFortuneScore = finalFortuneScore,
+                    hasNewFortune = hasNewFortune,
+                    isToolTipVisible = hasNewFortune,
+                )
             }
         }
     }
 
-    private fun restLastAddedAlarmIndex() {
-        updateState { copy(lastAddedAlarmIndex = null) }
+    private fun loadUpdateNoticeVisibility() = intent {
+        if (!isOnlineNow()) {
+            reduce { state.copy(isUpdateNoticeVisible = false) }
+            return@intent
+        }
+
+        val dontShowVersion =
+            userInfoRepository.updateNoticeDontShowVersionFlow.firstOrNull()
+        val lastShownDate =
+            userInfoRepository.updateNoticeLastShownDateEpochFlow.firstOrNull()
+
+        val today = LocalDate.now().toEpochDay()
+
+        val shouldShow = when {
+            dontShowVersion != null && dontShowVersion == appVersion -> false
+            lastShownDate != null && lastShownDate == today -> false
+            else -> true
+        }
+
+        if (shouldShow) userInfoRepository.markUpdateNoticeShownToday()
+
+        reduce { state.copy(isUpdateNoticeVisible = shouldShow) }
     }
 
-    private fun loadAllAlarms() {
-        updateState { copy(initialLoading = true) }
+    private fun setUpdateNoticeDontShowVersion() = intent {
+        userInfoRepository.markUpdateNoticeDontShow(appVersion)
+        reduce { state.copy(isUpdateNoticeVisible = false) }
+    }
 
-        viewModelScope.launch {
-            alarmUseCase.getAllAlarms().collect {
-                updateState {
-                    copy(
-                        alarms = it,
-                        initialLoading = false,
-                    )
-                }
-                updateDeliveryTime(it)
-            }
+    private fun hideUpdateNotice() = intent {
+        reduce { state.copy(isUpdateNoticeVisible = false) }
+    }
+
+    private fun loadUserName() = intent {
+        userInfoRepository.userNameFlow.first { userName ->
+            reduce { state.copy(name = userName ?: "") }
+            true
         }
     }
 
-    private fun editAlarm(alarmId: Long) {
-        emitSideEffect(HomeContract.SideEffect.NavigateToEditAlarm(alarmId))
+    private fun showNoDailyFortuneDialog() = intent {
+        reduce { state.copy(isNoDailyFortuneDialogVisible = true) }
     }
 
-    private fun updateDeliveryTime(alarms: List<Alarm>) {
-        val earliestAlarm = alarms
-            .filter { it.isAlarmActive }
-            .minByOrNull { alarm ->
-                getNextAlarmDateWithTime(alarm.isAm, alarm.hour, alarm.minute, alarm.repeatDays)
-            }
-
-        val deliveryTime = earliestAlarm?.let { alarm ->
-            val alarmDateTime = getNextAlarmDateWithTime(alarm.isAm, alarm.hour, alarm.minute, alarm.repeatDays)
-            alarmDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"))
-        } ?: "NONE"
-
-        updateState { copy(deliveryTime = formatDeliveryTime(deliveryTime)) }
+    private fun hideNoDailyFortuneDialog() = intent {
+        reduce { state.copy(isNoDailyFortuneDialogVisible = false) }
     }
 
-    private fun getNextAlarmDateWithTime(isAm: Boolean, hour: Int, minute: Int, repeatDays: Int): LocalDateTime {
-        val now = LocalDateTime.now()
-
-        val alarmHour = when {
-            isAm && hour == 12 -> 0
-            !isAm && hour != 12 -> hour + 12
-            else -> hour
-        }
-        val alarmTime = LocalTime.of(alarmHour, minute)
-        val todayAlarm = LocalDateTime.of(now.toLocalDate(), alarmTime)
-
-        // 반복 요일이 설정되지 않은 경우 → 단일 알람
-        if (repeatDays == 0) {
-            return if (todayAlarm.isAfter(now)) todayAlarm else todayAlarm.plusDays(1)
-        }
-
-        // 비트마스크 기반 반복 요일 추출
-        val selectedDays = repeatDays.toAlarmDays().map { it.toDayOfWeek() }.sortedBy { it.value }
-        val currentDayOfWeek = now.dayOfWeek
-
-        // 가장 빠른 다음 알람 날짜 계산
-        val nextDayOffset = selectedDays
-            .map { (it.value + 7 - currentDayOfWeek.value) % 7 }
-            .filter { it > 0 || todayAlarm.isAfter(now) }
-            .minOrNull() ?: (selectedDays.first().value + 7 - currentDayOfWeek.value)
-
-        return todayAlarm.plusDays(nextDayOffset.toLong())
+    private fun hideToolTip() = intent {
+        reduce { state.copy(isToolTipVisible = false) }
     }
 
-    private fun formatDeliveryTime(deliveryTime: String): String {
-        return try {
-            if (deliveryTime == "NONE") return resourceProvider.getString(R.string.home_fortune_no_alarm)
-
-            val inputDateTime = LocalDateTime.parse(deliveryTime, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"))
-            val now = LocalDateTime.now()
-            val today = now.toLocalDate()
-            val tomorrow = today.plusDays(1)
-
-            return when {
-                inputDateTime.toLocalDate() == today ->
-                    resourceProvider.getString(R.string.home_fortune_delivery_today, inputDateTime.format(DateTimeFormatter.ofPattern("a h:mm")))
-                inputDateTime.toLocalDate() == tomorrow ->
-                    resourceProvider.getString(R.string.home_fortune_delivery_tomorrow, inputDateTime.format(DateTimeFormatter.ofPattern("a h:mm")))
-                inputDateTime.year == now.year ->
-                    resourceProvider.getString(
-                        R.string.home_fortune_delivery_this_year,
-                        inputDateTime.format(DateTimeFormatter.ofPattern("M월 d일 a h:mm")),
-                    )
-                else ->
-                    resourceProvider.getString(
-                        R.string.home_fortune_delivery_other_year,
-                        inputDateTime.format(DateTimeFormatter.ofPattern("yy년 M월 d일 a h:mm")),
-                    )
-            }
-        } catch (e: Exception) {
-            resourceProvider.getString(R.string.home_fortune_no_alarm)
-        }
+    private fun navigateToSetting() = intent {
+        postSideEffect(HomeContract.SideEffect.NavigateToSetting)
     }
 
-    private fun loadDailyFortune() {
-        viewModelScope.launch {
-            val fortuneDate = userPreferences.fortuneDateFlow.firstOrNull()
-            val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-
-            Log.d("HomeViewModel", "fortuneDate: $fortuneDate, todayDate: $todayDate")
-
-            if (fortuneDate != todayDate) {
-                processAction(HomeContract.Action.ShowNoDailyFortuneDialog)
-            } else {
-                userPreferences.markFortuneAsChecked()
-                emitSideEffect(HomeContract.SideEffect.NavigateToFortune)
-            }
-        }
-    }
-
-    private fun loadDailyFortuneState() {
-        viewModelScope.launch {
-            val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-
-            combine(
-                userPreferences.fortuneDateFlow,
-                userPreferences.fortuneScoreFlow,
-                userPreferences.hasNewFortuneFlow,
-            ) { fortuneDate, fortuneScore, hasNewFortune ->
-                val isTodayFortuneAvailable = fortuneDate == todayDate
-                val finalFortuneScore = if (isTodayFortuneAvailable) fortuneScore ?: -1 else -1
-
-                Pair(finalFortuneScore, hasNewFortune)
-            }.collect { (finalFortuneScore, hasNewFortune) ->
-                updateState {
-                    copy(
-                        lastFortuneScore = finalFortuneScore,
-                        hasNewFortune = hasNewFortune,
-                        isToolTipVisible = hasNewFortune,
-                    )
-                }
-            }
-        }
-    }
-
-    private fun loadUserName() {
-        viewModelScope.launch {
-            userPreferences.userNameFlow.collect { userName ->
-                updateState { copy(name = userName ?: "") }
-            }
-        }
-    }
-
-    private fun showNoDailyFortuneDialog() {
-        updateState { copy(isNoDailyFortuneDialogVisible = true) }
-    }
-
-    private fun hideNoDailyFortuneDialog() {
-        updateState { copy(isNoDailyFortuneDialogVisible = false) }
-    }
-
-    private fun hideToolTip() {
-        updateState { copy(isToolTipVisible = false) }
-    }
-
-    private fun navigateToSetting() {
-        emitSideEffect(HomeContract.SideEffect.NavigateToSetting)
-    }
-
-    private fun showItemMenu(alarmId: Long, x: Float, y: Float) {
-        updateState {
-            copy(
+    private fun showItemMenu(alarmId: Long, x: Float, y: Float) = intent {
+        reduce {
+            state.copy(
                 activeItemMenu = alarmId,
                 activeItemMenuPosition = x to y,
             )
         }
     }
 
-    private fun hideItemMenu() {
-        updateState {
-            copy(
+    private fun hideItemMenu() = intent {
+        reduce {
+            state.copy(
                 activeItemMenu = null,
                 activeItemMenuPosition = null,
             )
         }
     }
 
-    private fun setSortOrder(sortOrder: HomeContract.AlarmSortOrder) {
-        updateState { copy(sortOrder = sortOrder) }
+    private fun setSortOrder(sortOrder: HomeContract.AlarmSortOrder) = intent {
+        reduce { state.copy(sortOrder = sortOrder) }
         hideDropDownMenu()
+    }
+
+    private fun isOnlineNow(): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 }

@@ -17,7 +17,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +35,7 @@ import com.yapp.ui.component.button.OrbitButton
 import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.utils.heightForScreenPercentage
 import feature.alarm.interaction.R
+import org.orbitmvi.orbit.compose.collectSideEffect
 import java.util.Locale
 
 @Composable
@@ -44,30 +44,33 @@ internal fun AlarmActionRoute(
     navigator: OrbitNavigator,
 ) {
     val state by viewModel.container.stateFlow.collectAsStateWithLifecycle()
-    val sideEffect = viewModel.container.sideEffectFlow
 
-    LaunchedEffect(sideEffect) {
-        sideEffect.collect { action ->
-            when (action) {
-                is AlarmActionContract.SideEffect.NavigateToAlarmSnooze -> {
-                    navigator.navigateToAlarmSnoozeTimer(action.alarm)
-                }
-            }
-        }
+    viewModel.collectSideEffect {
+        handleSideEffect(it, navigator)
     }
 
     AlarmActionScreen(
-        stateProvider = { state },
-        eventDispatcher = viewModel::processAction,
+        state = state,
+        processAction = viewModel::processAction,
     )
+}
+
+private fun handleSideEffect(
+    sideEffect: AlarmActionContract.SideEffect,
+    navigator: OrbitNavigator,
+) {
+    when (sideEffect) {
+        is AlarmActionContract.SideEffect.NavigateToAlarmSnooze -> {
+            navigator.navigateToAlarmSnoozeTimer(sideEffect.alarm)
+        }
+    }
 }
 
 @Composable
 internal fun AlarmActionScreen(
-    stateProvider: () -> AlarmActionContract.State,
-    eventDispatcher: (AlarmActionContract.Action) -> Unit,
+    state: AlarmActionContract.State,
+    processAction: (AlarmActionContract.Action) -> Unit,
 ) {
-    val state = stateProvider()
     val context = LocalContext.current
 
     if (state.initialLoading) {
@@ -81,10 +84,10 @@ internal fun AlarmActionScreen(
             snoozeEnabled = state.snoozeEnabled,
             snoozeInterval = state.snoozeInterval,
             snoozeCount = state.snoozeCount,
-            isFirstMission = state.isFirstMission,
-            onSnoozeClick = { eventDispatcher(AlarmActionContract.Action.Snooze) },
+            isFirstMission = state.shouldShowMissionStart,
+            onSnoozeClick = { processAction(AlarmActionContract.Action.Snooze) },
             onDismissClick = {
-                eventDispatcher(AlarmActionContract.Action.Dismiss)
+                processAction(AlarmActionContract.Action.Dismiss)
                 (context as? androidx.activity.ComponentActivity)?.finish()
             },
         )
@@ -121,74 +124,72 @@ private fun AlarmActionContent(
     onSnoozeClick: () -> Unit,
     onDismissClick: () -> Unit,
 ) {
-    Box(modifier = Modifier.statusBarsPadding()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    color = Color(0xFF496381),
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(
-                modifier = Modifier.heightForScreenPercentage(
-                    0.17f,
-                ),
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                color = Color(0xFF496381),
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Spacer(
+            modifier = Modifier.heightForScreenPercentage(
+                0.17f,
+            ),
+        )
+
+        AlarmTime(
+            isAm = isAm,
+            hour = hour,
+            minute = minute,
+            todayDate = todayDate,
+        )
+
+        Spacer(modifier = Modifier.height(102.dp))
+
+        Icon(
+            painter = painterResource(id = core.designsystem.R.drawable.ic_alarm_action_character),
+            tint = Color(0xFF07203E),
+            contentDescription = "Alarm Action Character",
+        )
+
+        Spacer(modifier = Modifier.height(56.dp))
+
+        if (snoozeEnabled && snoozeCount != 0) {
+            AlarmSnoozeButton(
+                snoozeInterval = snoozeInterval,
+                snoozeCount = snoozeCount,
+                onSnoozeClick = onSnoozeClick,
             )
-
-            AlarmTime(
-                isAm = isAm,
-                hour = hour,
-                minute = minute,
-                todayDate = todayDate,
-            )
-
-            Spacer(modifier = Modifier.height(102.dp))
-
-            Icon(
-                painter = painterResource(id = core.designsystem.R.drawable.ic_alarm_action_character),
-                tint = Color(0xFF07203E),
-                contentDescription = "Alarm Action Character",
-            )
-
-            Spacer(modifier = Modifier.height(56.dp))
-
-            if (snoozeEnabled && snoozeCount != 0) {
-                AlarmSnoozeButton(
-                    snoozeInterval = snoozeInterval,
-                    snoozeCount = snoozeCount,
-                    onSnoozeClick = onSnoozeClick,
-                )
-            } else {
-                Spacer(modifier = Modifier.height(54.dp))
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            if (isFirstMission != null) {
-                OrbitButton(
-                    label = if (isFirstMission) {
-                        stringResource(id = R.string.alarm_off_mission_start_btn)
-                    } else {
-                        stringResource(id = R.string.alarm_off_btn)
-                    },
-                    enabled = true,
-                    modifier = Modifier
-                        .padding(
-                            start = 40.dp,
-                            end = 40.dp,
-                            bottom = 48.dp,
-                        )
-                        .height(62.dp),
-                    onClick = onDismissClick,
-                )
-            } else {
-                Spacer(modifier = Modifier.height(62.dp))
-            }
+        } else {
+            Spacer(modifier = Modifier.height(54.dp))
         }
 
-        AdsBanner()
+        Spacer(modifier = Modifier.weight(1f))
+
+        if (isFirstMission != null) {
+            OrbitButton(
+                label = if (isFirstMission) {
+                    stringResource(id = R.string.alarm_off_mission_start_btn)
+                } else {
+                    stringResource(id = R.string.alarm_off_btn)
+                },
+                enabled = true,
+                modifier = Modifier
+                    .padding(
+                        start = 40.dp,
+                        end = 40.dp,
+                        bottom = 48.dp,
+                    )
+                    .height(62.dp),
+                onClick = onDismissClick,
+            )
+        } else {
+            Spacer(modifier = Modifier.height(62.dp))
+        }
     }
+
+    AdsBanner(modifier = Modifier.statusBarsPadding())
 }
 
 @Composable
@@ -298,18 +299,16 @@ private fun AlarmSnoozeButton(
 internal fun AlarmActionScreenPreview() {
     OrbitTheme {
         AlarmActionScreen(
-            stateProvider = {
-                AlarmActionContract.State(
-                    initialLoading = false,
-                    isAm = true,
-                    hour = 10,
-                    minute = 30,
-                    todayDate = "10월 10일 월요일",
-                    snoozeInterval = 5,
-                    snoozeCount = -1,
-                )
-            },
-            eventDispatcher = {},
+            state = AlarmActionContract.State(
+                initialLoading = false,
+                isAm = true,
+                hour = 10,
+                minute = 30,
+                todayDate = "10월 10일 월요일",
+                snoozeInterval = 5,
+                snoozeCount = -1,
+            ),
+            processAction = {},
         )
     }
 }

@@ -19,7 +19,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.designsystem.theme.OrbitTheme
 import com.yapp.ui.component.lottie.LottieAnimation
 import com.yapp.ui.utils.heightForScreenPercentage
@@ -51,27 +49,20 @@ import feature.alarm.interaction.R
 @Composable
 internal fun AlarmSnoozeTimerRoute(
     viewModel: AlarmSnoozeTimerViewModel = hiltViewModel(),
-    navigator: OrbitNavigator,
 ) {
     val state by viewModel.container.stateFlow.collectAsStateWithLifecycle()
-    val sideEffect = viewModel.container.sideEffectFlow
-
-    LaunchedEffect(sideEffect) {
-        sideEffect.collect { }
-    }
 
     AlarmSnoozeTimerScreen(
-        stateProvider = { state },
-        eventDispatcher = viewModel::processAction,
+        state = state,
+        processAction = viewModel::processAction,
     )
 }
 
 @Composable
 internal fun AlarmSnoozeTimerScreen(
-    stateProvider: () -> AlarmSnoozeTimerContract.State,
-    eventDispatcher: (AlarmSnoozeTimerContract.Action) -> Unit,
+    state: AlarmSnoozeTimerContract.State,
+    processAction: (AlarmSnoozeTimerContract.Action) -> Unit,
 ) {
-    val state = stateProvider()
     val context = LocalContext.current
 
     if (state.initialLoading) {
@@ -82,7 +73,7 @@ internal fun AlarmSnoozeTimerScreen(
             totalSeconds = state.totalSeconds,
             isFirstMission = state.isFirstMission,
             onDismissClick = {
-                eventDispatcher(AlarmSnoozeTimerContract.Action.Dismiss)
+                processAction(AlarmSnoozeTimerContract.Action.Dismiss)
                 (context as? ComponentActivity)?.finish()
             },
         )
@@ -304,8 +295,8 @@ private fun AlarmOffButton(
 internal fun PreviewAlarmSnoozeTimerScreen() {
     OrbitTheme {
         AlarmSnoozeTimerScreen(
-            stateProvider = { AlarmSnoozeTimerContract.State() },
-            eventDispatcher = {},
+            state = AlarmSnoozeTimerContract.State(),
+            processAction = {},
         )
     }
 }

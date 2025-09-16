@@ -10,8 +10,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,17 +33,17 @@ import kotlinx.coroutines.flow.map
 import kotlin.math.abs
 
 @Composable
-fun OrbitPickerItem(
+fun <T> OrbitPickerItem(
     modifier: Modifier = Modifier,
-    items: List<String>,
-    state: PickerState = rememberPickerState(),
+    items: List<T>,
+    state: PickerState<T> = rememberPickerState(items = items),
     visibleItemsCount: Int,
     textModifier: Modifier = Modifier,
+    itemFormatter: (T) -> String = { it.toString() },
     infiniteScroll: Boolean = true,
     textStyle: TextStyle,
     itemSpacing: Dp,
-    onValueChange: (String) -> Unit,
-    onScrollCompleted: () -> Unit = {},
+    onValueChange: (T) -> Unit,
 ) {
     val visibleItemsMiddle = visibleItemsCount / 2
     val listScrollCount = if (infiniteScroll) Int.MAX_VALUE else items.size + visibleItemsMiddle * 2
@@ -48,31 +51,28 @@ fun OrbitPickerItem(
 
     val listState = state.lazyListState
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
-    val itemHeightPixels = remember { mutableIntStateOf(0) }
-    val itemHeightDp = with(LocalDensity.current) { itemHeightPixels.intValue.toDp() }
+    var itemHeightPixels by remember { mutableIntStateOf(0) }
+    val itemHeightDp = with(LocalDensity.current) { itemHeightPixels.toDp() }
 
-    LaunchedEffect(key1 = state.startIndex) {
-        val safeStartIndex = state.startIndex.takeIf { it >= 0 } ?: 0
+    LaunchedEffect(state.initialIndex) {
+        val safeStartIndex = state.initialIndex
         val listStartIndex = if (infiniteScroll) {
-            calculateStartIndex(infiniteScroll, items.size, listScrollMiddle, visibleItemsMiddle, safeStartIndex)
+            getStartIndexForInfiniteScroll(itemHeightPixels, listScrollMiddle, visibleItemsMiddle, safeStartIndex)
         } else {
             safeStartIndex
         }
-
         listState.scrollToItem(listStartIndex, 0)
 
         if (!infiniteScroll) {
-            val selectedItem = items.getOrNull(safeStartIndex) ?: ""
-            if (selectedItem != state.selectedItem) {
-                state.selectedItem = selectedItem
-                onValueChange(selectedItem)
+            val selectedItem = items.getOrNull(listStartIndex) ?: items.first()
+            if (listStartIndex != state.selectedIndex.value) {
+                state.updateSelectedIndex(listStartIndex)
             }
+            onValueChange(selectedItem)
         }
     }
 
     LaunchedEffect(listState) {
-        var previousAdjustedIndex = -1
-
         snapshotFlow { listState.layoutInfo }
             .map { layoutInfo ->
                 val centerOffset = layoutInfo.viewportStartOffset +
@@ -82,30 +82,20 @@ fun OrbitPickerItem(
                     abs(itemCenter - centerOffset)
                 }?.index
             }
-            .distinctUntilChanged()
-            .collect { centerIndex ->
-                if (centerIndex != null) {
-                    val adjustedIndex = if (infiniteScroll) {
-                        centerIndex % items.size
-                    } else {
-                        centerIndex - visibleItemsMiddle
-                    }.coerceIn(0, items.size - 1)
-
-                    val newValue = items[adjustedIndex]
-
+            .map { centerIndex ->
+                centerIndex?.let { index ->
                     if (infiniteScroll) {
-                        val lastIndex = items.size - 1
-                        if ((previousAdjustedIndex == 0 && adjustedIndex == lastIndex) ||
-                            (previousAdjustedIndex == lastIndex && adjustedIndex == 0)
-                        ) {
-                            onScrollCompleted()
-                        }
+                        index % items.size
+                    } else {
+                        (index - visibleItemsMiddle).coerceIn(0, items.size - 1)
                     }
-                    if (newValue != state.selectedItem) {
-                        state.selectedItem = newValue
-                        onValueChange(newValue)
-                    }
-                    previousAdjustedIndex = adjustedIndex
+                }
+            }
+            .distinctUntilChanged()
+            .collect { adjustedIndex ->
+                if (adjustedIndex != null && adjustedIndex != state.selectedIndex.value) {
+                    state.updateSelectedIndex(adjustedIndex)
+                    onValueChange(items[adjustedIndex])
                 }
             }
     }
@@ -122,8 +112,9 @@ fun OrbitPickerItem(
                 .height(totalItemHeight * visibleItemsCount)
                 .pointerInput(Unit) { detectVerticalDragGestures { change, _ -> change.consume() } },
         ) {
-            items(listScrollCount) { index ->
-                val layoutInfo = listState.layoutInfo
+            items(listScrollCount, key = { index -> index }) { index ->
+                val layoutInfo by remember { derivedStateOf { listState.layoutInfo } }
+
                 val viewportCenterOffset = layoutInfo.viewportStartOffset +
                     (layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset) / 2
 
@@ -141,15 +132,22 @@ fun OrbitPickerItem(
 
                 val scaleY = 1f - (0.2f * (distanceFromCenter / maxDistance)).coerceIn(0f, 0.4f)
 
+                val item = getItemForIndex(
+                    index = index,
+                    items = items,
+                    infiniteScroll = infiniteScroll,
+                    visibleItemsMiddle = visibleItemsMiddle,
+                )
+
                 Text(
-                    text = getItemForIndex(index, items, infiniteScroll, visibleItemsMiddle),
+                    text = item?.let { itemFormatter(it) } ?: "",
                     maxLines = 1,
                     style = textStyle,
                     color = OrbitTheme.colors.white.copy(alpha = alpha),
                     modifier = Modifier
                         .padding(vertical = itemSpacing / 2)
                         .graphicsLayer(scaleY = scaleY)
-                        .onSizeChanged { size -> itemHeightPixels.intValue = size.height }
+                        .onSizeChanged { size -> itemHeightPixels = size.height }
                         .then(textModifier),
                 )
             }
@@ -157,37 +155,31 @@ fun OrbitPickerItem(
     }
 }
 
-/**
- * 무한 스크롤과 초기 시작 인덱스를 기반으로 리스트의 시작 인덱스를 계산합니다.
- */
-private fun calculateStartIndex(
-    infiniteScroll: Boolean,
+private fun getStartIndexForInfiniteScroll(
     itemSize: Int,
     listScrollMiddle: Int,
     visibleItemsMiddle: Int,
     startIndex: Int,
 ): Int {
-    return if (infiniteScroll) {
-        listScrollMiddle - listScrollMiddle % itemSize - visibleItemsMiddle + startIndex
-    } else {
-        startIndex + visibleItemsMiddle
+    if (itemSize == 0) {
+        return listScrollMiddle - visibleItemsMiddle + startIndex
     }
+
+    return listScrollMiddle - listScrollMiddle % itemSize - visibleItemsMiddle + startIndex
 }
 
-/**
- * 주어진 인덱스에 해당하는 항목을 반환합니다.
- * 무한 스크롤과 보이는 항목의 개수를 고려합니다.
- */
-private fun getItemForIndex(
+private fun <T> getItemForIndex(
     index: Int,
-    items: List<String>,
+    items: List<T>,
     infiniteScroll: Boolean,
     visibleItemsMiddle: Int,
-): String {
+): T? {
+    require(items.isNotEmpty()) { "Items list cannot be empty." }
+
     return if (!infiniteScroll) {
-        items.getOrNull(index - visibleItemsMiddle) ?: ""
+        items.getOrNull(index - visibleItemsMiddle)
     } else {
-        items.getOrNull(index % items.size) ?: ""
+        items.getOrNull(index % items.size)
     }
 }
 
@@ -197,7 +189,10 @@ fun OrbitPickerItemPreview() {
     OrbitTheme {
         OrbitPickerItem(
             items = (0..100).map { it.toString() },
-            state = rememberPickerState(),
+            state = rememberPickerState(
+                initialIndex = 50,
+                items = (0..100).map { it.toString() },
+            ),
             visibleItemsCount = 5,
             textStyle = TextStyle.Default,
             itemSpacing = 8.dp,

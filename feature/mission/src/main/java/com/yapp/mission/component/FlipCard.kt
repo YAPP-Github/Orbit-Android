@@ -25,7 +25,6 @@ import com.yapp.mission.MissionContract
 @Composable
 fun FlipCard(
     state: MissionContract.State,
-    eventDispatcher: (MissionContract.Action) -> Unit,
 ) {
     val rotationZ = remember { Animatable(0f) }
     val rotationY = remember { Animatable(state.rotationY) }
@@ -49,8 +48,8 @@ fun FlipCard(
         }
     }
 
-    LaunchedEffect(state.shakeCount) {
-        if (state.shakeCount in 1..9) {
+    LaunchedEffect(state.currentCount) {
+        if (state.currentCount in 1..state.missionCount - 1) {
             rotationZ.animateTo(
                 targetValue = -20f,
                 animationSpec = tween(durationMillis = 66, easing = LinearEasing),
@@ -109,7 +108,6 @@ fun FlipCardPreview() {
     ) {
         FlipCard(
             state = state.copy(rotationY = rotationY, rotationZ = rotationZ),
-            eventDispatcher = {},
         )
     }
 }

@@ -18,14 +18,15 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import com.yapp.alarm.AlarmConstants
-import com.yapp.alarm.AlarmHelper
+import com.yapp.alarm.AndroidAlarmScheduler
 import com.yapp.alarm.pendingIntent.interaction.createAlarmAlertPendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissPendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmSnoozePendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createNavigateToMissionPendingIntent
-import com.yapp.datastore.UserPreferences
+import com.yapp.alarm.scheduler.PostFortuneTaskScheduler
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
+import com.yapp.domain.model.MissionType
 import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.media.sound.SoundPlayer
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,10 +34,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -51,10 +49,10 @@ class AlarmService : Service() {
     private lateinit var vibrator: Vibrator
 
     @Inject
-    lateinit var alarmHelper: AlarmHelper
+    lateinit var androidAlarmScheduler: AndroidAlarmScheduler
 
     @Inject
-    lateinit var userPreferences: UserPreferences
+    lateinit var postFortuneTaskScheduler: PostFortuneTaskScheduler
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -81,7 +79,7 @@ class AlarmService : Service() {
         super.onDestroy()
     }
 
-    private suspend fun handleIntent(intent: Intent) {
+    private fun handleIntent(intent: Intent) {
         val alarm: Alarm? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableExtra(AlarmConstants.EXTRA_ALARM, Alarm::class.java)
         } else {
@@ -103,7 +101,7 @@ class AlarmService : Service() {
         // 반복 요일 알람 시, 다음 주 동일 요일 알람 예약
         if (!isOneTimeAlarm) {
             intent.getStringExtra(AlarmConstants.EXTRA_ALARM_DAY)?.let {
-                alarmHelper.scheduleWeeklyAlarm(alarm, AlarmDay.valueOf(it))
+                androidAlarmScheduler.rescheduleUpcomingWeeklyAlarm(alarm, AlarmDay.valueOf(it))
             }
         }
 
@@ -113,7 +111,7 @@ class AlarmService : Service() {
             false -> {
                 startForeground(
                     notificationId.toInt(),
-                    createNotification(alarm, shouldNavigateToMission()),
+                    createNotification(alarm, shouldNavigateToMission(alarm.missionType)),
                 )
                 if (alarm.isVibrationEnabled) startVibration()
                 if (alarm.isSoundEnabled) startSound(alarm.soundUri, alarm.soundVolume)
@@ -123,12 +121,14 @@ class AlarmService : Service() {
         if (isOneTimeAlarm) {
             turnOffAlarm(alarmId = notificationId)
         }
+
+        postFortuneTaskScheduler.enqueueOnceForToday()
     }
 
-    private suspend fun shouldNavigateToMission(): Boolean {
-        val fortuneDate = userPreferences.fortuneDateFlow.firstOrNull()
-        val todayDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-        return fortuneDate != todayDate
+    private fun shouldNavigateToMission(
+        missionType: MissionType,
+    ): Boolean {
+        return missionType != MissionType.NONE
     }
 
     private fun createNotification(alarm: Alarm, shouldNavigateToMission: Boolean): Notification {
@@ -139,11 +139,15 @@ class AlarmService : Service() {
             createNavigateToMissionPendingIntent(
                 applicationContext = applicationContext,
                 notificationId = alarm.id,
+                missionType = alarm.missionType.value,
+                missionCount = alarm.missionCount,
             )
         } else {
             createAlarmDismissPendingIntent(
                 applicationContext = applicationContext,
                 pendingIntentId = alarm.id,
+                missionType = alarm.missionType.value,
+                missionCount = alarm.missionCount,
             )
         }
 

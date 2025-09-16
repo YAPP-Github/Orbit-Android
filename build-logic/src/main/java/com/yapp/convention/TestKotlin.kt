@@ -1,23 +1,16 @@
 package com.yapp.convention
 
 import org.gradle.api.Project
-import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.dependencies
-import org.gradle.kotlin.dsl.withType
 
-internal fun Project.configureTest() {
-    configureJUnit()
+internal fun Project.configureTestKotlin() {
     val libs = extensions.libs
     dependencies {
+        // JUnit4 단위 테스트 프레임워크
         "testImplementation"(libs.findLibrary("junit4").get())
-        "testImplementation"(libs.findLibrary("junit-jupiter").get())
-        "testImplementation"(libs.findLibrary("coroutines-test").get())
+        // 코루틴 관련 테스트 도구 (TestCoroutineScope, runTest 등..)
+        "testImplementation"(libs.findLibrary("kotlinx-coroutines-test").get())
+        // Kotlin 기반 mock 객체 생성, 행위 검증
         "testImplementation"(libs.findLibrary("mockk").get())
-    }
-}
-
-internal fun Project.configureJUnit() {
-    tasks.withType<Test>().configureEach {
-        useJUnitPlatform()
     }
 }

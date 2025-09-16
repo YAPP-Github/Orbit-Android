@@ -1,6 +1,11 @@
 package com.yapp.common.navigation.route
 
+import com.yapp.domain.MissionMode
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object MissionRoute
+data class MissionRoute(
+    val missionType: String,
+    val missionCount: String,
+    val missionMode: String = MissionMode.REAL.name,
+)

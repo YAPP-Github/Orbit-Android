@@ -12,8 +12,10 @@ import com.yapp.alarm.receivers.AlarmReceiver
 fun createAlarmDismissPendingIntent(
     applicationContext: Context,
     pendingIntentId: Long,
+    missionType: Int,
+    missionCount: Int,
 ): PendingIntent {
-    val alarmDismissIntent = createAlarmDismissIntent(applicationContext, pendingIntentId)
+    val alarmDismissIntent = createAlarmDismissIntent(applicationContext, pendingIntentId, missionType, missionCount)
     return PendingIntent.getBroadcast(
         applicationContext,
         pendingIntentId.toInt(),
@@ -25,18 +27,29 @@ fun createAlarmDismissPendingIntent(
 fun createAlarmDismissIntent(
     context: Context,
     notificationId: Long,
+    missionType: Int,
+    missionCount: Int,
 ): Intent {
     return Intent(AlarmConstants.ACTION_ALARM_DISMISSED).apply {
         setClass(context, AlarmReceiver::class.java)
         putExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, notificationId)
+        putExtra(AlarmConstants.EXTRA_MISSION_TYPE, missionType)
+        putExtra(AlarmConstants.EXTRA_MISSION_COUNT, missionCount)
     }
 }
 
 fun createNavigateToMissionPendingIntent(
     applicationContext: Context,
     notificationId: Long,
+    missionType: Int,
+    missionCount: Int,
 ): PendingIntent {
-    val navigateToMissionIntent = createNavigateToMissionIntent(applicationContext, notificationId)
+    val navigateToMissionIntent = createNavigateToMissionIntent(
+        context = applicationContext,
+        notificationId = notificationId,
+        missionType = missionType,
+        missionCount = missionCount,
+    )
     return PendingIntent.getActivity(
         applicationContext,
         notificationId.toInt(),
@@ -48,8 +61,11 @@ fun createNavigateToMissionPendingIntent(
 fun createNavigateToMissionIntent(
     context: Context,
     notificationId: Long,
+    missionType: Int,
+    missionCount: Int,
 ): Intent {
-    return Intent(Intent.ACTION_VIEW, "orbitapp://mission?notificationId=$notificationId".toUri()).apply {
+    val uriString = "orbitapp://mission?notificationId=$notificationId&missionType=$missionType&missionCount=$missionCount"
+    return Intent(Intent.ACTION_VIEW, uriString.toUri()).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         setPackage(context.packageName)
     }

@@ -1,8 +1,8 @@
 package com.yapp.data.local.datasource
 
-import com.yapp.data.local.AlarmDao
-import com.yapp.data.local.AlarmEntity
-import com.yapp.data.local.toDomain
+import com.yapp.database.AlarmDao
+import com.yapp.database.AlarmEntity
+import com.yapp.database.toDomain
 import com.yapp.domain.model.Alarm
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -16,22 +16,10 @@ class AlarmLocalDataSourceImpl @Inject constructor(
             .map { alarmEntities -> alarmEntities.map { it.toDomain() } }
     }
 
-    override fun getPagedAlarms(
-        limit: Int,
-        offset: Int,
-    ): Flow<List<Alarm>> {
-        return alarmDao.getPagedAlarms(limit, offset)
-            .map { alarmEntities -> alarmEntities.map { it.toDomain() } }
-    }
-
-    override fun getAlarmsByTime(hour: Int, minute: Int, isAm: Boolean): Flow<List<Alarm>> {
-        return alarmDao.getAlarmsByTime(hour, minute, isAm).map { alarmEntities ->
+    override fun getAlarmsByTime(hour: Int, minute: Int): Flow<List<Alarm>> {
+        return alarmDao.getAlarmsByTime(hour, minute).map { alarmEntities ->
             alarmEntities.map { it.toDomain() }
         }
-    }
-
-    override fun getAlarmCount(): Flow<Int> {
-        return alarmDao.getAlarmCount()
     }
 
     override suspend fun insertAlarm(alarm: AlarmEntity): Long {

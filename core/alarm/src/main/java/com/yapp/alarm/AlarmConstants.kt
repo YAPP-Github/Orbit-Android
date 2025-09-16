@@ -7,6 +7,8 @@ object AlarmConstants {
     const val ACTION_ALARM_INTERACTION_ACTIVITY_CLOSE = "com.yapp.orbit.ACTION_ALERT_INTERACTION_CLOSE"
 
     const val EXTRA_NOTIFICATION_ID = "com.yapp.orbit.EXTRA_NOTIFICATION_ID"
+    const val EXTRA_MISSION_TYPE = "com.yapp.orbit.EXTRA_MISSION_TYPE"
+    const val EXTRA_MISSION_COUNT = "com.yapp.orbit.EXTRA_MISSION_COUNT"
 
     const val EXTRA_ALARM = "com.yapp.orbit.EXTRA_ALARM"
     const val EXTRA_ALARM_DAY = "com.yapp.orbit.EXTRA_ALARM_DAY"
@@ -15,8 +17,6 @@ object AlarmConstants {
     const val EXTRA_IS_DISMISS = "com.yapp.orbit.EXTRA_IS_DISMISS"
 
     const val SNOOZE_ID_OFFSET = 10000
-
-    const val WEEK_INTERVAL_MILLIS: Long = 7 * 24 * 60 * 60 * 1000
 
     val HOLIDAYS_2025 = setOf(
         "2025-01-01", "2025-01-27", "2025-01-28", "2025-01-29", "2025-01-30",

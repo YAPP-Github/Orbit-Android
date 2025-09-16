@@ -1,0 +1,118 @@
+{
+    "formatVersion": 1,
+    "database": {
+        "version": 1,
+        "identityHash": "d9643e982a8885da158bcd94c55931ff",
+        "entities": [
+            {
+                "tableName": "alarm_database",
+                "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `isAm` INTEGER NOT NULL, `hour` INTEGER NOT NULL, `minute` INTEGER NOT NULL, `second` INTEGER NOT NULL, `repeatDays` INTEGER NOT NULL, `isHolidayAlarmOff` INTEGER NOT NULL, `isSnoozeEnabled` INTEGER NOT NULL, `snoozeInterval` INTEGER NOT NULL, `snoozeCount` INTEGER NOT NULL, `isVibrationEnabled` INTEGER NOT NULL, `isSoundEnabled` INTEGER NOT NULL, `soundUri` TEXT NOT NULL, `soundVolume` INTEGER NOT NULL, `isAlarmActive` INTEGER NOT NULL)",
+                "fields": [
+                    {
+                        "fieldPath": "id",
+                        "columnName": "id",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "isAm",
+                        "columnName": "isAm",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "hour",
+                        "columnName": "hour",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "minute",
+                        "columnName": "minute",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "second",
+                        "columnName": "second",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "repeatDays",
+                        "columnName": "repeatDays",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "isHolidayAlarmOff",
+                        "columnName": "isHolidayAlarmOff",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "isSnoozeEnabled",
+                        "columnName": "isSnoozeEnabled",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "snoozeInterval",
+                        "columnName": "snoozeInterval",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "snoozeCount",
+                        "columnName": "snoozeCount",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "isVibrationEnabled",
+                        "columnName": "isVibrationEnabled",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "isSoundEnabled",
+                        "columnName": "isSoundEnabled",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "soundUri",
+                        "columnName": "soundUri",
+                        "affinity": "TEXT",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "soundVolume",
+                        "columnName": "soundVolume",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    },
+                    {
+                        "fieldPath": "isAlarmActive",
+                        "columnName": "isAlarmActive",
+                        "affinity": "INTEGER",
+                        "notNull": true
+                    }
+                ],
+                "primaryKey": {
+                    "autoGenerate": true,
+                    "columnNames": [
+                        "id"
+                    ]
+                },
+                "indices": [],
+                "foreignKeys": []
+            }
+        ],
+        "views": [],
+        "setupQueries": [
+            "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd9643e982a8885da158bcd94c55931ff')"
+        ]
+    }
+}

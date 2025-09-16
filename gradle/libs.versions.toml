@@ -22,14 +22,14 @@ ktlint = "11.5.1"
 kotlin = "2.0.0"
 kotlinx-serialization-json = "1.7.0"
 kotlinx-coroutines = "1.9.0-RC"
-kotlinx-datetime = "0.4.0"
 kotlinx-collections = "0.3.7"
 
 ## AndroidX
 androidx-app-compat = "1.7.0"
 androidx-core = "1.15.0"
 androidx-datastore = "1.1.1"
-androidx-room = "2.6.1"
+androidx-room = "2.7.2"
+androidx-work = "2.10.3"
 
 androidx-lifecycle = "2.8.7"
 
@@ -45,16 +45,12 @@ activity-compose = "1.9.3"
 ## Hilt
 hilt = "2.51.1"
 hilt-navigation-compose = "1.2.0"
+hilt-work = "1.2.0"
 
 ## Third Party
 okhttp = "4.12.0"
 retrofit = "2.11.0"
-retrofit-kotlinx-serialization-json = "1.0.0"
-coil = "2.4.0"
-sentry = "5.0.0"
-sentry-android = "8.0.0"
-sentry-compose = "8.0.0"
-gson = "2.11.0"
+coil = "2.7.0"
 
 # Google Libraries Versions
 google-service = "4.4.2"
@@ -64,12 +60,14 @@ firebase-app-distribution = "5.1.0"
 firebase-crashlytics = "3.0.3"
 
 ## Test
-junit = "4.13.2"
+junit4 = "4.13.2"
 mockito = "3.3.3"
+mockk = "1.13.9"
 robolectric = "4.9"
 androidx-test-ext-junit = "1.2.0"
 androidx-test-runner = "1.6.0"
 androidx-test = "1.6.0"
+jacoco = "0.8.10"
 
 ## Others
 timber = "5.0.1"
@@ -80,7 +78,6 @@ process-pheonix = "3.0.0"
 lottie = "6.1.0"
 accompanist = "0.37.0"
 materialAndroid = "1.7.5"
-flexible-bottomsheet = "0.1.5"
 amplitude = "1.20.3"
 
 [libraries]
@@ -92,7 +89,6 @@ ksp-gradle-plugin = { group = "com.google.devtools.ksp", name = "com.google.devt
 
 ## Kotlin Libraries
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
-kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
@@ -105,8 +101,12 @@ androidx-datastore = { group = "androidx.datastore", name = "datastore-preferenc
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "androidx-room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
+androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "androidx-room" }
 androidx-room-paging = { group = "androidx.room", name = "room-paging", version.ref = "androidx-room" }
 androidx-annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
+androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hilt-work" }
+androidx-work-runtime = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "androidx-work" }
+androidx-work-testing = { group = "androidx.work", name = "work-testing", version.ref = "androidx-work" }
 
 ## Compose Libraries
 activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
@@ -134,7 +134,7 @@ hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref
 hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
 hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt-navigation-compose" }
-
+hilt-worker = { group = "androidx.hilt", name = "hilt-work", version.ref = "hilt-work" }
 
 # Orbit
 orbit-core = { group = "org.orbit-mvi", name = "orbit-core", version.ref = "orbit" }
@@ -146,9 +146,6 @@ retrofit-core = { group = "com.squareup.retrofit2", name = "retrofit", version.r
 retrofit-kotlin-serialization = { module = "com.squareup.retrofit2:converter-kotlinx-serialization", version.ref = "retrofit" }
 okhttp-bom = { group = "com.squareup.okhttp3", name = "okhttp-bom", version.ref = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
-flexible-bottomsheet = { group = "com.github.skydoves", name = "flexible-bottomsheet-material3", version.ref = "flexible-bottomsheet" }
-#sentry-android = { group = "io.sentry", name = "sentry-android", version.ref = "sentry-android" }
-#sentry-compose = { group = "io.sentry", name = "sentry-compose", version.ref = "sentry-compose" }
 
 # Google Libraries
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
@@ -163,8 +160,9 @@ timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "tim
 coil = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 
 ## Test Libraries
-junit = { group = "junit", name = "junit", version.ref = "junit" }
+junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
 mockito = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidx-test-runner" }
@@ -191,10 +189,10 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }
 android-library = { id = "com.android.library", version.ref = "android-gradle-plugin" }
+room = { id = "androidx.room", version.ref = "androidx-room" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 android-test = { id = "com.android.test", version.ref = "android-gradle-plugin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-service = { id = "com.google.gms.google-services", version.ref = "google-service" }
 firebase-app-distribution = { id = "com.google.firebase.appdistribution", version.ref = "firebase-app-distribution" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics" }
-#sentry = { id = "io.sentry.android.gradle", version.ref = "sentry" }

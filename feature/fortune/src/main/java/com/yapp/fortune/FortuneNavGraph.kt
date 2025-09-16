@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
 import androidx.navigation.navOptions
 import androidx.navigation.navigation
 import com.yapp.common.navigation.OrbitNavigator
@@ -19,7 +20,11 @@ fun NavGraphBuilder.fortuneNavGraph(
     snackBarHostState: SnackbarHostState,
 ) {
     navigation<FortuneBaseRoute>(startDestination = FortuneDestination.Fortune) {
-        composable<FortuneDestination.Fortune> { backStackEntry ->
+        composable<FortuneDestination.Fortune>(
+            deepLinks = listOf(
+                navDeepLink { uriPattern = "orbitapp://fortune" },
+            ),
+        ) { backStackEntry ->
             val viewModel = backStackEntry.sharedHiltViewModel<FortuneViewModel>(navigator.navController)
             val coroutineScope = rememberCoroutineScope()
 
