@@ -8,6 +8,7 @@ import com.yapp.domain.usecase.AlarmUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,16 +27,21 @@ class RescheduleAlarmReceiver : BroadcastReceiver() {
         intent ?: return
 
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            rescheduleAlarm()
+            val pending = goAsync()
+            rescheduleAlarm(pending)
         }
     }
 
-    private fun rescheduleAlarm() {
-        CoroutineScope(Dispatchers.IO).launch {
-            val alarms = alarmUseCase.getAllAlarms().first()
-            alarms
-                .filter { it.isAlarmActive }
-                .forEach { alarm -> androidAlarmScheduler.scheduleAlarm(alarm) }
+    private fun rescheduleAlarm(pendingResult: PendingResult) {
+        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+            try {
+                val alarms = alarmUseCase.getAllAlarms().first()
+                alarms
+                    .filter { it.isAlarmActive }
+                    .forEach { alarm -> androidAlarmScheduler.scheduleAlarm(alarm) }
+            } finally {
+                pendingResult.finish()
+            }
         }
     }
 }
