@@ -57,6 +57,8 @@ import com.yapp.home.component.AlarmListDropDownMenu
 import com.yapp.home.component.AlarmSortDropDownMenu
 import com.yapp.ui.component.checkbox.OrbitCheckBox
 import feature.home.R
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 enum class BottomSheetExpandState {
@@ -99,7 +101,8 @@ internal fun AlarmListBottomSheet(
 
     LaunchedEffect(Unit) {
         snapshotFlow { sheetState.currentValue }
-            .collect { value ->
+            .distinctUntilChanged()
+            .collectLatest { value ->
                 expandedType = when (value) {
                     SheetValue.Expanded -> {
                         onExpanded()
