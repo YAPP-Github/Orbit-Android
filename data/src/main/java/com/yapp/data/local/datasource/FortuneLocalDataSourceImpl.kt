@@ -1,6 +1,6 @@
 package com.yapp.data.local.datasource
 
-import com.yapp.datastore.UserPreferences
+import com.yapp.datastore.FortunePreferences
 import com.yapp.domain.model.FortuneCreateStatus
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -8,22 +8,22 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 class FortuneLocalDataSourceImpl @Inject constructor(
-    private val userPreferences: UserPreferences,
+    private val fortunePreferences: FortunePreferences,
 ) : FortuneLocalDataSource {
 
-    override val fortuneIdFlow = userPreferences.fortuneIdFlow
-    override val fortuneDateEpochFlow = userPreferences.fortuneDateEpochFlow
-    override val fortuneImageIdFlow = userPreferences.fortuneImageIdFlow
-    override val fortuneScoreFlow = userPreferences.fortuneScoreFlow
-    override val hasUnseenFortuneFlow = userPreferences.hasUnseenFortuneFlow
-    override val shouldShowFortuneToolTipFlow = userPreferences.shouldShowFortuneToolTipFlow
-    override val isFirstAlarmDismissedTodayFlow = userPreferences.isFirstAlarmDismissedTodayFlow
+    override val fortuneIdFlow = fortunePreferences.fortuneIdFlow
+    override val fortuneDateEpochFlow = fortunePreferences.fortuneDateEpochFlow
+    override val fortuneImageIdFlow = fortunePreferences.fortuneImageIdFlow
+    override val fortuneScoreFlow = fortunePreferences.fortuneScoreFlow
+    override val hasUnseenFortuneFlow = fortunePreferences.hasUnseenFortuneFlow
+    override val shouldShowFortuneToolTipFlow = fortunePreferences.shouldShowFortuneToolTipFlow
+    override val isFirstAlarmDismissedTodayFlow = fortunePreferences.isFirstAlarmDismissedTodayFlow
 
     override val fortuneCreateStatusFlow = combine(
-        userPreferences.fortuneIdFlow,
-        userPreferences.fortuneDateEpochFlow,
-        userPreferences.isFortuneCreatingFlow,
-        userPreferences.isFortuneFailedFlow,
+        fortunePreferences.fortuneIdFlow,
+        fortunePreferences.fortuneDateEpochFlow,
+        fortunePreferences.isFortuneCreatingFlow,
+        fortunePreferences.isFortuneFailedFlow,
     ) { fortuneId, fortuneDate, isCreating, isFailed ->
         when {
             isFailed -> FortuneCreateStatus.Failure
@@ -36,38 +36,38 @@ class FortuneLocalDataSourceImpl @Inject constructor(
     private fun todayEpoch(): Long = LocalDate.now().toEpochDay()
 
     override suspend fun markFortuneCreating() {
-        userPreferences.markFortuneCreating()
+        fortunePreferences.markFortuneCreating()
     }
 
     override suspend fun markFortuneCreated(fortuneId: Long) {
-        userPreferences.markFortuneCreated(fortuneId)
+        fortunePreferences.markFortuneCreated(fortuneId)
     }
 
     override suspend fun markFortuneFailed() {
-        userPreferences.markFortuneFailed()
+        fortunePreferences.markFortuneFailed()
     }
 
     override suspend fun markFortuneSeen() {
-        userPreferences.markFortuneSeen()
+        fortunePreferences.markFortuneSeen()
     }
 
     override suspend fun markFortuneTooltipShown() {
-        userPreferences.markFortuneTooltipShown()
+        fortunePreferences.markFortuneTooltipShown()
     }
 
     override suspend fun saveFortuneImageId(imageResId: Int) {
-        userPreferences.saveFortuneImageId(imageResId)
+        fortunePreferences.saveFortuneImageId(imageResId)
     }
 
     override suspend fun saveFortuneScore(score: Int) {
-        userPreferences.saveFortuneScore(score)
+        fortunePreferences.saveFortuneScore(score)
     }
 
     override suspend fun markFirstAlarmDismissedToday() {
-        userPreferences.markFirstAlarmDismissedToday()
+        fortunePreferences.markFirstAlarmDismissedToday()
     }
 
     override suspend fun clearFortuneData() {
-        userPreferences.clearFortuneData()
+        fortunePreferences.clearFortuneData()
     }
 }
