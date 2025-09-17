@@ -88,21 +88,28 @@ class FortunePreferences @Inject constructor(
     val isFortuneCreatingFlow: Flow<Boolean> = dataStore.data
         .catch { emit(emptyPreferences()) }
         .map { pref ->
-            Pair(
+            Triple(
                 pref[Keys.CREATING] ?: false,
                 pref[Keys.EXPIRES_AT] ?: 0L,
+                pref[Keys.ATTEMPT_ID],
             )
         }
-        .transformLatest { (creating, expiresAt) ->
-            if (creating && expiresAt > 0L && nowMillis() > expiresAt) {
-                dataStore.edit { pref ->
-                    pref[Keys.CREATING] = false
-                    pref[Keys.FAILED] = true
+        .transformLatest { (creating, expiresAt, attemptId) ->
+            if (creating) {
+                val legacy = (expiresAt <= 0L) || attemptId.isNullOrEmpty()
+                val expired = (!legacy && nowMillis() > expiresAt)
+
+                if (legacy || expired) {
+                    // 레거시(만료정보 없음) 또는 만료 → 실패로 교정
+                    dataStore.edit { pref ->
+                        pref[Keys.CREATING] = false
+                        pref[Keys.FAILED] = true
+                    }
+                    emit(false)
+                    return@transformLatest
                 }
-                emit(false)
-            } else {
-                emit(creating)
             }
+            emit(creating)
         }
         .distinctUntilChanged()
 
