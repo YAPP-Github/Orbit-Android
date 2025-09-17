@@ -147,7 +147,20 @@ class FortunePreferences @Inject constructor(
     ) {
         dataStore.edit { pref ->
             val currentAttempt = pref[Keys.ATTEMPT_ID]
-            if (currentAttempt == attemptId) {
+            val isCreating = pref[Keys.CREATING] ?: false
+            val expiresAt = pref[Keys.EXPIRES_AT] ?: 0L
+
+            if (isCreating) {
+                val legacy = (expiresAt <= 0L) || currentAttempt.isNullOrEmpty()
+                val expired = (!legacy && nowMillis() > expiresAt)
+
+                if (legacy || expired) {
+                    // 만료된 상태라면 성공 처리 거부
+                    return@edit
+                }
+            }
+
+            if (isCreating && currentAttempt == attemptId) {
                 val today = todayEpoch()
                 val prevDate = pref[Keys.DATE]
                 val isNewForToday = (pref[Keys.ID] != fortuneId) || (prevDate != today)
