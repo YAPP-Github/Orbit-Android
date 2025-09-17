@@ -149,6 +149,37 @@ class FortunePreferencesTest {
     }
 
     @Test
+    fun `운세_생성_상태_Creating_만료_시_Success_처리는_거부되고_Failure로_교정된다`() = runTest {
+        // given: t0에서 Creating(lease 1초) 설정
+        val dataStore = createNewDataStoreWithFile("prefs_expired_success_guard.preferences_pb")
+        val prefsAtT0 = createFortunePreferencesWithClock(dataStore, fixedClockAtT0)
+
+        val attemptId = UUID.randomUUID().toString()
+        val fortuneId = 999L
+        prefsAtT0.markFortuneCreating(attemptId = attemptId, lease = 1_000L)
+
+        // when: t0+2초(만료 이후)로 시계를 바꾸고, 같은 DataStore로 성공 처리 시도
+        val prefsAtT0Plus2 = createFortunePreferencesWithClock(dataStore, fixedClockAtT0Plus2Seconds)
+        // 만료된 상태이므로, 아래 호출은 내부에서 return@edit 되어 성공 반영이 되면 안 된다.
+        prefsAtT0Plus2.markFortuneCreatedIfAttemptMatches(
+            attemptId = attemptId,
+            fortuneId = fortuneId
+        )
+
+        // then: 성공 반영이 거부되었으므로 fortuneId는 여전히 null이어야 한다
+        val savedId = prefsAtT0Plus2.fortuneIdFlow.first()
+        assertEquals(null, savedId)
+
+        // 그리고 isFortuneCreatingFlow 구독 시 만료 교정 로직이 작동하여
+        // CREATING → false, FAILED → true 로 자동 교정되어야 한다.
+        val creatingAfter = prefsAtT0Plus2.isFortuneCreatingFlow.first()
+        assertEquals(false, creatingAfter)
+
+        val failedAfter = prefsAtT0Plus2.isFortuneFailedFlow.first()
+        assertEquals(true, failedAfter)
+    }
+
+    @Test
     fun `오늘_운세가_있고_확인한_경우_hasUnseenFortune가_false`() = runTest {
         // given: 오늘 운세가 생성되어 있고(미확인)
         val dataStore = createNewDataStoreWithFile("prefs_seen.preferences_pb")
