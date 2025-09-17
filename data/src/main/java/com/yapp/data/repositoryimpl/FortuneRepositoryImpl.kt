@@ -24,9 +24,9 @@ class FortuneRepositoryImpl @Inject constructor(
 
     override val fortuneCreateStatusFlow: Flow<FortuneCreateStatus> = fortuneLocalDataSource.fortuneCreateStatusFlow
 
-    override suspend fun markFortuneAsCreating() = fortuneLocalDataSource.markFortuneCreating()
-    override suspend fun markFortuneAsCreated(fortuneId: Long) = fortuneLocalDataSource.markFortuneCreated(fortuneId)
-    override suspend fun markFortuneAsFailed() = fortuneLocalDataSource.markFortuneFailed()
+    override suspend fun markFortuneAsCreating(attemptId: String, leaseMillis: Long) = fortuneLocalDataSource.markFortuneCreating(attemptId, leaseMillis)
+    override suspend fun markFortuneAsCreated(attemptId: String, fortuneId: Long) = fortuneLocalDataSource.markFortuneCreated(attemptId, fortuneId)
+    override suspend fun markFortuneAsFailed(attemptId: String) = fortuneLocalDataSource.markFortuneFailed(attemptId)
     override suspend fun markFortuneSeen() = fortuneLocalDataSource.markFortuneSeen()
     override suspend fun markFortuneTooltipShown() = fortuneLocalDataSource.markFortuneTooltipShown()
     override suspend fun saveFortuneImageId(imageResId: Int) = fortuneLocalDataSource.saveFortuneImageId(imageResId)

@@ -35,16 +35,16 @@ class FortuneLocalDataSourceImpl @Inject constructor(
 
     private fun todayEpoch(): Long = LocalDate.now().toEpochDay()
 
-    override suspend fun markFortuneCreating() {
-        fortunePreferences.markFortuneCreating()
+    override suspend fun markFortuneCreating(attemptId: String, leaseMillis: Long) {
+        fortunePreferences.markFortuneCreating(attemptId, leaseMillis)
     }
 
-    override suspend fun markFortuneCreated(fortuneId: Long) {
-        fortunePreferences.markFortuneCreated(fortuneId)
+    override suspend fun markFortuneCreated(attemptId: String, fortuneId: Long) {
+        fortunePreferences.markFortuneCreatedIfAttemptMatches(attemptId, fortuneId)
     }
 
-    override suspend fun markFortuneFailed() {
-        fortunePreferences.markFortuneFailed()
+    override suspend fun markFortuneFailed(attemptId: String) {
+        fortunePreferences.markFortuneFailedIfAttemptMatches(attemptId)
     }
 
     override suspend fun markFortuneSeen() {

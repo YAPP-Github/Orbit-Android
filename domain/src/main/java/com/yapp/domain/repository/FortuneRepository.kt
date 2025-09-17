@@ -15,9 +15,9 @@ interface FortuneRepository {
 
     val fortuneCreateStatusFlow: Flow<FortuneCreateStatus>
 
-    suspend fun markFortuneAsCreating()
-    suspend fun markFortuneAsCreated(fortuneId: Long)
-    suspend fun markFortuneAsFailed()
+    suspend fun markFortuneAsCreating(attemptId: String, leaseMillis: Long = 2 * 60_000L)
+    suspend fun markFortuneAsCreated(attemptId: String, fortuneId: Long)
+    suspend fun markFortuneAsFailed(attemptId: String)
     suspend fun markFortuneSeen()
     suspend fun markFortuneTooltipShown()
     suspend fun saveFortuneImageId(imageResId: Int)

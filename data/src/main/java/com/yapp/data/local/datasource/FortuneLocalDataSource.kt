@@ -14,9 +14,9 @@ interface FortuneLocalDataSource {
 
     val fortuneCreateStatusFlow: Flow<FortuneCreateStatus>
 
-    suspend fun markFortuneCreating()
-    suspend fun markFortuneCreated(fortuneId: Long)
-    suspend fun markFortuneFailed()
+    suspend fun markFortuneCreating(attemptId: String, leaseMillis: Long)
+    suspend fun markFortuneCreated(attemptId: String, fortuneId: Long)
+    suspend fun markFortuneFailed(attemptId: String)
     suspend fun markFortuneSeen()
     suspend fun markFortuneTooltipShown()
     suspend fun saveFortuneImageId(imageResId: Int)

@@ -7,11 +7,15 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.transformLatest
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,14 +33,19 @@ class FortunePreferences @Inject constructor(
         val SEEN = booleanPreferencesKey("fortune_seen")
         val TOOLTIP_SHOWN = booleanPreferencesKey("fortune_tooltip_shown")
 
-        val FIRST_ALARM_DISMISSED_TODAY = booleanPreferencesKey("first_alarm_dismissed_today")
-        val FIRST_ALARM_DISMISSED_DATE_EPOCH = longPreferencesKey("first_alarm_dismissed_date_epoch")
-
         val CREATING = booleanPreferencesKey("fortune_creating")
         val FAILED = booleanPreferencesKey("fortune_failed")
+
+        val ATTEMPT_ID = stringPreferencesKey("fortune_attempt_id")
+        val STARTED_AT = longPreferencesKey("fortune_started_at")
+        val EXPIRES_AT = longPreferencesKey("fortune_expires_at")
+
+        val FIRST_ALARM_DISMISSED_TODAY = booleanPreferencesKey("first_alarm_dismissed_today")
+        val FIRST_ALARM_DISMISSED_DATE_EPOCH = longPreferencesKey("first_alarm_dismissed_date_epoch")
     }
 
     private fun todayEpoch(): Long = LocalDate.now(clock).toEpochDay()
+    private fun nowMillis(): Long = Instant.now(clock).toEpochMilli()
 
     val fortuneIdFlow: Flow<Long?> = dataStore.data
         .catch { emit(emptyPreferences()) }
@@ -75,9 +84,26 @@ class FortunePreferences @Inject constructor(
         }
         .distinctUntilChanged()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val isFortuneCreatingFlow: Flow<Boolean> = dataStore.data
         .catch { emit(emptyPreferences()) }
-        .map { it[Keys.CREATING] ?: false }
+        .map { pref ->
+            Pair(
+                pref[Keys.CREATING] ?: false,
+                pref[Keys.EXPIRES_AT] ?: 0L,
+            )
+        }
+        .transformLatest { (creating, expiresAt) ->
+            if (creating && expiresAt > 0L && nowMillis() > expiresAt) {
+                dataStore.edit { pref ->
+                    pref[Keys.CREATING] = false
+                    pref[Keys.FAILED] = true
+                }
+                emit(false)
+            } else {
+                emit(creating)
+            }
+        }
         .distinctUntilChanged()
 
     val isFortuneFailedFlow: Flow<Boolean> = dataStore.data
@@ -94,35 +120,50 @@ class FortunePreferences @Inject constructor(
         }
         .distinctUntilChanged()
 
-    suspend fun markFortuneCreating() {
+    suspend fun markFortuneCreating(
+        attemptId: String,
+        lease: Long,
+    ) {
+        val now = nowMillis()
         dataStore.edit { pref ->
             pref[Keys.CREATING] = true
             pref[Keys.FAILED] = false
+            pref[Keys.ATTEMPT_ID] = attemptId
+            pref[Keys.STARTED_AT] = now
+            pref[Keys.EXPIRES_AT] = now + lease
         }
     }
 
-    suspend fun markFortuneCreated(fortuneId: Long) {
+    suspend fun markFortuneCreatedIfAttemptMatches(
+        attemptId: String,
+        fortuneId: Long,
+    ) {
         dataStore.edit { pref ->
-            val today = todayEpoch()
-            val prevDate = pref[Keys.DATE]
-            val isNewForToday = (pref[Keys.ID] != fortuneId) || (prevDate != today)
+            val currentAttempt = pref[Keys.ATTEMPT_ID]
+            if (currentAttempt == attemptId) {
+                val today = todayEpoch()
+                val prevDate = pref[Keys.DATE]
+                val isNewForToday = (pref[Keys.ID] != fortuneId) || (prevDate != today)
 
-            pref[Keys.ID] = fortuneId
-            pref[Keys.DATE] = today
-            pref[Keys.CREATING] = false
-            pref[Keys.FAILED] = false
+                pref[Keys.ID] = fortuneId
+                pref[Keys.DATE] = today
+                pref[Keys.CREATING] = false
+                pref[Keys.FAILED] = false
 
-            if (isNewForToday) {
-                pref[Keys.SEEN] = false
-                pref[Keys.TOOLTIP_SHOWN] = false
+                if (isNewForToday) {
+                    pref[Keys.SEEN] = false
+                    pref[Keys.TOOLTIP_SHOWN] = false
+                }
             }
         }
     }
 
-    suspend fun markFortuneFailed() {
+    suspend fun markFortuneFailedIfAttemptMatches(attemptId: String) {
         dataStore.edit { pref ->
-            pref[Keys.CREATING] = false
-            pref[Keys.FAILED] = true
+            if (pref[Keys.ATTEMPT_ID] == attemptId) {
+                pref[Keys.CREATING] = false
+                pref[Keys.FAILED] = true
+            }
         }
     }
 
