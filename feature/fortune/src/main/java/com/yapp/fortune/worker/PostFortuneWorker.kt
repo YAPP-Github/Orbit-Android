@@ -9,6 +9,7 @@ import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.repository.UserInfoRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import java.util.UUID
@@ -55,6 +56,8 @@ class PostFortuneWorker @AssistedInject constructor(
                     Result.retry()
                 },
             )
+        } catch (ce: CancellationException) {
+            throw ce
         } catch (_: Throwable) {
             fortuneRepository.markFortuneAsFailed(attemptId)
             Result.retry()
