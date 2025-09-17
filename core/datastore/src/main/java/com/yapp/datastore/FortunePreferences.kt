@@ -156,6 +156,9 @@ class FortunePreferences @Inject constructor(
                 pref[Keys.DATE] = today
                 pref[Keys.CREATING] = false
                 pref[Keys.FAILED] = false
+                pref.remove(Keys.ATTEMPT_ID)
+                pref.remove(Keys.STARTED_AT)
+                pref.remove(Keys.EXPIRES_AT)
 
                 if (isNewForToday) {
                     pref[Keys.SEEN] = false
@@ -170,6 +173,9 @@ class FortunePreferences @Inject constructor(
             if (pref[Keys.ATTEMPT_ID] == attemptId) {
                 pref[Keys.CREATING] = false
                 pref[Keys.FAILED] = true
+                pref.remove(Keys.ATTEMPT_ID)
+                pref.remove(Keys.STARTED_AT)
+                pref.remove(Keys.EXPIRES_AT)
             }
         }
     }
