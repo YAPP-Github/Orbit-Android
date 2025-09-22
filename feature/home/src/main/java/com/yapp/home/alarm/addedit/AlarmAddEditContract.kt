@@ -45,7 +45,7 @@ sealed class AlarmAddEditContract {
     )
 
     data class AlarmMissionState(
-        val missionType: MissionType = MissionType.TAP,
+        val missionType: MissionType = MissionType.NONE,
         val missionCount: Int = 10,
     )
 
