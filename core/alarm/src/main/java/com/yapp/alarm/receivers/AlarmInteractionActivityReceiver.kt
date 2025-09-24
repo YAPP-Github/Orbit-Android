@@ -53,7 +53,9 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
                             }
 
                             when (fortuneCreateStatus) {
-                                is FortuneCreateStatus.Creating -> {
+                                is FortuneCreateStatus.Creating,
+                                is FortuneCreateStatus.Failure,
+                                -> {
                                     context?.let { ctx ->
                                         val uri = "orbitapp://fortune".toUri()
                                         val fortuneIntent = Intent(Intent.ACTION_VIEW, uri).apply {
@@ -78,7 +80,7 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
                                     }
                                 }
 
-                                FortuneCreateStatus.Failure, FortuneCreateStatus.Idle -> { }
+                                FortuneCreateStatus.Idle -> { }
                             }
                         } else {
                             context?.let { ctx ->

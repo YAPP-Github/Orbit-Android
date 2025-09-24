@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fortune_failure_dialog_title">운세 생성 실패</string>
+    <string name="fortune_failure_dialog_message">운세 생성에 실패했어요. 네트워크 연결 상태를 확인해주세요.</string>
+    <string name="fortune_failure_dialog_confirm">확인</string>
+</resources>
