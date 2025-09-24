@@ -28,9 +28,8 @@ class PostFortuneWorker @AssistedInject constructor(
             is FortuneCreateStatus.Creating,
             is FortuneCreateStatus.Success,
             -> return Result.success()
-            FortuneCreateStatus.Failure,
-            FortuneCreateStatus.Idle,
-            -> { /* 계속 진행 */ }
+            is FortuneCreateStatus.Failure -> return Result.failure()
+            FortuneCreateStatus.Idle -> { /* 계속 진행 */ }
         }
 
         val userId = userInfoRepository.userIdFlow.firstOrNull()
@@ -57,6 +56,7 @@ class PostFortuneWorker @AssistedInject constructor(
                 },
             )
         } catch (ce: CancellationException) {
+            fortuneRepository.markFortuneAsFailed(attemptId)
             throw ce
         } catch (_: Throwable) {
             fortuneRepository.markFortuneAsFailed(attemptId)

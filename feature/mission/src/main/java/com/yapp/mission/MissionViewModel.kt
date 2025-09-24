@@ -142,10 +142,13 @@ class MissionViewModel @Inject constructor(
         val fortuneCreateStatus = fortuneRepository.fortuneCreateStatusFlow.first()
         val hasUnseenFortune = fortuneRepository.hasUnseenFortuneFlow.first()
 
-        val shouldOpenFortune = (
-            fortuneCreateStatus is FortuneCreateStatus.Creating ||
-                fortuneCreateStatus is FortuneCreateStatus.Success && hasUnseenFortune
-            )
+        val shouldOpenFortune = when (fortuneCreateStatus) {
+            is FortuneCreateStatus.Creating,
+            is FortuneCreateStatus.Failure,
+            -> true
+            is FortuneCreateStatus.Success -> hasUnseenFortune
+            FortuneCreateStatus.Idle -> false
+        }
 
         postSideEffect(
             if (shouldOpenFortune) {

@@ -149,6 +149,54 @@ class FortunePreferencesTest {
     }
 
     @Test
+    fun `운세_생성_실패_후_재시도해도_성공하기_전까지_Failure가_유지된다`() = runTest {
+        // given: 첫 번째 시도에서 실패 상태로 전환
+        val dataStore = createNewDataStoreWithFile("prefs_fail_retry.preferences_pb")
+        val preferences = createFortunePreferencesWithClock(dataStore, fixedClockForReferenceDay)
+        val firstAttemptId = "ATTEMPT_FIRST"
+        val retryAttemptId = "ATTEMPT_RETRY"
+        val fortuneId = 101L
+
+        preferences.markFortuneCreating(attemptId = firstAttemptId, lease = 60_000L)
+        preferences.markFortuneFailedIfAttemptMatches(firstAttemptId)
+
+        // when: 새로운 attemptId로 재시도
+        preferences.markFortuneCreating(attemptId = retryAttemptId, lease = 60_000L)
+
+        // then: 성공 전까지는 Failure 상태 유지
+        val failedDuringRetry = preferences.isFortuneFailedFlow.first()
+        assertEquals(true, failedDuringRetry)
+
+        // when: 재시도가 성공적으로 완료되면
+        preferences.markFortuneCreatedIfAttemptMatches(
+            attemptId = retryAttemptId,
+            fortuneId = fortuneId,
+        )
+
+        // then: Failure 플래그가 해제된다
+        val failedAfterSuccess = preferences.isFortuneFailedFlow.first()
+        assertEquals(false, failedAfterSuccess)
+    }
+
+    @Test
+    fun `이전_날짜의_운세_실패_상태는_자동_초기화된다`() = runTest {
+        // given: 기준일에 실패 상태 기록
+        val dataStore = createNewDataStoreWithFile("prefs_fail_old.preferences_pb")
+        val preferencesToday = createFortunePreferencesWithClock(dataStore, fixedClockForReferenceDay)
+        val attemptId = "ATTEMPT_OLD_FAIL"
+        preferencesToday.markFortuneCreating(attemptId = attemptId, lease = 60_000L)
+        preferencesToday.markFortuneFailedIfAttemptMatches(attemptId)
+
+        // when: 다음 날 시점에서 상태 확인
+        val nextDayClock = Clock.fixed(referenceInstantForAnyDay.plusSeconds(86_400), fixedZoneOffsetUtc)
+        val preferencesNextDay = createFortunePreferencesWithClock(dataStore, nextDayClock)
+
+        // then: 실패 상태가 자동으로 해제된다
+        val failedNextDay = preferencesNextDay.isFortuneFailedFlow.first()
+        assertEquals(false, failedNextDay)
+    }
+
+    @Test
     fun `운세_생성_상태_Creating_만료_시_Success_처리는_거부되고_Failure로_교정된다`() = runTest {
         // given: t0에서 Creating(lease 1초) 설정
         val dataStore = createNewDataStoreWithFile("prefs_expired_success_guard.preferences_pb")

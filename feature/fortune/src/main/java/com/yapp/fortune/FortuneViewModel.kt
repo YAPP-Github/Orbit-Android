@@ -64,8 +64,19 @@ class FortuneViewModel @Inject constructor(
                     )
                 }
 
-                is FortuneCreateStatus.Failure, FortuneCreateStatus.Idle -> {
-                    postSideEffect(FortuneContract.SideEffect.NavigateToHome)
+                is FortuneCreateStatus.Failure -> {
+                    reduce {
+                        state.copy(
+                            isLoading = false,
+                            isCreateFailureDialogVisible = true,
+                        )
+                    }
+                }
+
+                is FortuneCreateStatus.Idle -> {
+                    if (!state.isCreateFailureDialogVisible) {
+                        postSideEffect(FortuneContract.SideEffect.NavigateToHome)
+                    }
                 }
             }
         }
@@ -94,6 +105,7 @@ class FortuneViewModel @Inject constructor(
                     fortunePages = fortune.toFortunePages(),
                     fortuneImageId = imageId,
                     hasReward = isFirstAlarmDismissedToday,
+                    isCreateFailureDialogVisible = false,
                 )
             }
         }.onFailure { error ->
@@ -122,6 +134,10 @@ class FortuneViewModel @Inject constructor(
     }
 
     private fun navigateToHome() = intent {
+        if (state.isCreateFailureDialogVisible) {
+            reduce { state.copy(isCreateFailureDialogVisible = false) }
+        }
+
         postSideEffect(FortuneContract.SideEffect.NavigateToHome)
     }
 

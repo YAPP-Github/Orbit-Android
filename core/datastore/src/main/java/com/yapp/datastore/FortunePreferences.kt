@@ -35,6 +35,7 @@ class FortunePreferences @Inject constructor(
 
         val CREATING = booleanPreferencesKey("fortune_creating")
         val FAILED = booleanPreferencesKey("fortune_failed")
+        val FAILED_DATE = longPreferencesKey("fortune_failed_date_epoch")
 
         val ATTEMPT_ID = stringPreferencesKey("fortune_attempt_id")
         val STARTED_AT = longPreferencesKey("fortune_started_at")
@@ -104,6 +105,7 @@ class FortunePreferences @Inject constructor(
                     dataStore.edit { pref ->
                         pref[Keys.CREATING] = false
                         pref[Keys.FAILED] = true
+                        pref[Keys.FAILED_DATE] = todayEpoch()
                     }
                     emit(false)
                     return@transformLatest
@@ -115,7 +117,25 @@ class FortunePreferences @Inject constructor(
 
     val isFortuneFailedFlow: Flow<Boolean> = dataStore.data
         .catch { emit(emptyPreferences()) }
-        .map { it[Keys.FAILED] ?: false }
+        .map { pref ->
+            val failed = pref[Keys.FAILED] ?: false
+            val failedDate = pref[Keys.FAILED_DATE]
+            failed to failedDate
+        }
+        .transformLatest { (failed, failedDate) ->
+            if (failed) {
+                val isToday = failedDate == todayEpoch()
+                if (!isToday) {
+                    dataStore.edit { pref ->
+                        pref[Keys.FAILED] = false
+                        pref.remove(Keys.FAILED_DATE)
+                    }
+                    emit(false)
+                    return@transformLatest
+                }
+            }
+            emit(failed)
+        }
         .distinctUntilChanged()
 
     val isFirstAlarmDismissedTodayFlow: Flow<Boolean> = dataStore.data
@@ -134,7 +154,6 @@ class FortunePreferences @Inject constructor(
         val now = nowMillis()
         dataStore.edit { pref ->
             pref[Keys.CREATING] = true
-            pref[Keys.FAILED] = false
             pref[Keys.ATTEMPT_ID] = attemptId
             pref[Keys.STARTED_AT] = now
             pref[Keys.EXPIRES_AT] = now + lease
@@ -169,6 +188,7 @@ class FortunePreferences @Inject constructor(
                 pref[Keys.DATE] = today
                 pref[Keys.CREATING] = false
                 pref[Keys.FAILED] = false
+                pref.remove(Keys.FAILED_DATE)
                 pref.remove(Keys.ATTEMPT_ID)
                 pref.remove(Keys.STARTED_AT)
                 pref.remove(Keys.EXPIRES_AT)
@@ -186,6 +206,7 @@ class FortunePreferences @Inject constructor(
             if (pref[Keys.ATTEMPT_ID] == attemptId) {
                 pref[Keys.CREATING] = false
                 pref[Keys.FAILED] = true
+                pref[Keys.FAILED_DATE] = todayEpoch()
                 pref.remove(Keys.ATTEMPT_ID)
                 pref.remove(Keys.STARTED_AT)
                 pref.remove(Keys.EXPIRES_AT)
@@ -226,6 +247,7 @@ class FortunePreferences @Inject constructor(
             pref.remove(Keys.TOOLTIP_SHOWN)
             pref.remove(Keys.CREATING)
             pref.remove(Keys.FAILED)
+            pref.remove(Keys.FAILED_DATE)
         }
     }
 }

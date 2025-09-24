@@ -15,6 +15,7 @@ sealed class FortuneContract {
         val avgFortuneScore: Int = 0,
         val fortunePages: List<FortunePageData> = emptyList(),
         val fortuneImageId: Int? = null,
+        val isCreateFailureDialogVisible: Boolean = false,
     ) : com.yapp.ui.base.UiState
 
     sealed class Action {
