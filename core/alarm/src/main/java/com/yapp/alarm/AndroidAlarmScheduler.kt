@@ -2,6 +2,8 @@ package com.yapp.alarm
 
 import android.app.AlarmManager
 import android.app.Application
+import android.app.PendingIntent
+import android.content.Intent
 import android.util.Log
 import com.yapp.alarm.pendingIntent.schedule.createAlarmReceiverPendingIntentForSchedule
 import com.yapp.alarm.pendingIntent.schedule.createAlarmReceiverPendingIntentForUnSchedule
@@ -26,6 +28,23 @@ class AndroidAlarmScheduler @Inject constructor(
         )
     }
 
+    private fun createShowMainActivityPendingIntent(): PendingIntent {
+        val intent = Intent().apply {
+            setClassName(
+                app.packageName,
+                "com.yapp.orbit.MainActivity",
+            )
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        }
+
+        return PendingIntent.getActivity(
+            app,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+    }
+
     override fun scheduleAlarm(alarm: Alarm) {
         val selectedDays = alarm.repeatDays.toAlarmDays()
 
@@ -42,9 +61,11 @@ class AndroidAlarmScheduler @Inject constructor(
         val triggerMillis = alarmTimeCalculator.calculateNextRepeatingTimeMillis(alarm, day)
         val pendingIntent = createAlarmReceiverPendingIntentForSchedule(app, alarm, day)
         logSchedule("REPEAT", alarm, triggerMillis, "day=$day")
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            triggerMillis,
+        alarmManager.setAlarmClock(
+            AlarmManager.AlarmClockInfo(
+                triggerMillis,
+                createShowMainActivityPendingIntent(),
+            ),
             pendingIntent,
         )
     }
@@ -53,9 +74,11 @@ class AndroidAlarmScheduler @Inject constructor(
         val triggerMillis = alarmTimeCalculator.calculateNonRepeatingTimeMillis(alarm)
         val pendingIntent = createAlarmReceiverPendingIntentForSchedule(app, alarm)
         logSchedule("NON_REPEAT", alarm, triggerMillis)
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            triggerMillis,
+        alarmManager.setAlarmClock(
+            AlarmManager.AlarmClockInfo(
+                triggerMillis,
+                createShowMainActivityPendingIntent(),
+            ),
             pendingIntent,
         )
     }
@@ -64,9 +87,11 @@ class AndroidAlarmScheduler @Inject constructor(
         val triggerMillis = alarmTimeCalculator.calculateNextWeeklyRescheduledTimeMillis(alarm, day)
         val pendingIntent = createAlarmReceiverPendingIntentForSchedule(app, alarm, day)
         logSchedule("RESCHEDULE_WEEKLY", alarm, triggerMillis, "day=$day")
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            triggerMillis,
+        alarmManager.setAlarmClock(
+            AlarmManager.AlarmClockInfo(
+                triggerMillis,
+                createShowMainActivityPendingIntent(),
+            ),
             pendingIntent,
         )
     }
