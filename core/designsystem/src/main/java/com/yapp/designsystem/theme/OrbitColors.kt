@@ -1,11 +1,13 @@
 package com.yapp.designsystem.theme
 
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
+@Stable
 class OrbitColors(
     main: Color = Color(0xFFFEFF65),
     sub_main: Color = Color(0xFFFDFE90),
