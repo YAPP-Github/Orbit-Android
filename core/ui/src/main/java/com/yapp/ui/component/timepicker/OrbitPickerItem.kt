@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -27,7 +26,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yapp.designsystem.theme.OrbitTheme
-import com.yapp.ui.utils.toPx
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlin.math.abs
@@ -113,25 +111,6 @@ fun <T> OrbitPickerItem(
                 .pointerInput(Unit) { detectVerticalDragGestures { change, _ -> change.consume() } },
         ) {
             items(listScrollCount, key = { index -> index }) { index ->
-                val layoutInfo by remember { derivedStateOf { listState.layoutInfo } }
-
-                val viewportCenterOffset = layoutInfo.viewportStartOffset +
-                    (layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset) / 2
-
-                val itemInfo = layoutInfo.visibleItemsInfo.find { it.index == index }
-                val itemCenterOffset = itemInfo?.offset?.let { it + (itemInfo.size / 2) } ?: 0
-
-                val distanceFromCenter = abs(viewportCenterOffset - itemCenterOffset)
-                val maxDistance = totalItemHeight.toPx() * visibleItemsMiddle
-
-                val alpha = if (distanceFromCenter <= maxDistance) {
-                    ((maxDistance - distanceFromCenter) / maxDistance).coerceIn(0.2f, 1f)
-                } else {
-                    0.2f
-                }
-
-                val scaleY = 1f - (0.2f * (distanceFromCenter / maxDistance)).coerceIn(0f, 0.4f)
-
                 val item = getItemForIndex(
                     index = index,
                     items = items,
@@ -143,10 +122,29 @@ fun <T> OrbitPickerItem(
                     text = item?.let { itemFormatter(it) } ?: "",
                     maxLines = 1,
                     style = textStyle,
-                    color = OrbitTheme.colors.white.copy(alpha = alpha),
+                    color = OrbitTheme.colors.white,
                     modifier = Modifier
                         .padding(vertical = itemSpacing / 2)
-                        .graphicsLayer(scaleY = scaleY)
+                        .graphicsLayer {
+                            val layoutInfo = listState.layoutInfo
+
+                            val viewportCenterOffset = layoutInfo.viewportStartOffset +
+                                (layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset) / 2
+
+                            val itemInfo = layoutInfo.visibleItemsInfo.find { it.index == index }
+                            val itemCenterOffset = itemInfo?.offset?.let { it + (itemInfo.size / 2) } ?: 0
+
+                            val distanceFromCenter = abs(viewportCenterOffset - itemCenterOffset)
+                            val maxDistance = totalItemHeight.toPx() * visibleItemsMiddle
+
+                            alpha = if (distanceFromCenter <= maxDistance) {
+                                ((maxDistance - distanceFromCenter) / maxDistance).coerceIn(0.2f, 1f)
+                            } else {
+                                0.2f
+                            }
+
+                            scaleY = 1f - (0.2f * (distanceFromCenter / maxDistance)).coerceIn(0f, 0.4f)
+                        }
                         .onSizeChanged { size -> itemHeightPixels = size.height }
                         .then(textModifier),
                 )
