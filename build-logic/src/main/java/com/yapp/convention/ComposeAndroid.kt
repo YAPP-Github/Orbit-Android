@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.compose.compiler.gradle.ComposeCompilerGradlePluginE
 internal fun Project.configureComposeAndroid() {
     with(plugins) {
         apply("org.jetbrains.kotlin.plugin.compose")
+        apply("com.github.skydoves.compose.stability.analyzer")
     }
 
     val libs = extensions.libs
