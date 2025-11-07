@@ -4,6 +4,7 @@ import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +33,7 @@ fun rememberOrbitBottomSheetState(): OrbitBottomSheetState {
     }
 }
 
+@Stable
 class OrbitBottomSheetState(
     val state: ModalBottomSheetState,
     val contentState: State<BottomSheetContent?>,
