@@ -11,7 +11,6 @@ internal fun Project.configureComposeAndroid() {
         apply("com.github.skydoves.compose.stability.analyzer")
     }
 
-    val libs = extensions.libs
     androidExtension.apply {
         dependencies {
             val bom = libs.findLibrary("compose.bom").get()
