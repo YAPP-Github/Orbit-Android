@@ -139,6 +139,12 @@ fun <T> OrbitPickerItem(
                             val distanceFromCenter = abs(viewportCenterOffset - itemCenterOffset)
                             val maxDistance = totalItemHeight.toPx() * visibleItemsMiddle
 
+                            if (maxDistance <= 0f) {
+                                alpha = 1f
+                                scaleY = 1f
+                                return@graphicsLayer
+                            }
+
                             alpha = if (distanceFromCenter <= maxDistance) {
                                 ((maxDistance - distanceFromCenter) / maxDistance).coerceIn(0.2f, 1f)
                             } else {
