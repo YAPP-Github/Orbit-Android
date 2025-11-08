@@ -4,7 +4,6 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
 
 internal fun Project.configureTestKotlin() {
-    val libs = extensions.libs
     dependencies {
         // JUnit4 단위 테스트 프레임워크
         "testImplementation"(libs.findLibrary("junit4").get())

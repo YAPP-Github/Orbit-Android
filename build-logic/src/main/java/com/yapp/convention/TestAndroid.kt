@@ -12,7 +12,6 @@ internal fun Project.configureTestAndroid() {
 }
 
 internal fun Project.configureComposeUiTest() {
-    val libs = extensions.libs
     dependencies {
         "androidTestImplementation"(libs.findLibrary("compose-ui-test-junit4").get())
         "debugImplementation"(libs.findLibrary("compose-ui-test-manifest").get())
@@ -24,7 +23,6 @@ internal fun Project.configureJUnitAndroid() {
     androidExtension.apply {
         defaultConfig { testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
 
-        val libs = extensions.libs
         dependencies {
             "androidTestImplementation"(libs.findLibrary("androidx-test-ext-junit").get())
             "androidTestImplementation"(libs.findLibrary("androidx-test-runner").get())

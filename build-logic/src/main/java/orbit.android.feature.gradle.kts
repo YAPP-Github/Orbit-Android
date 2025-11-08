@@ -9,7 +9,6 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
 
-    val libs = project.extensions.libs
     implementation(libs.findLibrary("compose-navigation").get())
     implementation(libs.findLibrary("lifecycle-viewmodel").get())
     implementation(libs.findLibrary("lifecycle-runtime").get())

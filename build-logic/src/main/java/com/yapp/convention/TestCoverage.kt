@@ -13,7 +13,6 @@ import org.gradle.testing.jacoco.tasks.JacocoReport
 internal fun Project.configureTestCoverage() {
     pluginManager.apply("jacoco")
 
-    val libs = extensions.libs
     extensions.configure<JacocoPluginExtension> {
         toolVersion = libs.findVersion("jacoco").get().toString()
     }

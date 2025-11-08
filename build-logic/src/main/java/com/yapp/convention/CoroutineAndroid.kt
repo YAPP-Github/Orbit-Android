@@ -9,7 +9,6 @@ internal fun Project.configureCoroutine() {
 }
 
 private fun Project.addImplementation(libraryKey: String) {
-    val libs = extensions.libs
     dependencies {
         "implementation"(libs.findLibrary(libraryKey).get())
     }

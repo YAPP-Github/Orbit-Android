@@ -3,10 +3,12 @@ package com.yapp.ui.component.timepicker
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
+@Stable
 class PickerState<T>(
     val lazyListState: LazyListState,
     val initialIndex: Int,
