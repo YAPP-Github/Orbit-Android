@@ -30,7 +30,7 @@ androidx-datastore = "1.1.1"
 androidx-room = "2.7.2"
 androidx-work = "2.10.3"
 
-androidx-lifecycle = "2.8.7"
+androidx-lifecycle = "2.9.4"
 
 annotation = "1.9.1"
 
@@ -54,9 +54,9 @@ coil = "2.7.0"
 # Google Libraries Versions
 google-service = "4.4.2"
 playServicesAd = "24.2.0"
-firebase-bom = "33.1.1"
-firebase-app-distribution = "5.1.0"
-firebase-crashlytics = "3.0.3"
+firebase-bom = "34.4.0"
+firebase-app-distribution = "5.2.0"
+firebase-crashlytics = "3.0.6"
 
 ## Test
 junit4 = "4.13.2"
@@ -78,6 +78,10 @@ accompanist = "0.37.0"
 materialAndroid = "1.7.5"
 amplitude = "1.20.3"
 stability-analyzer = "0.5.0"
+uiautomator = "2.3.0"
+benchmarkMacroJunit4 = "1.4.1"
+baselineprofile = "1.4.1"
+profileinstaller = "1.4.1"
 
 [libraries]
 
@@ -148,9 +152,9 @@ okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor",
 
 # Google Libraries
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
-firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
-firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics-ktx" }
-firebase-config = { group = "com.google.firebase", name = "firebase-config-ktx" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
+firebase-config = { group = "com.google.firebase", name = "firebase-config" }
 
 ## Logging
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
@@ -178,6 +182,9 @@ amplitude-analytics = { group = "com.amplitude", name = "analytics-android", ver
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAd" }
 
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmarkMacroJunit4" }
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 
 [plugins]
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
@@ -195,3 +202,4 @@ google-service = { id = "com.google.gms.google-services", version.ref = "google-
 firebase-app-distribution = { id = "com.google.firebase.appdistribution", version.ref = "firebase-app-distribution" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics" }
 stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version.ref = "stability-analyzer" }
+baselineprofile = { id = "androidx.baselineprofile", version.ref = "baselineprofile" }

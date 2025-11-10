@@ -4,13 +4,7 @@ pluginManagement {
         name = "build-logic"
     }
     repositories {
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
+        google()
         mavenCentral()
         gradlePluginPortal()
     }
@@ -47,3 +41,4 @@ include(":feature:webview")
 include(":core:analytics")
 include(":core:remoteconfig")
 include(":core:database")
+include(":baselineprofile")
