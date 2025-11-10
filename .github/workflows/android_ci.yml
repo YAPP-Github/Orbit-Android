@@ -83,7 +83,7 @@ jobs:
 
       # Run Unit Test and Generate Coverage
       - name: Run unit tests and generate coverage
-        run: ./gradlew generateTestCoverageReport
+        run: ./gradlew generateTestCoverageReport --no-configuration-cache
 
       # Upload Coverage to Codecov
       - name: Upload coverage to Codecov
