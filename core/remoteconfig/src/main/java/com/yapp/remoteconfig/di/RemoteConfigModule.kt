@@ -1,9 +1,9 @@
 package com.yapp.remoteconfig.di
 
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.Firebase
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
-import com.google.firebase.remoteconfig.ktx.remoteConfig
-import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
+import com.google.firebase.remoteconfig.remoteConfig
+import com.google.firebase.remoteconfig.remoteConfigSettings
 import com.yapp.remoteconfig.FirebaseRemoteConfigManager
 import dagger.Module
 import dagger.Provides
