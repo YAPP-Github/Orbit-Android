@@ -3,8 +3,6 @@ package com.yapp.database
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.yapp.domain.model.Alarm
-import com.yapp.domain.model.MissionType
 
 @Entity(tableName = AlarmDatabase.DATABASE_NAME)
 data class AlarmEntity(
@@ -33,45 +31,9 @@ data class AlarmEntity(
     val isAlarmActive: Boolean = true,
 
     @ColumnInfo(defaultValue = "1")
-    val missionType: MissionType = MissionType.TAP,
+    val missionType: Int = DEFAULT_MISSION_TYPE_VALUE,
     @ColumnInfo(defaultValue = "10")
     val missionCount: Int = 10,
 )
 
-fun AlarmEntity.toDomain() = Alarm(
-    id = id,
-    hour = hour,
-    minute = minute,
-    second = second,
-    repeatDays = repeatDays,
-    isHolidayAlarmOff = isHolidayAlarmOff,
-    isSnoozeEnabled = isSnoozeEnabled,
-    snoozeInterval = snoozeInterval,
-    snoozeCount = snoozeCount,
-    isVibrationEnabled = isVibrationEnabled,
-    isSoundEnabled = isSoundEnabled,
-    soundUri = soundUri,
-    soundVolume = soundVolume,
-    isAlarmActive = isAlarmActive,
-    missionType = missionType,
-    missionCount = missionCount,
-)
-
-fun Alarm.toEntity() = AlarmEntity(
-    id = id,
-    hour = hour,
-    minute = minute,
-    second = second,
-    repeatDays = repeatDays,
-    isHolidayAlarmOff = isHolidayAlarmOff,
-    isSnoozeEnabled = isSnoozeEnabled,
-    snoozeInterval = snoozeInterval,
-    snoozeCount = snoozeCount,
-    isVibrationEnabled = isVibrationEnabled,
-    isSoundEnabled = isSoundEnabled,
-    soundUri = soundUri,
-    soundVolume = soundVolume,
-    isAlarmActive = isAlarmActive,
-    missionType = missionType,
-    missionCount = missionCount,
-)
+private const val DEFAULT_MISSION_TYPE_VALUE = 1

@@ -1,8 +1,8 @@
 package com.yapp.data.local.datasource
 
+import com.yapp.data.local.mapper.toDomain
 import com.yapp.database.AlarmDao
 import com.yapp.database.AlarmEntity
-import com.yapp.database.toDomain
 import com.yapp.domain.model.Alarm
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
