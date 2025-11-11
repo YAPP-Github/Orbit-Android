@@ -9,9 +9,9 @@ import com.yapp.common.navigation.route.OnboardingDestination
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
 import com.yapp.domain.model.toRepeatDays
+import com.yapp.domain.repository.AlarmRepository
 import com.yapp.domain.repository.SignUpRepository
 import com.yapp.domain.repository.UserInfoRepository
-import com.yapp.domain.usecase.AlarmUseCase
 import com.yapp.media.haptic.HapticFeedbackManager
 import com.yapp.media.haptic.HapticType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,7 +30,7 @@ class OnboardingViewModel @Inject constructor(
     private val analyticsHelper: AnalyticsHelper,
     private val signUpRepository: SignUpRepository,
     private val userInfoRepository: UserInfoRepository,
-    private val alarmUseCase: AlarmUseCase,
+    private val alarmRepository: AlarmRepository,
     private val hapticFeedbackManager: HapticFeedbackManager,
     private val savedStateHandle: SavedStateHandle,
 ) : ViewModel(), ContainerHost<OnboardingContract.State, OnboardingContract.SideEffect> {
@@ -131,7 +131,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     private fun createAlarm() = intent {
-        alarmUseCase.getAlarmSounds().onSuccess { sounds ->
+        alarmRepository.getAlarmSounds().onSuccess { sounds ->
             val defaultSoundIndex = sounds.indexOfFirst { it.title == "Homecoming" }.takeIf { it >= 0 } ?: 0
             val defaultSound = sounds[defaultSoundIndex]
 
@@ -145,7 +145,7 @@ class OnboardingViewModel @Inject constructor(
                 soundUri = defaultSound.uri,
             )
 
-            alarmUseCase.insertAlarm(
+            alarmRepository.insertAlarm(
                 alarm = newAlarm,
             ).onFailure {
                 Log.e("OnboardingViewModel", "Failed to create alarm", it)

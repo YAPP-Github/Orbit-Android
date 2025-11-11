@@ -13,8 +13,8 @@ import com.yapp.analytics.AnalyticsHelper
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.toAlarmDay
 import com.yapp.domain.model.toTimeString
+import com.yapp.domain.repository.AlarmRepository
 import com.yapp.domain.repository.FortuneRepository
-import com.yapp.domain.usecase.AlarmUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +37,7 @@ class AlarmReceiver : BroadcastReceiver() {
     lateinit var fortuneRepository: FortuneRepository
 
     @Inject
-    lateinit var alarmUseCase: AlarmUseCase
+    lateinit var alarmRepository: AlarmRepository
 
     override fun onReceive(context: Context?, intent: Intent?) {
         context ?: return
@@ -93,7 +93,7 @@ class AlarmReceiver : BroadcastReceiver() {
                 context.stopService(alarmServiceIntent)
 
                 CoroutineScope(Dispatchers.IO).launch {
-                    val alarms = alarmUseCase.getAllAlarms().first()
+                    val alarms = alarmRepository.getAllAlarms().first()
 
                     val isSnoozeId = notificationId >= AlarmConstants.SNOOZE_ID_OFFSET
 

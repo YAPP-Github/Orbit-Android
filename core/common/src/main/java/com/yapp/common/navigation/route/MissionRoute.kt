@@ -1,6 +1,6 @@
 package com.yapp.common.navigation.route
 
-import com.yapp.domain.MissionMode
+import com.yapp.domain.model.MissionMode
 import kotlinx.serialization.Serializable
 
 @Serializable

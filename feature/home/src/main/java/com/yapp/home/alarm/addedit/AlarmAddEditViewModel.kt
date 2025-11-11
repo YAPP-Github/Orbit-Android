@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
 import com.yapp.common.util.ResourceProvider
+import com.yapp.domain.media.AlarmSoundManager
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
 import com.yapp.domain.model.AlarmSound
@@ -15,7 +16,8 @@ import com.yapp.domain.model.copyFrom
 import com.yapp.domain.model.toAlarmDayNames
 import com.yapp.domain.model.toAlarmDays
 import com.yapp.domain.model.toRepeatDays
-import com.yapp.domain.usecase.AlarmUseCase
+import com.yapp.domain.repository.AlarmRepository
+import com.yapp.domain.scheduler.AlarmScheduler
 import com.yapp.home.util.AlarmDateTimeFormatter
 import com.yapp.media.haptic.HapticFeedbackManager
 import com.yapp.media.haptic.HapticType
@@ -35,7 +37,9 @@ import javax.inject.Inject
 @HiltViewModel
 class AlarmAddEditViewModel @Inject constructor(
     private val analyticsHelper: AnalyticsHelper,
-    private val alarmUseCase: AlarmUseCase,
+    private val alarmRepository: AlarmRepository,
+    private val alarmScheduler: AlarmScheduler,
+    private val alarmSoundManager: AlarmSoundManager,
     private val resourceProvider: ResourceProvider,
     private val alarmDateTimeFormatter: AlarmDateTimeFormatter,
     private val hapticFeedbackManager: HapticFeedbackManager,
@@ -52,7 +56,7 @@ class AlarmAddEditViewModel @Inject constructor(
     private val alarmId: Long = savedStateHandle.get<Long>("alarmId") ?: -1
 
     private fun initializeAlarmScreen() = intent {
-        alarmUseCase.getAlarmSounds().onSuccess { sounds ->
+        alarmRepository.getAlarmSounds().onSuccess { sounds ->
             if (alarmId == -1L) {
                 setupNewAlarmScreen(sounds)
             } else {
@@ -67,7 +71,7 @@ class AlarmAddEditViewModel @Inject constructor(
         val defaultSoundIndex = sounds.indexOfFirst { it.title == "Homecoming" }.takeIf { it >= 0 } ?: 0
         val defaultSound = sounds[defaultSoundIndex]
 
-        alarmUseCase.initializeSoundPlayer(defaultSound.uri)
+        alarmSoundManager.initializeSoundPlayer(defaultSound.uri)
 
         val now = LocalTime.now()
 
@@ -85,12 +89,12 @@ class AlarmAddEditViewModel @Inject constructor(
     }
 
     private fun loadExistingAlarm(sounds: List<AlarmSound>) = intent {
-        alarmUseCase.getAlarm(alarmId).onSuccess { alarm ->
+        alarmRepository.getAlarm(alarmId).onSuccess { alarm ->
             val repeatDays = alarm.repeatDays.toAlarmDays()
             val selectedSoundIndex = sounds.indexOfFirst { it.uri == alarm.soundUri }
             val selectedSound = sounds.getOrNull(selectedSoundIndex) ?: sounds.first()
 
-            alarmUseCase.initializeSoundPlayer(selectedSound.uri)
+            alarmSoundManager.initializeSoundPlayer(selectedSound.uri)
 
             reduce {
                 state.copy(
@@ -156,7 +160,7 @@ class AlarmAddEditViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        alarmUseCase.releaseSoundPlayer()
+        alarmSoundManager.releaseSoundPlayer()
     }
 
     fun processAction(action: AlarmAddEditContract.Action) {
@@ -201,7 +205,7 @@ class AlarmAddEditViewModel @Inject constructor(
             navigateBack()
         } else {
             val updatedAlarm = state.toAlarm()
-            alarmUseCase.getAlarm(alarmId).onSuccess { existingAlarm ->
+            alarmRepository.getAlarm(alarmId).onSuccess { existingAlarm ->
                 if (updatedAlarm.copy(id = alarmId) != existingAlarm) {
                     showUnsavedChangesDialog()
                 } else {
@@ -242,13 +246,13 @@ class AlarmAddEditViewModel @Inject constructor(
     private fun updateExistingAlarm(alarm: Alarm) = intent {
         val updatedAlarm = alarm.copy(id = alarmId)
 
-        alarmUseCase.getAlarm(alarmId).onSuccess { oldAlarm ->
-            alarmUseCase.unScheduleAlarm(oldAlarm)
+        alarmRepository.getAlarm(alarmId).onSuccess { oldAlarm ->
+            alarmScheduler.unScheduleAlarm(oldAlarm)
         }
 
-        alarmUseCase.updateAlarm(updatedAlarm)
+        alarmRepository.updateAlarm(updatedAlarm)
             .onSuccess {
-                alarmUseCase.scheduleAlarm(updatedAlarm)
+                alarmScheduler.scheduleAlarm(updatedAlarm)
                 postSideEffect(AlarmAddEditContract.SideEffect.UpdateAlarm(it.id))
             }
             .onFailure {
@@ -257,7 +261,7 @@ class AlarmAddEditViewModel @Inject constructor(
     }
 
     private suspend fun checkAndCreateAlarm(newAlarm: Alarm) {
-        val timeMatchedAlarms = alarmUseCase.getAlarmsByTime(newAlarm.hour, newAlarm.minute)
+        val timeMatchedAlarms = alarmRepository.getAlarmsByTime(newAlarm.hour, newAlarm.minute)
             .first()
 
         when {
@@ -290,7 +294,7 @@ class AlarmAddEditViewModel @Inject constructor(
     }
 
     private fun createNewAlarm(alarm: Alarm) = intent {
-        alarmUseCase.insertAlarm(alarm)
+        alarmRepository.insertAlarm(alarm)
             .onSuccess {
                 analyticsHelper.logEvent(
                     AnalyticsEvent(
@@ -302,7 +306,7 @@ class AlarmAddEditViewModel @Inject constructor(
                         ),
                     ),
                 )
-                alarmUseCase.scheduleAlarm(it)
+                alarmScheduler.scheduleAlarm(it)
                 postSideEffect(AlarmAddEditContract.SideEffect.SaveAlarm(it.id))
             }
             .onFailure {
@@ -508,18 +512,18 @@ class AlarmAddEditViewModel @Inject constructor(
 
     private fun toggleSoundEnabled(enabled: Boolean) = intent {
         if (!enabled) {
-            alarmUseCase.stopAlarmSound()
+            alarmSoundManager.stopAlarmSound()
         }
     }
 
     private fun setSoundVolume(volume: Int) = intent {
-        alarmUseCase.updateAlarmVolume(volume)
+        alarmSoundManager.updateAlarmVolume(volume)
     }
 
     private fun setSoundIndex(index: Int) = intent {
         val selectedSound = state.soundState.sounds[index]
-        alarmUseCase.initializeSoundPlayer(selectedSound.uri)
-        alarmUseCase.playAlarmSound(state.soundState.soundVolume)
+        alarmSoundManager.initializeSoundPlayer(selectedSound.uri)
+        alarmSoundManager.playAlarmSound(state.soundState.soundVolume)
     }
 
     private fun showBottomSheet(sheetType: AlarmAddEditContract.BottomSheetType) = intent {
