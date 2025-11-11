@@ -2,6 +2,7 @@ import com.yapp.convention.setNamespace
 
 plugins {
     id("orbit.android.feature")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {

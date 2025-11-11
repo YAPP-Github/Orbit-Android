@@ -32,20 +32,19 @@ android {
             isShrinkResources = true
         }
     }
+
+    lint {
+        disable.add("NullSafeMutableLiveData")
+    }
 }
 
 dependencies {
     implementation(projects.core.common)
     implementation(projects.core.analytics)
     implementation(projects.core.buildconfig)
-    implementation(projects.core.network)
     implementation(projects.core.designsystem)
-    implementation(projects.core.datastore)
-    implementation(projects.core.alarm)
-    implementation(projects.core.media)
     implementation(projects.core.ui)
     implementation(projects.data)
-    implementation(projects.domain)
     implementation(projects.feature.splash)
     implementation(projects.feature.onboarding)
     implementation(projects.feature.home)

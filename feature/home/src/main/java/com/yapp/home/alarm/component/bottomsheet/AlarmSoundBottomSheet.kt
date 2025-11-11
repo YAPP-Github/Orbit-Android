@@ -1,6 +1,5 @@
 package com.yapp.home.alarm.component.bottomsheet
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -269,7 +268,7 @@ private fun AlarmSoundBottomSheetPreview() {
     OrbitTheme {
         AlarmSoundBottomSheet(
             soundState = AlarmAddEditContract.AlarmSoundState(
-                sounds = (1..20).map { AlarmSound("sound $it", Uri.EMPTY) },
+                sounds = (1..20).map { AlarmSound("sound $it", "") },
             ),
             onVibrationToggle = {},
             onSoundToggle = {},

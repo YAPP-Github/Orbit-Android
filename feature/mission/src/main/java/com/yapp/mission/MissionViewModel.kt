@@ -6,8 +6,8 @@ import androidx.lifecycle.ViewModel
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
-import com.yapp.domain.MissionMode
 import com.yapp.domain.model.FortuneCreateStatus
+import com.yapp.domain.model.MissionMode
 import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.media.haptic.HapticFeedbackManager

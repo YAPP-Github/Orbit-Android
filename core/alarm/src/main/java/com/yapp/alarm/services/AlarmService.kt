@@ -27,7 +27,7 @@ import com.yapp.alarm.scheduler.PostFortuneTaskScheduler
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
 import com.yapp.domain.model.MissionType
-import com.yapp.domain.usecase.AlarmUseCase
+import com.yapp.domain.repository.AlarmRepository
 import com.yapp.media.sound.SoundPlayer
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -41,7 +41,7 @@ import javax.inject.Inject
 class AlarmService : Service() {
 
     @Inject
-    lateinit var alarmUseCase: AlarmUseCase
+    lateinit var alarmRepository: AlarmRepository
 
     @Inject
     lateinit var soundPlayer: SoundPlayer
@@ -80,12 +80,7 @@ class AlarmService : Service() {
     }
 
     private fun handleIntent(intent: Intent) {
-        val alarm: Alarm? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableExtra(AlarmConstants.EXTRA_ALARM, Alarm::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getParcelableExtra(AlarmConstants.EXTRA_ALARM)
-        }
+        val alarm: Alarm? = intent.getStringExtra(AlarmConstants.EXTRA_ALARM)?.let(Alarm::fromJson)
 
         if (alarm == null) {
             Log.e("AlarmService", "Failed to retrieve Alarm object from intent")
@@ -198,7 +193,7 @@ class AlarmService : Service() {
 
     private fun turnOffAlarm(alarmId: Long) {
         CoroutineScope(Dispatchers.IO).launch {
-            alarmUseCase.updateAlarmActive(
+            alarmRepository.updateAlarmActive(
                 id = alarmId,
                 active = false,
             )

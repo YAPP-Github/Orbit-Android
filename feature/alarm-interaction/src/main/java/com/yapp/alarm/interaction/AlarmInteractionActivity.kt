@@ -5,7 +5,6 @@ import android.app.KeyguardManager
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ActivityInfo
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,12 +33,7 @@ class AlarmInteractionActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
-        val alarm: Alarm? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableExtra(AlarmConstants.EXTRA_ALARM, Alarm::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getParcelableExtra(AlarmConstants.EXTRA_ALARM)
-        }
+        val alarm = intent.getStringExtra(AlarmConstants.EXTRA_ALARM)?.let(Alarm::fromJson)
 
         unlockScreen()
 
@@ -66,12 +60,7 @@ class AlarmInteractionActivity : ComponentActivity() {
 
             DisposableEffect(this, navigator.navController) {
                 val onNewIntentConsumer = Consumer<Intent> { newIntent ->
-                    val newAlarm: Alarm? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        newIntent.getParcelableExtra(AlarmConstants.EXTRA_ALARM, Alarm::class.java)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        newIntent.getParcelableExtra(AlarmConstants.EXTRA_ALARM)
-                    }
+                    val newAlarm = newIntent.getStringExtra(AlarmConstants.EXTRA_ALARM)?.let(Alarm::fromJson)
                     newAlarm?.let { alarm ->
                         navigator.navigateToAlarmAction(alarm = alarm)
                     }

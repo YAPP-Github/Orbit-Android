@@ -1,45 +1,40 @@
 package com.yapp.data.repositoryimpl
 
-import android.net.Uri
 import com.yapp.data.local.datasource.AlarmLocalDataSource
-import com.yapp.database.toEntity
+import com.yapp.data.local.mapper.toEntity
+import com.yapp.domain.media.AlarmSoundManager
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmSound
 import com.yapp.domain.repository.AlarmRepository
-import com.yapp.media.ringtone.RingtoneManagerHelper
-import com.yapp.media.sound.SoundPlayer
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class AlarmRepositoryImpl @Inject constructor(
     private val alarmLocalDataSource: AlarmLocalDataSource,
-    private val ringtoneManagerHelper: RingtoneManagerHelper,
-    private val soundPlayer: SoundPlayer,
+    private val alarmSoundManager: AlarmSoundManager,
 ) : AlarmRepository {
     override suspend fun getAlarmSounds(): Result<List<AlarmSound>> = runCatching {
-        ringtoneManagerHelper.getAlarmSounds().map { (title, uri) ->
-            AlarmSound(title, uri)
-        }
+        alarmSoundManager.getAlarmSounds()
     }
 
-    override fun initializeSoundPlayer(uri: Uri) {
-        soundPlayer.initialize(uri)
+    override fun initializeSoundPlayer(uri: String) {
+        alarmSoundManager.initializeSoundPlayer(uri)
     }
 
     override fun playAlarmSound(volume: Int) {
-        soundPlayer.playSound(volume)
+        alarmSoundManager.playAlarmSound(volume)
     }
 
     override fun stopAlarmSound() {
-        soundPlayer.stopSound()
+        alarmSoundManager.stopAlarmSound()
     }
 
     override fun updateAlarmVolume(volume: Int) {
-        soundPlayer.updateVolume(volume)
+        alarmSoundManager.updateAlarmVolume(volume)
     }
 
     override fun releaseSoundPlayer() {
-        soundPlayer.release()
+        alarmSoundManager.releaseSoundPlayer()
     }
 
     override fun getAllAlarms(): Flow<List<Alarm>> =

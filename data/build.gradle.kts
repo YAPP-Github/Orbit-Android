@@ -15,7 +15,6 @@ dependencies {
     implementation(projects.core.datastore)
 
     implementation(projects.domain)
-    implementation(projects.core.media)
     implementation(projects.core.remoteconfig)
 
     implementation(libs.kotlinx.serialization.json)

@@ -3,7 +3,6 @@ package com.yapp.alarm.receivers
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import com.yapp.alarm.AlarmConstants
@@ -14,8 +13,8 @@ import com.yapp.analytics.AnalyticsHelper
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.toAlarmDay
 import com.yapp.domain.model.toTimeString
+import com.yapp.domain.repository.AlarmRepository
 import com.yapp.domain.repository.FortuneRepository
-import com.yapp.domain.usecase.AlarmUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +37,7 @@ class AlarmReceiver : BroadcastReceiver() {
     lateinit var fortuneRepository: FortuneRepository
 
     @Inject
-    lateinit var alarmUseCase: AlarmUseCase
+    lateinit var alarmRepository: AlarmRepository
 
     override fun onReceive(context: Context?, intent: Intent?) {
         context ?: return
@@ -47,15 +46,7 @@ class AlarmReceiver : BroadcastReceiver() {
         val alarmServiceIntent = createAlarmServiceIntent(context, intent)
         when (intent.action) {
             AlarmConstants.ACTION_ALARM_TRIGGERED -> {
-                val alarm: Alarm? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    alarmServiceIntent.getParcelableExtra(
-                        AlarmConstants.EXTRA_ALARM,
-                        Alarm::class.java,
-                    )
-                } else {
-                    @Suppress("DEPRECATION")
-                    alarmServiceIntent.getParcelableExtra(AlarmConstants.EXTRA_ALARM)
-                }
+                val alarm: Alarm? = alarmServiceIntent.getStringExtra(AlarmConstants.EXTRA_ALARM)?.let(Alarm::fromJson)
                 analyticsHelper.logEvent(
                     AnalyticsEvent(
                         type = "alarm_ring",
@@ -70,12 +61,7 @@ class AlarmReceiver : BroadcastReceiver() {
             }
 
             AlarmConstants.ACTION_ALARM_SNOOZED -> {
-                val alarm: Alarm? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    intent.getParcelableExtra(AlarmConstants.EXTRA_ALARM, Alarm::class.java)
-                } else {
-                    @Suppress("DEPRECATION")
-                    intent.getParcelableExtra(AlarmConstants.EXTRA_ALARM)
-                }
+                val alarm: Alarm? = intent.getStringExtra(AlarmConstants.EXTRA_ALARM)?.let(Alarm::fromJson)
                 analyticsHelper.logEvent(
                     AnalyticsEvent(
                         type = "alarm_snooze",
@@ -107,7 +93,7 @@ class AlarmReceiver : BroadcastReceiver() {
                 context.stopService(alarmServiceIntent)
 
                 CoroutineScope(Dispatchers.IO).launch {
-                    val alarms = alarmUseCase.getAllAlarms().first()
+                    val alarms = alarmRepository.getAllAlarms().first()
 
                     val isSnoozeId = notificationId >= AlarmConstants.SNOOZE_ID_OFFSET
 

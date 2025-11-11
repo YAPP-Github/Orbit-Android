@@ -7,9 +7,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.yapp.common.util.ResourceProvider
 import com.yapp.domain.model.Alarm
+import com.yapp.domain.repository.AlarmRepository
 import com.yapp.domain.repository.FortuneRepository
 import com.yapp.domain.repository.UserInfoRepository
-import com.yapp.domain.usecase.AlarmUseCase
+import com.yapp.domain.scheduler.AlarmScheduler
 import com.yapp.home.util.AlarmDateTimeFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -30,7 +31,8 @@ import javax.inject.Named
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val alarmUseCase: AlarmUseCase,
+    private val alarmRepository: AlarmRepository,
+    private val alarmScheduler: AlarmScheduler,
     private val resourceProvider: ResourceProvider,
     private val alarmDateTimeFormatter: AlarmDateTimeFormatter,
     private val fortuneRepository: FortuneRepository,
@@ -178,7 +180,7 @@ class HomeViewModel @Inject constructor(
         val previousState = currentAlarm.isAlarmActive // 기존 상태 저장
         val updatedAlarm = currentAlarm.copy(isAlarmActive = !currentAlarm.isAlarmActive)
 
-        alarmUseCase.updateAlarmActive(alarmId, updatedAlarm.isAlarmActive).onSuccess {
+        alarmRepository.updateAlarmActive(alarmId, updatedAlarm.isAlarmActive).onSuccess {
             val updatedAlarms = state.alarms.toMutableList()
             updatedAlarms[currentIndex] = updatedAlarm
 
@@ -192,9 +194,9 @@ class HomeViewModel @Inject constructor(
             }
 
             if (updatedAlarm.isAlarmActive) {
-                alarmUseCase.scheduleAlarm(updatedAlarm)
+                alarmScheduler.scheduleAlarm(updatedAlarm)
             } else {
-                alarmUseCase.unScheduleAlarm(updatedAlarm)
+                alarmScheduler.unScheduleAlarm(updatedAlarm)
             }
         }.onFailure { error ->
             Log.e("HomeViewModel", "Failed to update alarm state", error)
@@ -242,7 +244,7 @@ class HomeViewModel @Inject constructor(
         val currentAlarm = state.alarms[currentIndex]
         val restoredAlarm = currentAlarm.copy(isAlarmActive = previousState)
 
-        alarmUseCase.updateAlarm(restoredAlarm).onSuccess { updatedAlarm ->
+        alarmRepository.updateAlarm(restoredAlarm).onSuccess { updatedAlarm ->
             val updatedAlarms = state.alarms.toMutableList()
             updatedAlarms[currentIndex] = updatedAlarm
             reduce {
@@ -254,9 +256,9 @@ class HomeViewModel @Inject constructor(
             }
 
             if (updatedAlarm.isAlarmActive) {
-                alarmUseCase.scheduleAlarm(updatedAlarm)
+                alarmScheduler.scheduleAlarm(updatedAlarm)
             } else {
-                alarmUseCase.unScheduleAlarm(updatedAlarm)
+                alarmScheduler.unScheduleAlarm(updatedAlarm)
             }
         }.onFailure { error ->
             Log.e("HomeViewModel", "Failed to rollback alarm state", error)
@@ -274,8 +276,8 @@ class HomeViewModel @Inject constructor(
             .filter { it.id in alarmIds }
 
         alarmsToDelete.forEach { alarm ->
-            alarmUseCase.deleteAlarm(alarm.id)
-            alarmUseCase.unScheduleAlarm(alarm)
+            alarmRepository.deleteAlarm(alarm.id)
+            alarmScheduler.unScheduleAlarm(alarm)
         }
 
         if (state.activeItemMenu != null) {
@@ -297,8 +299,8 @@ class HomeViewModel @Inject constructor(
 
     private fun restoreDeletedAlarms(alarmsWithIndex: List<Alarm>) = intent {
         alarmsWithIndex.forEach { alarm ->
-            alarmUseCase.insertAlarm(alarm)
-            alarmUseCase.scheduleAlarm(alarm)
+            alarmRepository.insertAlarm(alarm)
+            alarmScheduler.scheduleAlarm(alarm)
         }
     }
 
@@ -309,7 +311,7 @@ class HomeViewModel @Inject constructor(
     private fun loadAllAlarms() = intent {
         reduce { state.copy(initialLoading = true) }
 
-        alarmUseCase.getAllAlarms().collect { alarms ->
+        alarmRepository.getAllAlarms().collect { alarms ->
             reduce {
                 state.copy(
                     alarms = alarms,

@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.yapp.alarm.AndroidAlarmScheduler
-import com.yapp.domain.usecase.AlarmUseCase
+import com.yapp.domain.repository.AlarmRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +17,7 @@ import javax.inject.Inject
 class RescheduleAlarmReceiver : BroadcastReceiver() {
 
     @Inject
-    lateinit var alarmUseCase: AlarmUseCase
+    lateinit var alarmRepository: AlarmRepository
 
     @Inject
     lateinit var androidAlarmScheduler: AndroidAlarmScheduler
@@ -35,7 +35,7 @@ class RescheduleAlarmReceiver : BroadcastReceiver() {
     private fun rescheduleAlarm(pendingResult: PendingResult) {
         CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
             try {
-                val alarms = alarmUseCase.getAllAlarms().first()
+                val alarms = alarmRepository.getAllAlarms().first()
                 alarms
                     .filter { it.isAlarmActive }
                     .forEach { alarm -> androidAlarmScheduler.scheduleAlarm(alarm) }

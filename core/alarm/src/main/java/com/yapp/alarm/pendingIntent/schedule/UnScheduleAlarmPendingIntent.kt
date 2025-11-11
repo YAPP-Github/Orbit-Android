@@ -7,6 +7,7 @@ import com.yapp.alarm.AlarmConstants
 import com.yapp.alarm.receivers.AlarmReceiver
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
+import com.yapp.domain.model.toJson
 
 fun createAlarmReceiverPendingIntentForUnSchedule(
     app: Application,
@@ -25,6 +26,6 @@ fun createAlarmReceiverPendingIntentForUnSchedule(
 private fun createAlarmReceiverIntent(app: Application, alarm: Alarm): Intent {
     return Intent(AlarmConstants.ACTION_ALARM_TRIGGERED).apply {
         setClass(app, AlarmReceiver::class.java)
-        putExtra(AlarmConstants.EXTRA_ALARM, alarm)
+        putExtra(AlarmConstants.EXTRA_ALARM, alarm.toJson())
     }
 }
