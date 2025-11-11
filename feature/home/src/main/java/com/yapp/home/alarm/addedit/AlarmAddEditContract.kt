@@ -154,7 +154,7 @@ internal fun AlarmAddEditContract.State.toAlarm(id: Long = 0): Alarm {
         snoozeCount = snoozeState.snoozeCount,
         isVibrationEnabled = soundState.isVibrationEnabled,
         isSoundEnabled = soundState.isSoundEnabled,
-        soundUri = soundState.sounds.getOrNull(soundState.soundIndex)?.uri.toString(),
+        soundUri = soundState.sounds.getOrNull(soundState.soundIndex)?.uri.orEmpty(),
         soundVolume = soundState.soundVolume,
         isAlarmActive = true,
     )

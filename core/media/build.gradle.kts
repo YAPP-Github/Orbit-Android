@@ -9,3 +9,7 @@ plugins {
 android {
     setNamespace("core.media")
 }
+
+dependencies {
+    implementation(projects.domain)
+}

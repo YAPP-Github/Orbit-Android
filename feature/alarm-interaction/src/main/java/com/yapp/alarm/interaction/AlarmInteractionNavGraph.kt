@@ -1,5 +1,6 @@
 package com.yapp.alarm.interaction
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavGraphBuilder
@@ -13,7 +14,7 @@ import com.yapp.common.navigation.OrbitNavigator
 import com.yapp.common.navigation.route.AlarmInteractionBaseRoute
 import com.yapp.common.navigation.route.AlarmInteractionDestination
 import com.yapp.domain.model.Alarm
-import kotlinx.serialization.json.Json
+import com.yapp.domain.model.toJson
 import kotlin.reflect.typeOf
 
 val AlarmArgType = object : NavType<Alarm>(isNullableAllowed = false) {
@@ -26,7 +27,11 @@ val AlarmArgType = object : NavType<Alarm>(isNullableAllowed = false) {
     }
 
     override fun put(bundle: Bundle, key: String, value: Alarm) {
-        bundle.putString(key, Json.encodeToString(Alarm.serializer(), value))
+        bundle.putString(key, value.toJson())
+    }
+
+    override fun serializeAsValue(value: Alarm): String {
+        return Uri.encode(value.toJson())
     }
 }
 

@@ -87,7 +87,7 @@ class AlarmAddEditViewModel @Inject constructor(
     private fun loadExistingAlarm(sounds: List<AlarmSound>) = intent {
         alarmUseCase.getAlarm(alarmId).onSuccess { alarm ->
             val repeatDays = alarm.repeatDays.toAlarmDays()
-            val selectedSoundIndex = sounds.indexOfFirst { it.uri.toString() == alarm.soundUri }
+            val selectedSoundIndex = sounds.indexOfFirst { it.uri == alarm.soundUri }
             val selectedSound = sounds.getOrNull(selectedSoundIndex) ?: sounds.first()
 
             alarmUseCase.initializeSoundPlayer(selectedSound.uri)

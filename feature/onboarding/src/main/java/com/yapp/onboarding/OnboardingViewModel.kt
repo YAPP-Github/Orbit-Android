@@ -133,7 +133,7 @@ class OnboardingViewModel @Inject constructor(
     private fun createAlarm() = intent {
         alarmUseCase.getAlarmSounds().onSuccess { sounds ->
             val defaultSoundIndex = sounds.indexOfFirst { it.title == "Homecoming" }.takeIf { it >= 0 } ?: 0
-            val defaultSoundUri = sounds[defaultSoundIndex]
+            val defaultSound = sounds[defaultSoundIndex]
 
             val newAlarm = Alarm(
                 hour = state.selectedTime.hour,
@@ -142,7 +142,7 @@ class OnboardingViewModel @Inject constructor(
                 isSnoozeEnabled = true,
                 snoozeInterval = 5,
                 snoozeCount = 5,
-                soundUri = "${defaultSoundUri.uri}",
+                soundUri = defaultSound.uri,
             )
 
             alarmUseCase.insertAlarm(

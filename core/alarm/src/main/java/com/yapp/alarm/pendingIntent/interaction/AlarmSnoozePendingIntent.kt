@@ -7,6 +7,7 @@ import android.content.Intent
 import com.yapp.alarm.AlarmConstants
 import com.yapp.alarm.receivers.AlarmReceiver
 import com.yapp.domain.model.Alarm
+import com.yapp.domain.model.toJson
 
 fun createAlarmSnoozePendingIntent(
     context: Context,
@@ -27,6 +28,6 @@ fun createAlarmSnoozeIntent(
 ): Intent {
     return Intent(context, AlarmReceiver::class.java).apply {
         action = AlarmConstants.ACTION_ALARM_SNOOZED
-        putExtra(AlarmConstants.EXTRA_ALARM, alarm)
+        putExtra(AlarmConstants.EXTRA_ALARM, alarm.toJson())
     }
 }

@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import com.yapp.alarm.AlarmConstants
 import com.yapp.domain.model.Alarm
+import com.yapp.domain.model.toJson
 
 fun createAlarmAlertPendingIntent(
     context: Context,
@@ -31,7 +32,7 @@ private fun createAlarmAlertIntent(
 ): Intent {
     return Intent("com.yapp.alarm.interaction.ACTION_ALARM_INTERACTION").apply {
         putExtra(AlarmConstants.EXTRA_NOTIFICATION_ID, notificationId)
-        putExtra(AlarmConstants.EXTRA_ALARM, alarm)
+        putExtra(AlarmConstants.EXTRA_ALARM, alarm.toJson())
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         setPackage(context.packageName)
     }

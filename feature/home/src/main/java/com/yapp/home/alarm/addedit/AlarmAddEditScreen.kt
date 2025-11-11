@@ -1,6 +1,5 @@
 package com.yapp.home.alarm.addedit
 
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -546,16 +545,13 @@ private fun AlarmAddEditSettingsSection(
                 state.soundState.isSoundEnabled && state.soundState.isVibrationEnabled -> {
                     "${stringResource(id = R.string.alarm_add_edit_vibration)}, ${
                     state.soundState.sounds.getOrElse(state.soundState.soundIndex) {
-                        AlarmSound("", Uri.EMPTY)
+                        AlarmSound("", "")
                     }.title
                     }"
                 }
 
                 state.soundState.isSoundEnabled -> state.soundState.sounds.getOrElse(state.soundState.soundIndex) {
-                    AlarmSound(
-                        "",
-                        Uri.EMPTY,
-                    )
+                    AlarmSound("", "")
                 }.title
 
                 state.soundState.isVibrationEnabled -> stringResource(id = R.string.alarm_add_edit_vibration)

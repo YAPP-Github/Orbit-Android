@@ -80,12 +80,7 @@ class AlarmService : Service() {
     }
 
     private fun handleIntent(intent: Intent) {
-        val alarm: Alarm? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableExtra(AlarmConstants.EXTRA_ALARM, Alarm::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getParcelableExtra(AlarmConstants.EXTRA_ALARM)
-        }
+        val alarm: Alarm? = intent.getStringExtra(AlarmConstants.EXTRA_ALARM)?.let(Alarm::fromJson)
 
         if (alarm == null) {
             Log.e("AlarmService", "Failed to retrieve Alarm object from intent")

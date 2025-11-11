@@ -1,6 +1,7 @@
 [versions]
 # SDK Versions
 compileSdk = "35"
+javaxInject = "1"
 minSdk = "28"
 targetSdk = "35"
 
@@ -87,6 +88,7 @@ profileinstaller = "1.4.1"
 
 ## Android Libraries
 android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "android-gradle-plugin" }
+javax-inject = { module = "javax.inject:javax.inject", version.ref = "javaxInject" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 ksp-gradle-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 

@@ -1,6 +1,5 @@
 package com.yapp.domain.usecase
 
-import android.net.Uri
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmSound
 import com.yapp.domain.repository.AlarmRepository
@@ -13,7 +12,7 @@ class AlarmUseCase @Inject constructor(
     private val alarmScheduler: AlarmScheduler,
 ) {
     suspend fun getAlarmSounds(): Result<List<AlarmSound>> = alarmRepository.getAlarmSounds()
-    fun initializeSoundPlayer(uri: Uri) = alarmRepository.initializeSoundPlayer(uri)
+    fun initializeSoundPlayer(uri: String) = alarmRepository.initializeSoundPlayer(uri)
     fun playAlarmSound(volume: Int) = alarmRepository.playAlarmSound(volume)
     fun stopAlarmSound() = alarmRepository.stopAlarmSound()
     fun updateAlarmVolume(volume: Int) = alarmRepository.updateAlarmVolume(volume)
