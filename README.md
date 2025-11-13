@@ -52,7 +52,8 @@
 
 ![Project Dependency Graph](project.dot.png)
 
-`app`이 feature/data/core 모듈을 조립하고, feature는 `domain`+필요한 `core`에만 의존하는 계층 구조를 시각화한 그래프입니다. 각 모듈의 역할과 의존 규칙은 [docs/Modularization.md](docs/Modularization.md)에 정리되어 있습니다.
+`app`이 feature/data/core 모듈을 조립하고, feature는 `domain`+필요한 `core`에만 의존하는 계층 구조를 시각화한 그래프입니다.<br>
+각 모듈의 역할과 의존 규칙은 [docs/Modularization.md](docs/Modularization.md)에 정리되어 있습니다.
 
 ## 아키텍처 설계
 

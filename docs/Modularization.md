@@ -47,5 +47,7 @@ core 모듈 간에는 필요한 최소한의 방향(예: designsystem ← ui)만
 ## 협업 이점
 
 1. **작업 범위 명확화**: 미션 화면 담당자는 `feature:mission`, 알람 설정 담당자는 `feature:home`에만 접근합니다. feature 간 의존을 허용하지 않기 때문에 Git 충돌 가능성도 낮습니다.
+
    ![분리된 협업 워크플로](images/module_cooperation.png "각 feature 모듈을 서로 의존하지 않도록 하여 병렬 작업과 코드 리뷰를 수월하게 만든 예시")
+
 2. **PR 흐름 단순화**: Domain/Data/Core에서 계약(인터페이스, DTO)을 먼저 확정하고 Feature 모듈이 이를 소비하는 순서로 PR을 나눕니다. 이 순서 덕분에 리뷰어는 스펙과 화면 구현을 분리해 검토할 수 있습니다.
