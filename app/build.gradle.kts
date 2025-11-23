@@ -38,6 +38,14 @@ android {
     }
 }
 
+androidComponents {
+    finalizeDsl { extension ->
+        extension.sourceSets.getByName("benchmarkRelease").manifest.srcFile(
+            "src/benchmarkRelease/AndroidManifest.xml",
+        )
+    }
+}
+
 dependencies {
     implementation(projects.core.common)
     implementation(projects.core.analytics)
