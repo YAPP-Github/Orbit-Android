@@ -1,6 +1,5 @@
 package com.yapp.data.local.datasource
 
-import com.yapp.domain.model.FortuneCreateStatus
 import kotlinx.coroutines.flow.Flow
 
 interface FortuneLocalDataSource {
@@ -12,11 +11,7 @@ interface FortuneLocalDataSource {
     val shouldShowFortuneToolTipFlow: Flow<Boolean>
     val isFirstAlarmDismissedTodayFlow: Flow<Boolean>
 
-    val fortuneCreateStatusFlow: Flow<FortuneCreateStatus>
-
-    suspend fun markFortuneCreating(attemptId: String, leaseMillis: Long)
-    suspend fun markFortuneCreated(attemptId: String, fortuneId: Long)
-    suspend fun markFortuneFailed(attemptId: String)
+    suspend fun markFortuneCreated(fortuneId: Long)
     suspend fun markFortuneSeen()
     suspend fun markFortuneTooltipShown()
     suspend fun saveFortuneImageId(imageResId: Int)
@@ -24,4 +19,6 @@ interface FortuneLocalDataSource {
     suspend fun markFirstAlarmDismissedToday()
 
     suspend fun clearFortuneData()
+
+    suspend fun hasTodayFortune(): Boolean
 }

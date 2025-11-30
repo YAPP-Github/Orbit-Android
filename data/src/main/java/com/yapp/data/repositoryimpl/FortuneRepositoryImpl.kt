@@ -4,7 +4,6 @@ import com.yapp.data.local.datasource.FortuneLocalDataSource
 import com.yapp.data.remote.datasource.FortuneDataSource
 import com.yapp.data.remote.dto.response.toDomain
 import com.yapp.domain.model.Fortune
-import com.yapp.domain.model.FortuneCreateStatus
 import com.yapp.domain.repository.FortuneRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -22,11 +21,7 @@ class FortuneRepositoryImpl @Inject constructor(
     override val shouldShowFortuneToolTipFlow: Flow<Boolean> = fortuneLocalDataSource.shouldShowFortuneToolTipFlow
     override val isFirstAlarmDismissedTodayFlow: Flow<Boolean> = fortuneLocalDataSource.isFirstAlarmDismissedTodayFlow
 
-    override val fortuneCreateStatusFlow: Flow<FortuneCreateStatus> = fortuneLocalDataSource.fortuneCreateStatusFlow
-
-    override suspend fun markFortuneAsCreating(attemptId: String, leaseMillis: Long) = fortuneLocalDataSource.markFortuneCreating(attemptId, leaseMillis)
-    override suspend fun markFortuneAsCreated(attemptId: String, fortuneId: Long) = fortuneLocalDataSource.markFortuneCreated(attemptId, fortuneId)
-    override suspend fun markFortuneAsFailed(attemptId: String) = fortuneLocalDataSource.markFortuneFailed(attemptId)
+    override suspend fun markFortuneAsCreated(fortuneId: Long) = fortuneLocalDataSource.markFortuneCreated(fortuneId)
     override suspend fun markFortuneSeen() = fortuneLocalDataSource.markFortuneSeen()
     override suspend fun markFortuneTooltipShown() = fortuneLocalDataSource.markFortuneTooltipShown()
     override suspend fun saveFortuneImageId(imageResId: Int) = fortuneLocalDataSource.saveFortuneImageId(imageResId)
@@ -34,6 +29,8 @@ class FortuneRepositoryImpl @Inject constructor(
     override suspend fun markFirstAlarmDismissedToday() = fortuneLocalDataSource.markFirstAlarmDismissedToday()
 
     override suspend fun clearFortuneData() = fortuneLocalDataSource.clearFortuneData()
+
+    override suspend fun hasTodayFortune() = fortuneLocalDataSource.hasTodayFortune()
 
     override suspend fun postFortune(userId: Long): Result<Fortune> {
         return fortuneRemoteDataSource.postFortune(userId)
