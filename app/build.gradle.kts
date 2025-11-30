@@ -64,8 +64,6 @@ dependencies {
 
     implementation(libs.compose.material)
     implementation(libs.kotlin.reflect)
-    implementation(libs.hilt.worker)
-    implementation(libs.androidx.work.runtime)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)

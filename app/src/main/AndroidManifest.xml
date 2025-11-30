@@ -80,14 +80,5 @@
             android:name="com.yapp.alarm.services.AlarmService"
             android:foregroundServiceType="mediaPlayback" />
 
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            android:exported="false"
-            tools:node="merge">
-            <meta-data
-                android:name="androidx.work.WorkManagerInitializer"
-                tools:node="remove" />
-        </provider>
     </application>
 </manifest>
