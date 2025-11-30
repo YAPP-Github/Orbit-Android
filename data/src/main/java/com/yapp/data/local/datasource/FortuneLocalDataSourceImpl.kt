@@ -1,10 +1,6 @@
 package com.yapp.data.local.datasource
 
 import com.yapp.datastore.FortunePreferences
-import com.yapp.domain.model.FortuneCreateStatus
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import java.time.LocalDate
 import javax.inject.Inject
 
 class FortuneLocalDataSourceImpl @Inject constructor(
@@ -19,32 +15,8 @@ class FortuneLocalDataSourceImpl @Inject constructor(
     override val shouldShowFortuneToolTipFlow = fortunePreferences.shouldShowFortuneToolTipFlow
     override val isFirstAlarmDismissedTodayFlow = fortunePreferences.isFirstAlarmDismissedTodayFlow
 
-    override val fortuneCreateStatusFlow = combine(
-        fortunePreferences.fortuneIdFlow,
-        fortunePreferences.fortuneDateEpochFlow,
-        fortunePreferences.isFortuneCreatingFlow,
-        fortunePreferences.isFortuneFailedFlow,
-    ) { fortuneId, fortuneDate, isCreating, isFailed ->
-        when {
-            isFailed -> FortuneCreateStatus.Failure
-            isCreating -> FortuneCreateStatus.Creating
-            fortuneId != null && fortuneDate == todayEpoch() -> FortuneCreateStatus.Success(fortuneId)
-            else -> FortuneCreateStatus.Idle
-        }
-    }.distinctUntilChanged()
-
-    private fun todayEpoch(): Long = LocalDate.now().toEpochDay()
-
-    override suspend fun markFortuneCreating(attemptId: String, leaseMillis: Long) {
-        fortunePreferences.markFortuneCreating(attemptId, leaseMillis)
-    }
-
-    override suspend fun markFortuneCreated(attemptId: String, fortuneId: Long) {
-        fortunePreferences.markFortuneCreatedIfAttemptMatches(attemptId, fortuneId)
-    }
-
-    override suspend fun markFortuneFailed(attemptId: String) {
-        fortunePreferences.markFortuneFailedIfAttemptMatches(attemptId)
+    override suspend fun markFortuneCreated(fortuneId: Long) {
+        fortunePreferences.markFortuneCreated(fortuneId)
     }
 
     override suspend fun markFortuneSeen() {
@@ -69,5 +41,9 @@ class FortuneLocalDataSourceImpl @Inject constructor(
 
     override suspend fun clearFortuneData() {
         fortunePreferences.clearFortuneData()
+    }
+
+    override suspend fun hasTodayFortune(): Boolean {
+        return fortunePreferences.hasTodayFortune()
     }
 }

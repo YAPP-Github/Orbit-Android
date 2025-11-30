@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissIntent
 import com.yapp.analytics.AnalyticsEvent
 import com.yapp.analytics.AnalyticsHelper
-import com.yapp.domain.model.FortuneCreateStatus
 import com.yapp.domain.model.MissionMode
 import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
@@ -139,16 +138,10 @@ class MissionViewModel @Inject constructor(
             return@intent
         }
 
-        val fortuneCreateStatus = fortuneRepository.fortuneCreateStatusFlow.first()
+        val hasTodayFortune = fortuneRepository.hasTodayFortune()
         val hasUnseenFortune = fortuneRepository.hasUnseenFortuneFlow.first()
 
-        val shouldOpenFortune = when (fortuneCreateStatus) {
-            is FortuneCreateStatus.Creating,
-            is FortuneCreateStatus.Failure,
-            -> true
-            is FortuneCreateStatus.Success -> hasUnseenFortune
-            FortuneCreateStatus.Idle -> false
-        }
+        val shouldOpenFortune = !hasTodayFortune || hasUnseenFortune
 
         postSideEffect(
             if (shouldOpenFortune) {

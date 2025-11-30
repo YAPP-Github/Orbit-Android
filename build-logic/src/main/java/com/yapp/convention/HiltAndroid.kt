@@ -13,9 +13,7 @@ internal fun Project.configureHiltAndroid() {
     dependencies {
         "implementation"(libs.findLibrary("hilt.android").get())
         "ksp"(libs.findLibrary("hilt.android.compiler").get())
-        "ksp"(libs.findLibrary("androidx-hilt-compiler").get())
         "implementation"(libs.findLibrary("hilt-navigation-compose").get())
-        "implementation"(libs.findLibrary("hilt-worker").get())
     }
 }
 

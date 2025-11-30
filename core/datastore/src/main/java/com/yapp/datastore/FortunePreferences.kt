@@ -7,15 +7,12 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.transformLatest
 import java.time.Clock
-import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,20 +30,11 @@ class FortunePreferences @Inject constructor(
         val SEEN = booleanPreferencesKey("fortune_seen")
         val TOOLTIP_SHOWN = booleanPreferencesKey("fortune_tooltip_shown")
 
-        val CREATING = booleanPreferencesKey("fortune_creating")
-        val FAILED = booleanPreferencesKey("fortune_failed")
-        val FAILED_DATE = longPreferencesKey("fortune_failed_date_epoch")
-
-        val ATTEMPT_ID = stringPreferencesKey("fortune_attempt_id")
-        val STARTED_AT = longPreferencesKey("fortune_started_at")
-        val EXPIRES_AT = longPreferencesKey("fortune_expires_at")
-
         val FIRST_ALARM_DISMISSED_TODAY = booleanPreferencesKey("first_alarm_dismissed_today")
         val FIRST_ALARM_DISMISSED_DATE_EPOCH = longPreferencesKey("first_alarm_dismissed_date_epoch")
     }
 
     private fun todayEpoch(): Long = LocalDate.now(clock).toEpochDay()
-    private fun nowMillis(): Long = Instant.now(clock).toEpochMilli()
 
     val fortuneIdFlow: Flow<Long?> = dataStore.data
         .catch { emit(emptyPreferences()) }
@@ -85,59 +73,6 @@ class FortunePreferences @Inject constructor(
         }
         .distinctUntilChanged()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val isFortuneCreatingFlow: Flow<Boolean> = dataStore.data
-        .catch { emit(emptyPreferences()) }
-        .map { pref ->
-            Triple(
-                pref[Keys.CREATING] ?: false,
-                pref[Keys.EXPIRES_AT] ?: 0L,
-                pref[Keys.ATTEMPT_ID],
-            )
-        }
-        .transformLatest { (creating, expiresAt, attemptId) ->
-            if (creating) {
-                val legacy = (expiresAt <= 0L) || attemptId.isNullOrEmpty()
-                val expired = (!legacy && nowMillis() > expiresAt)
-
-                if (legacy || expired) {
-                    // 레거시(만료정보 없음) 또는 만료 → 실패로 교정
-                    dataStore.edit { pref ->
-                        pref[Keys.CREATING] = false
-                        pref[Keys.FAILED] = true
-                        pref[Keys.FAILED_DATE] = todayEpoch()
-                    }
-                    emit(false)
-                    return@transformLatest
-                }
-            }
-            emit(creating)
-        }
-        .distinctUntilChanged()
-
-    val isFortuneFailedFlow: Flow<Boolean> = dataStore.data
-        .catch { emit(emptyPreferences()) }
-        .map { pref ->
-            val failed = pref[Keys.FAILED] ?: false
-            val failedDate = pref[Keys.FAILED_DATE]
-            failed to failedDate
-        }
-        .transformLatest { (failed, failedDate) ->
-            if (failed) {
-                val isToday = failedDate == todayEpoch()
-                if (!isToday) {
-                    dataStore.edit { pref ->
-                        pref[Keys.FAILED] = false
-                        pref.remove(Keys.FAILED_DATE)
-                    }
-                    emit(false)
-                    return@transformLatest
-                }
-            }
-            emit(failed)
-        }
-        .distinctUntilChanged()
-
     val isFirstAlarmDismissedTodayFlow: Flow<Boolean> = dataStore.data
         .catch { emit(emptyPreferences()) }
         .map { pref ->
@@ -147,69 +82,18 @@ class FortunePreferences @Inject constructor(
         }
         .distinctUntilChanged()
 
-    suspend fun markFortuneCreating(
-        attemptId: String,
-        lease: Long,
-    ) {
-        val now = nowMillis()
+    suspend fun markFortuneCreated(fortuneId: Long) {
         dataStore.edit { pref ->
-            pref[Keys.CREATING] = true
-            pref[Keys.ATTEMPT_ID] = attemptId
-            pref[Keys.STARTED_AT] = now
-            pref[Keys.EXPIRES_AT] = now + lease
-        }
-    }
+            val today = todayEpoch()
+            val prevDate = pref[Keys.DATE]
+            val isNewForToday = (pref[Keys.ID] != fortuneId) || (prevDate != today)
 
-    suspend fun markFortuneCreatedIfAttemptMatches(
-        attemptId: String,
-        fortuneId: Long,
-    ) {
-        dataStore.edit { pref ->
-            val currentAttempt = pref[Keys.ATTEMPT_ID]
-            val isCreating = pref[Keys.CREATING] ?: false
-            val expiresAt = pref[Keys.EXPIRES_AT] ?: 0L
+            pref[Keys.ID] = fortuneId
+            pref[Keys.DATE] = today
 
-            if (isCreating) {
-                val legacy = (expiresAt <= 0L) || currentAttempt.isNullOrEmpty()
-                val expired = (!legacy && nowMillis() > expiresAt)
-
-                if (legacy || expired) {
-                    // 만료된 상태라면 성공 처리 거부
-                    return@edit
-                }
-            }
-
-            if (isCreating && currentAttempt == attemptId) {
-                val today = todayEpoch()
-                val prevDate = pref[Keys.DATE]
-                val isNewForToday = (pref[Keys.ID] != fortuneId) || (prevDate != today)
-
-                pref[Keys.ID] = fortuneId
-                pref[Keys.DATE] = today
-                pref[Keys.CREATING] = false
-                pref[Keys.FAILED] = false
-                pref.remove(Keys.FAILED_DATE)
-                pref.remove(Keys.ATTEMPT_ID)
-                pref.remove(Keys.STARTED_AT)
-                pref.remove(Keys.EXPIRES_AT)
-
-                if (isNewForToday) {
-                    pref[Keys.SEEN] = false
-                    pref[Keys.TOOLTIP_SHOWN] = false
-                }
-            }
-        }
-    }
-
-    suspend fun markFortuneFailedIfAttemptMatches(attemptId: String) {
-        dataStore.edit { pref ->
-            if (pref[Keys.ATTEMPT_ID] == attemptId) {
-                pref[Keys.CREATING] = false
-                pref[Keys.FAILED] = true
-                pref[Keys.FAILED_DATE] = todayEpoch()
-                pref.remove(Keys.ATTEMPT_ID)
-                pref.remove(Keys.STARTED_AT)
-                pref.remove(Keys.EXPIRES_AT)
+            if (isNewForToday) {
+                pref[Keys.SEEN] = false
+                pref[Keys.TOOLTIP_SHOWN] = false
             }
         }
     }
@@ -245,9 +129,11 @@ class FortunePreferences @Inject constructor(
             pref.remove(Keys.SCORE)
             pref.remove(Keys.SEEN)
             pref.remove(Keys.TOOLTIP_SHOWN)
-            pref.remove(Keys.CREATING)
-            pref.remove(Keys.FAILED)
-            pref.remove(Keys.FAILED_DATE)
         }
+    }
+
+    suspend fun hasTodayFortune(): Boolean {
+        val prefs = dataStore.data.first()
+        return prefs[Keys.ID] != null && prefs[Keys.DATE] == todayEpoch()
     }
 }

@@ -6,9 +6,10 @@ import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.core.net.toUri
 import com.yapp.alarm.AlarmConstants
-import com.yapp.domain.model.FortuneCreateStatus
+import com.yapp.domain.model.FortuneCreationState
 import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.FortuneRepository
+import com.yapp.domain.tracker.FortuneCreationTracker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +23,9 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
 
     @Inject
     lateinit var fortuneRepository: FortuneRepository
+
+    @Inject
+    lateinit var fortuneCreationTracker: FortuneCreationTracker
 
     override fun onReceive(context: Context?, intent: Intent?) {
         val isSnoozed = intent?.getBooleanExtra(AlarmConstants.EXTRA_IS_SNOOZED, false) ?: false
@@ -46,16 +50,15 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
                 CoroutineScope(Dispatchers.Main).launch {
                     try {
                         if (!hasValidMissionData) {
-                            val (fortuneCreateStatus, hasUnseenFortune) = withContext(Dispatchers.IO) {
-                                val status = fortuneRepository.fortuneCreateStatusFlow.first()
+                            val (fortuneCreationState, hasUnseenFortune) = withContext(Dispatchers.IO) {
+                                val todayFortune = fortuneCreationTracker.state.first()
                                 val unseen = fortuneRepository.hasUnseenFortuneFlow.first()
-                                status to unseen
+
+                                todayFortune to unseen
                             }
 
-                            when (fortuneCreateStatus) {
-                                is FortuneCreateStatus.Creating,
-                                is FortuneCreateStatus.Failure,
-                                -> {
+                            when (fortuneCreationState) {
+                                is FortuneCreationState.Start -> {
                                     context?.let { ctx ->
                                         val uri = "orbitapp://fortune".toUri()
                                         val fortuneIntent = Intent(Intent.ACTION_VIEW, uri).apply {
@@ -65,8 +68,7 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
                                         ctx.startActivity(fortuneIntent)
                                     }
                                 }
-
-                                is FortuneCreateStatus.Success -> {
+                                is FortuneCreationState.Success -> {
                                     if (hasUnseenFortune) {
                                         context?.let { ctx ->
                                             val uri = "orbitapp://fortune".toUri()
@@ -79,8 +81,7 @@ class AlarmInteractionActivityReceiver(private val activity: ComponentActivity) 
                                         }
                                     }
                                 }
-
-                                FortuneCreateStatus.Idle -> { }
+                                is FortuneCreationState.Failure -> { }
                             }
                         } else {
                             context?.let { ctx ->
