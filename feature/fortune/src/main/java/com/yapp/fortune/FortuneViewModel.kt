@@ -4,8 +4,9 @@ import android.app.Application
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
-import com.yapp.domain.model.FortuneCreateStatus
+import com.yapp.domain.model.FortuneCreationState
 import com.yapp.domain.repository.FortuneRepository
+import com.yapp.domain.tracker.FortuneCreationTracker
 import com.yapp.fortune.page.toFortunePages
 import com.yapp.media.decoder.ImageUtils
 import com.yapp.media.storage.ImageSaver
@@ -25,6 +26,7 @@ class FortuneViewModel @Inject constructor(
     private val application: Application,
     private val fortuneRepository: FortuneRepository,
     private val imageSaver: ImageSaver,
+    private val fortuneCreationTracker: FortuneCreationTracker,
 ) : ViewModel(), ContainerHost<FortuneContract.State, FortuneContract.SideEffect> {
 
     override val container: Container<FortuneContract.State, FortuneContract.SideEffect> = container(
@@ -51,31 +53,25 @@ class FortuneViewModel @Inject constructor(
     }
 
     private fun observeFortune() = intent {
-        fortuneRepository.fortuneCreateStatusFlow.collect { status ->
+        fortuneCreationTracker.state.collect { status ->
             when (status) {
-                is FortuneCreateStatus.Creating -> {
+                is FortuneCreationState.Start -> {
                     reduce { state.copy(isLoading = true) }
                 }
 
-                is FortuneCreateStatus.Success -> {
+                is FortuneCreationState.Success -> {
                     fetchAndUpdateFortune(
                         fortuneId = status.fortuneId,
                         isFirstAlarmDismissedToday = fortuneRepository.isFirstAlarmDismissedTodayFlow.first(),
                     )
                 }
 
-                is FortuneCreateStatus.Failure -> {
+                FortuneCreationState.Failure -> {
                     reduce {
                         state.copy(
                             isLoading = false,
                             isCreateFailureDialogVisible = true,
                         )
-                    }
-                }
-
-                is FortuneCreateStatus.Idle -> {
-                    if (!state.isCreateFailureDialogVisible) {
-                        postSideEffect(FortuneContract.SideEffect.NavigateToHome)
                     }
                 }
             }
