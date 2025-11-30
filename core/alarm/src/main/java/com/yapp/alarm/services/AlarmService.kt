@@ -23,17 +23,20 @@ import com.yapp.alarm.pendingIntent.interaction.createAlarmAlertPendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmDismissPendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createAlarmSnoozePendingIntent
 import com.yapp.alarm.pendingIntent.interaction.createNavigateToMissionPendingIntent
-import com.yapp.alarm.scheduler.PostFortuneTaskScheduler
 import com.yapp.domain.model.Alarm
 import com.yapp.domain.model.AlarmDay
 import com.yapp.domain.model.MissionType
 import com.yapp.domain.repository.AlarmRepository
+import com.yapp.domain.repository.FortuneRepository
+import com.yapp.domain.repository.UserInfoRepository
+import com.yapp.domain.tracker.FortuneCreationTracker
 import com.yapp.media.sound.SoundPlayer
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -52,7 +55,13 @@ class AlarmService : Service() {
     lateinit var androidAlarmScheduler: AndroidAlarmScheduler
 
     @Inject
-    lateinit var postFortuneTaskScheduler: PostFortuneTaskScheduler
+    lateinit var fortuneRepository: FortuneRepository
+
+    @Inject
+    lateinit var userInfoRepository: UserInfoRepository
+
+    @Inject
+    lateinit var fortuneCreationTracker: FortuneCreationTracker
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -79,7 +88,7 @@ class AlarmService : Service() {
         super.onDestroy()
     }
 
-    private fun handleIntent(intent: Intent) {
+    private suspend fun handleIntent(intent: Intent) {
         val alarm: Alarm? = intent.getStringExtra(AlarmConstants.EXTRA_ALARM)?.let(Alarm::fromJson)
 
         if (alarm == null) {
@@ -117,7 +126,19 @@ class AlarmService : Service() {
             turnOffAlarm(alarmId = notificationId)
         }
 
-        postFortuneTaskScheduler.enqueueOnceForToday()
+        val shouldPostFortune = !fortuneRepository.hasTodayFortune()
+        if (shouldPostFortune) {
+            val userId = userInfoRepository.userIdFlow.first()
+            userId?.let {
+                fortuneCreationTracker.start()
+                fortuneRepository.postFortune(userId).onSuccess { fortune ->
+                    fortuneCreationTracker.succeed(fortune.id)
+                    fortuneRepository.markFortuneAsCreated(fortune.id)
+                }.onFailure {
+                    fortuneCreationTracker.fail()
+                }
+            }
+        }
     }
 
     private fun shouldNavigateToMission(
